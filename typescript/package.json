@@ -1,0 +1,55 @@
+{
+  "name": "@heir/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for the Heir public API: League reads, eligibility, inventory and stat submission.",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "generate:check": "node scripts/generate.mjs --check",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run generate:check && npm run typecheck && npm test && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heirgg/heir-sdk.git",
+    "directory": "typescript"
+  },
+  "homepage": "https://github.com/heirgg/heir-sdk/tree/main/typescript",
+  "keywords": [
+    "heir",
+    "heir.gg",
+    "league",
+    "esports",
+    "mordhau",
+    "api",
+    "sdk"
+  ],
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "openapi-typescript": "^7.13.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

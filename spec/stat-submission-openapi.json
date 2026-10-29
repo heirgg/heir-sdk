@@ -260,7 +260,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublicGamemodeCatalog"
+                  "$ref": "#/components/schemas/GamemodeCatalog"
                 }
               }
             }
@@ -329,7 +329,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/StatSchemaCatalog"
                 },
                 "example": {
                   "game": "mordhau",
@@ -339,6 +339,7 @@
                     {
                       "schemaRef": "mordhau.skirmish@1",
                       "id": "mordhau.skirmish",
+                      "key": "SKM",
                       "label": "Skirmish",
                       "record": "match",
                       "unit": "round",
@@ -439,7 +440,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BeginMatch"
+                "$ref": "#/components/schemas/BeginMatchRequest"
               },
               "example": {
                 "matchId": "lobby-42-1790000000",
@@ -454,7 +455,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/BeginMatchResponse"
                 },
                 "example": {
                   "matchId": "lobby-42-1790000000",
@@ -634,7 +635,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AppendUnits"
+                "$ref": "#/components/schemas/AppendUnitsRequest"
               },
               "example": {
                 "games": [
@@ -685,7 +686,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/AppendUnitsResponse"
                 },
                 "example": {
                   "accepted": 1,
@@ -853,7 +854,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/HeartbeatMatchResponse"
                 },
                 "example": {
                   "deadline": 1790001800000,
@@ -1020,7 +1021,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/FinalizeMatchResponse"
                 },
                 "example": {
                   "closed": true,
@@ -1189,7 +1190,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UploadMatch"
+                "$ref": "#/components/schemas/UploadMatchRequest"
               },
               "example": {
                 "matchId": "lobby-42-1790000000",
@@ -1250,7 +1251,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/UploadMatchResponse"
                 },
                 "example": {
                   "matchId": "lobby-42-1790000000",
@@ -1387,6 +1388,293 @@
       }
     },
     "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "enum": [
+              "not-available",
+              "unauthorized",
+              "forbidden",
+              "rate-limited",
+              "live-session-limit",
+              "invalid-request",
+              "rejected",
+              "conflict",
+              "not-found",
+              "too-large",
+              "unavailable"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "error",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "HeirMatchGamemode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "HeirMatchMap": {
+        "type": "object",
+        "properties": {
+          "gamemode": {
+            "$ref": "#/components/schemas/HeirMatchGamemode"
+          },
+          "map": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "winner": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z]{1,2}$"
+                  },
+                  {
+                    "type": "string",
+                    "const": "draw"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attacker": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b"
+            ]
+          },
+          "tiebreak": {
+            "type": "boolean",
+            "const": true
+          },
+          "score": {
+            "type": "object",
+            "properties": {
+              "a": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100000
+              },
+              "b": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100000
+              }
+            },
+            "required": [
+              "a",
+              "b"
+            ],
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000
+            }
+          },
+          "placements": {
+            "maxItems": 256,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "identity": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "member": {
+                  "type": "string",
+                  "pattern": "^\\d{17,20}$"
+                },
+                "side": {
+                  "type": "string",
+                  "pattern": "^[a-z]{1,2}$"
+                },
+                "place": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 256
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "place"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "players": {
+            "minItems": 1,
+            "maxItems": 256,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeirMatchPlayer"
+            }
+          },
+          "rounds": {
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeirMatchRound"
+            }
+          }
+        },
+        "required": [
+          "players"
+        ],
+        "additionalProperties": false
+      },
+      "HeirMatchPlayer": {
+        "type": "object",
+        "properties": {
+          "identity": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "member": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "side": {
+            "type": "string",
+            "pattern": "^[a-z]{1,2}$"
+          },
+          "stats": {
+            "default": {},
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "HeirMatchRound": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999
+          },
+          "winner": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z]{1,2}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "players": {
+            "maxItems": 256,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeirMatchPlayer"
+            }
+          }
+        },
+        "required": [
+          "index",
+          "players"
+        ],
+        "additionalProperties": false
+      },
       "HeirMatchFile": {
         "type": "object",
         "properties": {
@@ -1395,29 +1683,7 @@
             "const": "heir-match-v1"
           },
           "gamemode": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid",
-                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-              },
-              "key": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 100
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 40
-              },
-              "version": {
-                "type": "integer",
-                "exclusiveMinimum": 0
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/components/schemas/HeirMatchGamemode"
           },
           "type": {
             "default": "pug",
@@ -1499,266 +1765,7 @@
             "maxItems": 32,
             "type": "array",
             "items": {
-              "type": "object",
-              "properties": {
-                "gamemode": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                    },
-                    "key": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 100
-                    },
-                    "name": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 40
-                    },
-                    "version": {
-                      "type": "integer",
-                      "exclusiveMinimum": 0
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                "map": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "maxLength": 120
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "startedAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                },
-                "endedAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                },
-                "winner": {
-                  "anyOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "pattern": "^[a-z]{1,2}$",
-                          "description": "A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two."
-                        },
-                        {
-                          "type": "string",
-                          "const": "draw"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "score": {
-                  "type": "object",
-                  "properties": {
-                    "a": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 100000
-                    },
-                    "b": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 100000
-                    }
-                  },
-                  "required": [
-                    "a",
-                    "b"
-                  ],
-                  "additionalProperties": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 100000
-                  }
-                },
-                "placements": {
-                  "maxItems": 256,
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "identity": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 256
-                      },
-                      "member": {
-                        "type": "string",
-                        "pattern": "^\\d{17,20}$"
-                      },
-                      "side": {
-                        "type": "string",
-                        "pattern": "^[a-z]{1,2}$",
-                        "description": "A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two."
-                      },
-                      "place": {
-                        "anyOf": [
-                          {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 256
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "place"
-                    ],
-                    "additionalProperties": false
-                  }
-                },
-                "players": {
-                  "minItems": 1,
-                  "maxItems": 256,
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "identity": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 256
-                      },
-                      "member": {
-                        "type": "string",
-                        "pattern": "^\\d{17,20}$"
-                      },
-                      "name": {
-                        "type": "string",
-                        "maxLength": 80
-                      },
-                      "side": {
-                        "type": "string",
-                        "pattern": "^[a-z]{1,2}$",
-                        "description": "A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two."
-                      },
-                      "stats": {
-                        "default": {},
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string",
-                          "pattern": "^[a-z][a-z0-9_-]{0,63}$"
-                        },
-                        "additionalProperties": {
-                          "anyOf": [
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "additionalProperties": false
-                  }
-                },
-                "rounds": {
-                  "maxItems": 500,
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "index": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 999
-                      },
-                      "winner": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "pattern": "^[a-z]{1,2}$",
-                            "description": "A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two."
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "players": {
-                        "maxItems": 256,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "identity": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 256
-                            },
-                            "member": {
-                              "type": "string",
-                              "pattern": "^\\d{17,20}$"
-                            },
-                            "name": {
-                              "type": "string",
-                              "maxLength": 80
-                            },
-                            "side": {
-                              "type": "string",
-                              "pattern": "^[a-z]{1,2}$",
-                              "description": "A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two."
-                            },
-                            "stats": {
-                              "default": {},
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string",
-                                "pattern": "^[a-z][a-z0-9_-]{0,63}$"
-                              },
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "type": "number"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ]
-                              }
-                            }
-                          },
-                          "additionalProperties": false
-                        }
-                      }
-                    },
-                    "required": [
-                      "index",
-                      "players"
-                    ],
-                    "additionalProperties": false
-                  }
-                }
-              },
-              "required": [
-                "players"
-              ],
-              "additionalProperties": false
+              "$ref": "#/components/schemas/HeirMatchMap"
             }
           },
           "note": {
@@ -1822,7 +1829,7 @@
         ],
         "additionalProperties": false
       },
-      "PublicGamemodeCatalog": {
+      "GamemodeCatalog": {
         "type": "object",
         "properties": {
           "gameKey": {
@@ -1980,29 +1987,7 @@
                 "const": "heir-match-v1"
               },
               "gamemode": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                  },
-                  "key": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 40
-                  },
-                  "version": {
-                    "type": "integer",
-                    "exclusiveMinimum": 0
-                  }
-                },
-                "additionalProperties": false
+                "$ref": "#/components/schemas/HeirMatchGamemode"
               },
               "type": {
                 "default": "pug",
@@ -2084,266 +2069,7 @@
                 "maxItems": 32,
                 "type": "array",
                 "items": {
-                  "type": "object",
-                  "properties": {
-                    "gamemode": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "key": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 100
-                        },
-                        "name": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 40
-                        },
-                        "version": {
-                          "type": "integer",
-                          "exclusiveMinimum": 0
-                        }
-                      },
-                      "additionalProperties": false
-                    },
-                    "map": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "maxLength": 120
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "startedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "endedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "winner": {
-                      "anyOf": [
-                        {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "pattern": "^[a-z]{1,2}$",
-                              "description": "A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two."
-                            },
-                            {
-                              "type": "string",
-                              "const": "draw"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "score": {
-                      "type": "object",
-                      "properties": {
-                        "a": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 100000
-                        },
-                        "b": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 100000
-                        }
-                      },
-                      "required": [
-                        "a",
-                        "b"
-                      ],
-                      "additionalProperties": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 100000
-                      }
-                    },
-                    "placements": {
-                      "maxItems": 256,
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "identity": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 256
-                          },
-                          "member": {
-                            "type": "string",
-                            "pattern": "^\\d{17,20}$"
-                          },
-                          "side": {
-                            "type": "string",
-                            "pattern": "^[a-z]{1,2}$",
-                            "description": "A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two."
-                          },
-                          "place": {
-                            "anyOf": [
-                              {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 256
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "place"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "players": {
-                      "minItems": 1,
-                      "maxItems": 256,
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "identity": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 256
-                          },
-                          "member": {
-                            "type": "string",
-                            "pattern": "^\\d{17,20}$"
-                          },
-                          "name": {
-                            "type": "string",
-                            "maxLength": 80
-                          },
-                          "side": {
-                            "type": "string",
-                            "pattern": "^[a-z]{1,2}$",
-                            "description": "A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two."
-                          },
-                          "stats": {
-                            "default": {},
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string",
-                              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
-                            },
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        "additionalProperties": false
-                      }
-                    },
-                    "rounds": {
-                      "maxItems": 500,
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "index": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 999
-                          },
-                          "winner": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "pattern": "^[a-z]{1,2}$",
-                                "description": "A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two."
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "players": {
-                            "maxItems": 256,
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "identity": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 256
-                                },
-                                "member": {
-                                  "type": "string",
-                                  "pattern": "^\\d{17,20}$"
-                                },
-                                "name": {
-                                  "type": "string",
-                                  "maxLength": 80
-                                },
-                                "side": {
-                                  "type": "string",
-                                  "pattern": "^[a-z]{1,2}$",
-                                  "description": "A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two."
-                                },
-                                "stats": {
-                                  "default": {},
-                                  "type": "object",
-                                  "propertyNames": {
-                                    "type": "string",
-                                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
-                                  },
-                                  "additionalProperties": {
-                                    "anyOf": [
-                                      {
-                                        "type": "number"
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ]
-                                  }
-                                }
-                              },
-                              "additionalProperties": false
-                            }
-                          }
-                        },
-                        "required": [
-                          "index",
-                          "players"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "players"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/HeirMatchMap"
                 }
               },
               "note": {
@@ -2367,18 +2093,124 @@
         ],
         "additionalProperties": false
       },
-      "BeginMatch": {
+      "StatSchema": {
+        "type": "object",
+        "properties": {
+          "schemaRef": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "record": {
+            "type": "string",
+            "const": "match"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "round",
+              "game"
+            ]
+          },
+          "counters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "signed": {
+                  "type": "boolean",
+                  "const": true
+                },
+                "whole": {
+                  "type": "boolean",
+                  "const": true
+                }
+              },
+              "required": [
+                "name",
+                "required"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scoreCeiling": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "schemaRef",
+          "id",
+          "key",
+          "label",
+          "record",
+          "unit",
+          "counters",
+          "events",
+          "scoreCeiling"
+        ],
+        "additionalProperties": false
+      },
+      "StatSchemaCatalog": {
+        "type": "object",
+        "properties": {
+          "game": {
+            "type": "string"
+          },
+          "liveSessions": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "requestsPerMinute": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "schemas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatSchema"
+            }
+          }
+        },
+        "required": [
+          "game",
+          "liveSessions",
+          "requestsPerMinute",
+          "schemas"
+        ],
+        "additionalProperties": false
+      },
+      "BeginMatchRequest": {
         "type": "object",
         "properties": {
           "matchId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9._:-]{1,120}$",
-            "description": "Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'."
+            "pattern": "^[A-Za-z0-9._:-]{1,120}$"
           },
           "startedAt": {
             "type": "integer",
-            "exclusiveMinimum": 0,
-            "description": "When the match started, in milliseconds since the Unix epoch."
+            "exclusiveMinimum": 0
           }
         },
         "required": [
@@ -2387,7 +2219,242 @@
         ],
         "additionalProperties": false
       },
-      "AppendUnits": {
+      "GameSubmission": {
+        "type": "object",
+        "properties": {
+          "schemaRef": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "gameId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:-]{1,120}$"
+          },
+          "map": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rounds": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoundUnit"
+            }
+          },
+          "result": {
+            "$ref": "#/components/schemas/GameResult"
+          }
+        },
+        "required": [
+          "schemaRef",
+          "gameId"
+        ],
+        "additionalProperties": false
+      },
+      "RoundUnit": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          },
+          "winnerSide": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "const": 0
+                  },
+                  {
+                    "type": "number",
+                    "const": 1
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "players": {
+            "minItems": 1,
+            "maxItems": 128,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          },
+          "kills": {
+            "maxItems": 512,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          }
+        },
+        "required": [
+          "index",
+          "players"
+        ],
+        "additionalProperties": false
+      },
+      "GameResult": {
+        "type": "object",
+        "properties": {
+          "winnerSide": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "const": 0
+                  },
+                  {
+                    "type": "number",
+                    "const": 1
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finalScore": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "side0": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "side1": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "side0",
+                  "side1"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "endedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attackingSide": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "const": 0
+                  },
+                  {
+                    "type": "number",
+                    "const": 1
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "players": {
+            "minItems": 1,
+            "maxItems": 128,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          },
+          "segments": {
+            "maxItems": 512,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "side": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0
+                    },
+                    {
+                      "type": "number",
+                      "const": 1
+                    }
+                  ]
+                },
+                "seconds": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "points": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "side",
+                "seconds",
+                "points"
+              ]
+            }
+          }
+        },
+        "required": [
+          "winnerSide"
+        ],
+        "additionalProperties": false
+      },
+      "AppendUnitsRequest": {
         "type": "object",
         "properties": {
           "games": {
@@ -2395,247 +2462,7 @@
             "maxItems": 16,
             "type": "array",
             "items": {
-              "type": "object",
-              "properties": {
-                "schemaRef": {
-                  "type": "string",
-                  "maxLength": 120,
-                  "description": "The gamemode schema this game follows, as `<schema id>@<version>`, for example `mordhau.skirmish@1`."
-                },
-                "gameId": {
-                  "type": "string",
-                  "pattern": "^[A-Za-z0-9._:-]{1,120}$",
-                  "description": "Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'."
-                },
-                "map": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "maxLength": 120
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "startedAt": {
-                  "description": "When the game started, in milliseconds since the Unix epoch.",
-                  "anyOf": [
-                    {
-                      "type": "integer",
-                      "exclusiveMinimum": 0
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "rounds": {
-                  "description": "Round units, for a gamemode submitted round by round.",
-                  "maxItems": 64,
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "index": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 200,
-                        "description": "The round's number within its game, from 0. Rounds may be sent in any order."
-                      },
-                      "winnerSide": {
-                        "description": "The side that won the round; null if nobody did.",
-                        "anyOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "type": "number",
-                                "const": 0
-                              },
-                              {
-                                "type": "number",
-                                "const": 1
-                              }
-                            ]
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "players": {
-                        "minItems": 1,
-                        "maxItems": 128,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string"
-                          },
-                          "additionalProperties": {},
-                          "description": "One Player's line: their game account id, and the counters the gamemode's schema lists."
-                        }
-                      },
-                      "kills": {
-                        "description": "Kill events, when the gamemode takes them. Heir derives clutches and Round Impact from these.",
-                        "maxItems": 512,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string"
-                          },
-                          "additionalProperties": {}
-                        }
-                      }
-                    },
-                    "required": [
-                      "index",
-                      "players"
-                    ],
-                    "additionalProperties": false
-                  }
-                },
-                "result": {
-                  "description": "Ends the game. For a gamemode submitted as a whole game, this is the unit.",
-                  "type": "object",
-                  "properties": {
-                    "winnerSide": {
-                      "anyOf": [
-                        {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                              "const": 0
-                            },
-                            {
-                              "type": "number",
-                              "const": 1
-                            }
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "finalScore": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "side0": {
-                              "type": "number",
-                              "minimum": 0
-                            },
-                            "side1": {
-                              "type": "number",
-                              "minimum": 0
-                            }
-                          },
-                          "required": [
-                            "side0",
-                            "side1"
-                          ],
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "endedAt": {
-                      "description": "When the game ended, in milliseconds since the Unix epoch.",
-                      "anyOf": [
-                        {
-                          "type": "integer",
-                          "exclusiveMinimum": 0
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "attackingSide": {
-                      "anyOf": [
-                        {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                              "const": 0
-                            },
-                            {
-                              "type": "number",
-                              "const": 1
-                            }
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "players": {
-                      "description": "Player lines, for a gamemode submitted as a whole game.",
-                      "minItems": 1,
-                      "maxItems": 128,
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string"
-                        },
-                        "additionalProperties": {},
-                        "description": "One Player's line: their game account id, and the counters the gamemode's schema lists."
-                      }
-                    },
-                    "segments": {
-                      "maxItems": 512,
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "side": {
-                            "anyOf": [
-                              {
-                                "type": "number",
-                                "const": 0
-                              },
-                              {
-                                "type": "number",
-                                "const": 1
-                              }
-                            ]
-                          },
-                          "seconds": {
-                            "type": "number",
-                            "minimum": 0
-                          },
-                          "points": {
-                            "type": "number",
-                            "minimum": 0
-                          }
-                        },
-                        "required": [
-                          "side",
-                          "seconds",
-                          "points"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "winnerSide"
-                  ],
-                  "additionalProperties": false
-                }
-              },
-              "required": [
-                "schemaRef",
-                "gameId"
-              ],
-              "additionalProperties": false
+              "$ref": "#/components/schemas/GameSubmission"
             }
           }
         },
@@ -2644,265 +2471,23 @@
         ],
         "additionalProperties": false
       },
-      "UploadMatch": {
+      "UploadMatchRequest": {
         "type": "object",
         "properties": {
           "matchId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9._:-]{1,120}$",
-            "description": "Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'."
+            "pattern": "^[A-Za-z0-9._:-]{1,120}$"
           },
           "startedAt": {
             "type": "integer",
-            "exclusiveMinimum": 0,
-            "description": "When the match started, in milliseconds since the Unix epoch."
+            "exclusiveMinimum": 0
           },
           "games": {
             "minItems": 1,
             "maxItems": 16,
             "type": "array",
             "items": {
-              "type": "object",
-              "properties": {
-                "schemaRef": {
-                  "type": "string",
-                  "maxLength": 120,
-                  "description": "The gamemode schema this game follows, as `<schema id>@<version>`, for example `mordhau.skirmish@1`."
-                },
-                "gameId": {
-                  "type": "string",
-                  "pattern": "^[A-Za-z0-9._:-]{1,120}$",
-                  "description": "Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'."
-                },
-                "map": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "maxLength": 120
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "startedAt": {
-                  "description": "When the game started, in milliseconds since the Unix epoch.",
-                  "anyOf": [
-                    {
-                      "type": "integer",
-                      "exclusiveMinimum": 0
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "rounds": {
-                  "description": "Round units, for a gamemode submitted round by round.",
-                  "maxItems": 64,
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "index": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 200,
-                        "description": "The round's number within its game, from 0. Rounds may be sent in any order."
-                      },
-                      "winnerSide": {
-                        "description": "The side that won the round; null if nobody did.",
-                        "anyOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "type": "number",
-                                "const": 0
-                              },
-                              {
-                                "type": "number",
-                                "const": 1
-                              }
-                            ]
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "players": {
-                        "minItems": 1,
-                        "maxItems": 128,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string"
-                          },
-                          "additionalProperties": {},
-                          "description": "One Player's line: their game account id, and the counters the gamemode's schema lists."
-                        }
-                      },
-                      "kills": {
-                        "description": "Kill events, when the gamemode takes them. Heir derives clutches and Round Impact from these.",
-                        "maxItems": 512,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string"
-                          },
-                          "additionalProperties": {}
-                        }
-                      }
-                    },
-                    "required": [
-                      "index",
-                      "players"
-                    ],
-                    "additionalProperties": false
-                  }
-                },
-                "result": {
-                  "description": "Ends the game. For a gamemode submitted as a whole game, this is the unit.",
-                  "type": "object",
-                  "properties": {
-                    "winnerSide": {
-                      "anyOf": [
-                        {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                              "const": 0
-                            },
-                            {
-                              "type": "number",
-                              "const": 1
-                            }
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "finalScore": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "side0": {
-                              "type": "number",
-                              "minimum": 0
-                            },
-                            "side1": {
-                              "type": "number",
-                              "minimum": 0
-                            }
-                          },
-                          "required": [
-                            "side0",
-                            "side1"
-                          ],
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "endedAt": {
-                      "description": "When the game ended, in milliseconds since the Unix epoch.",
-                      "anyOf": [
-                        {
-                          "type": "integer",
-                          "exclusiveMinimum": 0
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "attackingSide": {
-                      "anyOf": [
-                        {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                              "const": 0
-                            },
-                            {
-                              "type": "number",
-                              "const": 1
-                            }
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "players": {
-                      "description": "Player lines, for a gamemode submitted as a whole game.",
-                      "minItems": 1,
-                      "maxItems": 128,
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string"
-                        },
-                        "additionalProperties": {},
-                        "description": "One Player's line: their game account id, and the counters the gamemode's schema lists."
-                      }
-                    },
-                    "segments": {
-                      "maxItems": 512,
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "side": {
-                            "anyOf": [
-                              {
-                                "type": "number",
-                                "const": 0
-                              },
-                              {
-                                "type": "number",
-                                "const": 1
-                              }
-                            ]
-                          },
-                          "seconds": {
-                            "type": "number",
-                            "minimum": 0
-                          },
-                          "points": {
-                            "type": "number",
-                            "minimum": 0
-                          }
-                        },
-                        "required": [
-                          "side",
-                          "seconds",
-                          "points"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "winnerSide"
-                  ],
-                  "additionalProperties": false
-                }
-              },
-              "required": [
-                "schemaRef",
-                "gameId"
-              ],
-              "additionalProperties": false
+              "$ref": "#/components/schemas/GameSubmission"
             }
           }
         },
@@ -2913,54 +2498,139 @@
         ],
         "additionalProperties": false
       },
-      "Error": {
+      "BeginMatchResponse": {
         "type": "object",
         "properties": {
-          "error": {
+          "matchId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:-]{1,120}$"
+          },
+          "created": {
+            "type": "boolean"
+          },
+          "approval": {
             "type": "string",
             "enum": [
-              "not-available",
-              "unauthorized",
-              "forbidden",
-              "rate-limited",
-              "live-session-limit",
-              "invalid-request",
-              "rejected",
-              "conflict",
-              "not-found",
-              "too-large",
-              "unavailable"
-            ],
-            "description": "A stable code to branch on."
+              "automatic",
+              "manual"
+            ]
           },
-          "message": {
-            "type": "string",
-            "description": "A sentence for a person. Its wording can change."
+          "replayed": {
+            "type": "boolean"
           },
-          "issues": {
-            "description": "For a complete match that cannot be read (`invalid-request`) or does not add up (`rejected`): each field that is wrong, when Heir can name it.",
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "path": {
-                  "type": "string"
-                },
-                "message": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "path",
-                "message"
-              ],
-              "additionalProperties": false
-            }
+          "dryRun": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
-          "error",
-          "message"
+          "matchId",
+          "created",
+          "approval"
+        ],
+        "additionalProperties": false
+      },
+      "AppendUnitsResponse": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "duplicates": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "replayed": {
+            "type": "boolean"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "accepted",
+          "duplicates"
+        ],
+        "additionalProperties": false
+      },
+      "HeartbeatMatchResponse": {
+        "type": "object",
+        "properties": {
+          "deadline": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "replayed": {
+            "type": "boolean"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "deadline"
+        ],
+        "additionalProperties": false
+      },
+      "FinalizeMatchResponse": {
+        "type": "object",
+        "properties": {
+          "closed": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "heldForReview": {
+            "type": "boolean"
+          },
+          "replayed": {
+            "type": "boolean"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "closed",
+          "status",
+          "heldForReview"
+        ],
+        "additionalProperties": false
+      },
+      "UploadMatchResponse": {
+        "type": "object",
+        "properties": {
+          "matchId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:-]{1,120}$"
+          },
+          "created": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "heldForReview": {
+            "type": "boolean"
+          },
+          "replayed": {
+            "type": "boolean"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "matchId",
+          "created",
+          "status",
+          "heldForReview"
         ],
         "additionalProperties": false
       }
