@@ -219,6 +219,114 @@
       "scoreCeiling": 150
     },
     {
+      "game": "mordhau",
+      "gameLabel": "Mordhau",
+      "schemaRef": "mordhau.oddball@1",
+      "label": "Oddball",
+      "record": "match",
+      "unit": "game",
+      "counters": [
+        {
+          "name": "kills",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "deaths",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "teamKills",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "suicides",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "score",
+          "required": true,
+          "signed": true,
+          "whole": true
+        },
+        {
+          "name": "timeOnPoint",
+          "required": true,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "assists",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "damageDealt",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "damageTaken",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "teamDamage",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "teamDamageTaken",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "hits",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "headshots",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "parries",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "chambers",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "activeSeconds",
+          "required": false,
+          "signed": false,
+          "whole": true
+        }
+      ],
+      "events": [],
+      "scoreCeiling": 250
+    },
+    {
       "game": "chivalry",
       "gameLabel": "Chivalry: Medieval Warfare",
       "schemaRef": "chivalry.last-team-standing@1",
