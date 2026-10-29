@@ -1,0 +1,428 @@
+{
+  "schemas": [
+    {
+      "game": "mordhau",
+      "gameLabel": "Mordhau",
+      "schemaRef": "mordhau.skirmish@1",
+      "label": "Skirmish",
+      "record": "match",
+      "unit": "round",
+      "counters": [
+        {
+          "name": "kills",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "deaths",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "teamKills",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "suicides",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "score",
+          "required": true,
+          "signed": true,
+          "whole": true
+        },
+        {
+          "name": "assists",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "damageDealt",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "damageTaken",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "teamDamage",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "teamDamageTaken",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "hits",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "headshots",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "parries",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "chambers",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "activeSeconds",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "timeOnPoint",
+          "required": false,
+          "signed": false,
+          "whole": false
+        }
+      ],
+      "events": [
+        "kill"
+      ],
+      "scoreCeiling": 7
+    },
+    {
+      "game": "mordhau",
+      "gameLabel": "Mordhau",
+      "schemaRef": "mordhau.hardpoint@1",
+      "label": "Hardpoint",
+      "record": "match",
+      "unit": "game",
+      "counters": [
+        {
+          "name": "kills",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "deaths",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "teamKills",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "suicides",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "score",
+          "required": true,
+          "signed": true,
+          "whole": true
+        },
+        {
+          "name": "timeOnPoint",
+          "required": true,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "assists",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "damageDealt",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "damageTaken",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "teamDamage",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "teamDamageTaken",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "hits",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "headshots",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "parries",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "chambers",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "activeSeconds",
+          "required": false,
+          "signed": false,
+          "whole": true
+        }
+      ],
+      "events": [],
+      "scoreCeiling": 150
+    },
+    {
+      "game": "chivalry",
+      "gameLabel": "Chivalry: Medieval Warfare",
+      "schemaRef": "chivalry.last-team-standing@1",
+      "label": "Last Team Standing",
+      "record": "match",
+      "unit": "round",
+      "counters": [
+        {
+          "name": "kills",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "deaths",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "teamKills",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "suicides",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "score",
+          "required": true,
+          "signed": true,
+          "whole": true
+        },
+        {
+          "name": "assists",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "damageDealt",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "damageTaken",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "teamDamage",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "hits",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "parries",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "activeSeconds",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "feints",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "blocks",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "dodges",
+          "required": false,
+          "signed": false,
+          "whole": true
+        }
+      ],
+      "events": [
+        "kill"
+      ],
+      "scoreCeiling": null
+    },
+    {
+      "game": "chivalry",
+      "gameLabel": "Chivalry: Medieval Warfare",
+      "schemaRef": "chivalry.team-objective@1",
+      "label": "Team Objective",
+      "record": "match",
+      "unit": "game",
+      "counters": [
+        {
+          "name": "kills",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "deaths",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "teamKills",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "suicides",
+          "required": true,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "score",
+          "required": true,
+          "signed": true,
+          "whole": true
+        },
+        {
+          "name": "assists",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "damageDealt",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "damageTaken",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "teamDamage",
+          "required": false,
+          "signed": false,
+          "whole": false
+        },
+        {
+          "name": "hits",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "parries",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "activeSeconds",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "feints",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "blocks",
+          "required": false,
+          "signed": false,
+          "whole": true
+        },
+        {
+          "name": "dodges",
+          "required": false,
+          "signed": false,
+          "whole": true
+        }
+      ],
+      "events": [],
+      "scoreCeiling": null
+    }
+  ]
+}
