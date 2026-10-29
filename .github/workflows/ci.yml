@@ -28,3 +28,26 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  go:
+    name: Go (${{ matrix.go }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ["1.23", "stable"]
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: go/internal/gen/go.sum
+      - name: Formatted
+        run: test -z "$(gofmt -l .)"
+      - name: Generated types match spec/
+        if: matrix.go == 'stable'
+        run: go run -C internal/gen . -check
+      - run: go vet ./...
+      - run: go test ./...

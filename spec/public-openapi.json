@@ -3167,10 +3167,10 @@
                 "type": "object",
                 "properties": {
                   "wins": {
-                    "type": "number"
+                    "type": "integer"
                   },
                   "losses": {
-                    "type": "number"
+                    "type": "integer"
                   }
                 },
                 "required": [
@@ -3260,10 +3260,10 @@
             }
           },
           "page": {
-            "type": "number"
+            "type": "integer"
           },
           "pageSize": {
-            "type": "number"
+            "type": "integer"
           },
           "hasMore": {
             "type": "boolean"
@@ -3369,10 +3369,10 @@
             }
           },
           "page": {
-            "type": "number"
+            "type": "integer"
           },
           "pageSize": {
-            "type": "number"
+            "type": "integer"
           },
           "hasMore": {
             "type": "boolean"
@@ -3447,7 +3447,7 @@
               "type": "object",
               "properties": {
                 "position": {
-                  "type": "number"
+                  "type": "integer"
                 },
                 "displayName": {
                   "type": "string"
@@ -3476,10 +3476,10 @@
             }
           },
           "page": {
-            "type": "number"
+            "type": "integer"
           },
           "pageSize": {
-            "type": "number"
+            "type": "integer"
           },
           "hasMore": {
             "type": "boolean"
@@ -3518,9 +3518,13 @@
         "type": "object",
         "properties": {
           "season": {
-            "type": [
-              "number",
-              "null"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "standings": {
@@ -3537,19 +3541,19 @@
                   "type": "string"
                 },
                 "position": {
-                  "type": "number"
+                  "type": "integer"
                 },
                 "wins": {
-                  "type": "number"
+                  "type": "integer"
                 },
                 "losses": {
-                  "type": "number"
+                  "type": "integer"
                 },
                 "roundsWon": {
-                  "type": "number"
+                  "type": "integer"
                 },
                 "roundsLost": {
-                  "type": "number"
+                  "type": "integer"
                 },
                 "teamMmr": {
                   "type": "number"
@@ -3573,10 +3577,10 @@
             }
           },
           "page": {
-            "type": "number"
+            "type": "integer"
           },
           "pageSize": {
-            "type": "number"
+            "type": "integer"
           },
           "hasMore": {
             "type": "boolean"
@@ -3682,15 +3686,23 @@
             ]
           },
           "scoreA": {
-            "type": [
-              "number",
-              "null"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "scoreB": {
-            "type": [
-              "number",
-              "null"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "streamUrl": {
@@ -3724,10 +3736,10 @@
             }
           },
           "page": {
-            "type": "number"
+            "type": "integer"
           },
           "pageSize": {
-            "type": "number"
+            "type": "integer"
           },
           "hasMore": {
             "type": "boolean"
@@ -3816,10 +3828,10 @@
                         "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                       },
                       "winnerScore": {
-                        "type": "number"
+                        "type": "integer"
                       },
                       "loserScore": {
-                        "type": "number"
+                        "type": "integer"
                       }
                     },
                     "required": [
@@ -3930,9 +3942,13 @@
             ]
           },
           "season": {
-            "type": [
-              "number",
-              "null"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "credentials": {
@@ -4007,7 +4023,7 @@
             }
           },
           "batchMax": {
-            "type": "number"
+            "type": "integer"
           }
         },
         "required": [
