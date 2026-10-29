@@ -2,15 +2,16 @@
 
 Official client libraries for the [Heir public API](https://api.heir.gg/public/v1/openapi.json): TypeScript (Node), Go and Python.
 
-Status: pre-release. The TypeScript and Go clients are complete and tested but not yet published; Python is not started.
+Status: pre-release. The TypeScript, Go and Python clients are complete and tested; none is published yet.
 
 ## Layout
 
 ```text
-spec/        OpenAPI documents the SDKs are generated from (synced from the backend repo, do not edit by hand)
+spec/        OpenAPI documents the SDKs are generated from (synced from the backend repo, do not edit by hand),
+             and type-names.json, the names every generator gives the documents' inline shapes
 typescript/  @heir/sdk for Node and other JavaScript runtimes (see its README)
 go/          Go module github.com/heirgg/heir-sdk/go (see its README)
-python/      Python package, sync and async
+python/      heir-sdk on PyPI, import heir; sync and async (see its README)
 ```
 
 ## Source of truth

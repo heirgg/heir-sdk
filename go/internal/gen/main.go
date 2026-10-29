@@ -29,72 +29,11 @@ import (
 
 type schema = map[string]any
 
-// names gives Go type names to inline shapes and shared enums, by their place in the document: `Parent.field`,
+// names gives type names to inline shapes and shared enums, by their place in the document: `Parent.field`,
 // `Parent.field[]` for an array's items, `Parent.field{}` for a map's values. The same name on several places means
-// one type, and the places must agree.
-var names = map[string]string{
-	// Public API: League reads and inventory.
-	"Item.edition":                          "ItemEdition",
-	"InventoryBatchResponse.players{}":      "InventoryEntry",
-	"LeagueItemsResponse.items[]":           "LeagueItem",
-	"LeagueItemsResponse.items[].lasts":     "ItemLasts",
-	"LeagueItemsResponse.credentials[]":     "LeagueCredential",
-	"Player.mmr":                            "PlayerMMR",
-	"Player.heirRating":                     "PlayerHeirRating",
-	"Player.roster":                         "PlayerRoster",
-	"Rank.iconKey":                          "RankIcon",
-	"PlayerLookupRequest.category":          "Category",
-	"PlayerLookupResponse.players[]":        "PlayerLookupResult",
-	"PlayerLookupResponse.players[].status": "LookupStatus",
-	"PlayerStatsResponse.record":            "PlayerRecord",
-	"PlayerMatchesResponse.matches[]":       "PlayerMatch",
-	"Roster.captain":                        "RosterCaptain",
-	"RosterResponse.members[]":              "RosterMember",
-	"LeaderboardResponse.entries[]":         "LeaderboardEntry",
-	"StandingsResponse.standings[]":         "Standing",
-	"Fixture.rosterA":                       "FixtureRoster",
-	"Fixture.rosterB":                       "FixtureRoster",
-	"MatchResponse.match":                   "Match",
-	"MatchResponse.match.kind":              "MatchKind",
-	"MatchResponse.match.ratingStatus":      "RatingStatus",
-	"MatchResponse.match.result":            "MatchResult",
-	"MatchResponse.match.games[]":           "MatchGame",
-	"MatchResponse.match.games[].players[]": "MatchGamePlayer",
-	"LeagueConfigResponse.credentials[]":    "LeagueConfigCredential",
-	"LeagueConfigResponse.gamemodes[]":      "LeagueGamemode",
-	"EligibilityResponse.players[]":         "EligibilityVerdict",
-	// Stat submission.
-	"HeirMatchFile.format":                          "HeirMatchFormat",
-	"HeirMatchFile.type":                            "MatchType",
-	"HeirMatchFile.rosters":                         "HeirMatchRosters",
-	"HeirMatchFile.rosters.a":                       "HeirMatchRoster",
-	"HeirMatchFile.rosters.b":                       "HeirMatchRoster",
-	"HeirMatchMap.attacker":                         "Side",
-	"HeirMatchMap.score":                            "HeirMatchScore",
-	"HeirMatchMap.placements[]":                     "HeirMatchPlacement",
-	"MatchEntryReceipt.kind":                        "ReceiptKind",
-	"MatchEntryReceipt.status":                      "ReceiptStatus",
-	"GamemodeCatalog.identity":                      "GamemodeIdentity",
-	"GamemodeCatalog.gamemodes[]":                   "Gamemode",
-	"GamemodeCatalog.gamemodes[].playedBy":          "PlayedBy",
-	"GamemodeCatalog.gamemodes[].decidedBy":         "DecidedBy",
-	"GamemodeCatalog.gamemodes[].stats[]":           "GamemodeStat",
-	"GamemodeCatalog.gamemodes[].stats[].scope":     "StatScope",
-	"GamemodeCatalog.gamemodes[].stats[].direction": "StatDirection",
-	"GamemodeCatalog.gamemodes[].stats[].format":    "StatFormat",
-	"GamemodeCatalog.template":                      "MatchTemplate",
-	"GamemodeCatalog.template.format":               "HeirMatchFormat",
-	"GamemodeCatalog.template.type":                 "MatchType",
-	"GamemodeCatalog.template.rosters":              "MatchTemplateRosters",
-	"GamemodeCatalog.template.rosters.a":            "MatchTemplateRoster",
-	"GamemodeCatalog.template.rosters.b":            "MatchTemplateRoster",
-	"StatSchema.record":                             "StatRecord",
-	"StatSchema.unit":                               "StatUnit",
-	"StatSchema.counters[]":                         "StatCounter",
-	"GameResult.finalScore":                         "FinalScore",
-	"GameResult.segments[]":                         "GameSegment",
-	"BeginMatchResponse.approval":                   "Approval",
-}
+// one type, and the places must agree. The table is ../../../spec/type-names.json, shared with the other SDKs'
+// generators so every language calls a shape the same thing.
+var names map[string]string
 
 var documents = []struct {
 	file, out string
@@ -110,6 +49,13 @@ func main() {
 	outDir := flag.String("out", "../..", "the package directory to write into")
 	check := flag.Bool("check", false, "fail instead of writing when the committed files are out of date")
 	flag.Parse()
+	table, err := os.ReadFile(filepath.Join(*specDir, "type-names.json"))
+	if err != nil {
+		fail("%v", err)
+	}
+	if err := json.Unmarshal(table, &names); err != nil {
+		fail("type-names.json: %v", err)
+	}
 
 	var stale []string
 	for _, document := range documents {
