@@ -1,0 +1,43 @@
+name: Release TypeScript
+
+# Publishes @heir/sdk to npm when a `typescript/vX.Y.Z` tag is pushed. The tag must match package.json.
+on:
+  push:
+    tags: ["typescript/v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    defaults:
+      run:
+        working-directory: typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: typescript/package-lock.json
+      - name: Tag matches package.json
+        run: |
+          tag="${GITHUB_REF_NAME#typescript/v}"
+          version="$(node -p "require('./package.json').version")"
+          test "$tag" = "$version" || { echo "tag typescript/v$tag but package.json says $version"; exit 1; }
+      - run: npm ci
+      - run: npm run generate:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: GitHub release
+        run: gh release create "$GITHUB_REF_NAME" --title "@heir/sdk ${GITHUB_REF_NAME#typescript/}" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

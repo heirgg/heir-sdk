@@ -2,8 +2,6 @@
 
 The official Go client for the [Heir public API](https://api.heir.gg/public/v1/openapi.json): League players, ratings, Rosters, schedules, results and shop inventory, fixture eligibility checks, and stat submission. Go 1.23 or later, no dependencies beyond the standard library. Every type is generated from the API's own OpenAPI document.
 
-Status: pre-release.
-
 ```bash
 go get github.com/heirgg/heir-sdk/go
 ```

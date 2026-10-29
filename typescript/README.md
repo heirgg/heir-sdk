@@ -2,8 +2,6 @@
 
 The official TypeScript client for the [Heir public API](https://api.heir.gg/public/v1/openapi.json): League players, ratings, Rosters, schedules, results and shop inventory, fixture eligibility checks, and stat submission. Node 20 or later, or any runtime with `fetch`. ESM and CommonJS, fully typed from the API's own OpenAPI document.
 
-Status: pre-release, not yet published to npm.
-
 ## Install
 
 ```bash

@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "description": "Official TypeScript SDK for the Heir public API: League reads, eligibility, inventory and stat submission.",
   "license": "MIT",
-  "private": true,
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -53,5 +52,9 @@
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

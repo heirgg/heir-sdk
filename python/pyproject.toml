@@ -12,7 +12,6 @@ license = "MIT"
 license-files = ["LICENSE"]
 keywords = ["heir", "heir.gg", "league", "esports", "mordhau", "api", "sdk"]
 classifiers = [
-  "Private :: Do Not Upload",
   "Programming Language :: Python :: 3",
   "Typing :: Typed",
 ]

@@ -1,0 +1,42 @@
+name: Release Python
+
+# Publishes heir-sdk to PyPI when a `python/vX.Y.Z` tag is pushed. The tag must match pyproject.toml. PyPI is told
+# to trust this workflow (trusted publishing), so no token is stored.
+on:
+  push:
+    tags: ["python/v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Tag matches pyproject.toml
+        run: |
+          tag="${GITHUB_REF_NAME#python/v}"
+          version="$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")"
+          test "$tag" = "$version" || { echo "tag python/v$tag but pyproject.toml says $version"; exit 1; }
+      - run: pip install -e ".[dev]" build
+      - run: python scripts/generate.py --check
+      - run: ruff check .
+      - run: mypy
+      - run: pytest
+      - run: python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/dist
+      - name: GitHub release
+        run: gh release create "$GITHUB_REF_NAME" --title "heir-sdk ${GITHUB_REF_NAME#python/}" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

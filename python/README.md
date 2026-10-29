@@ -2,8 +2,6 @@
 
 The official Python client for the [Heir public API](https://api.heir.gg/public/v1/openapi.json): League players, ratings, Rosters, schedules, results and shop inventory, fixture eligibility checks, and stat submission. Python 3.10 or later, synchronous and asyncio clients, every type a pydantic model generated from the API's own OpenAPI document.
 
-Status: pre-release, not yet published to PyPI.
-
 ```bash
 pip install heir-sdk
 ```
