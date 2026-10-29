@@ -31,3 +31,7 @@ To refresh them, run `npm run openapi:build` in the backend repo and copy `docs/
 - Idempotency keys on stat-submission writes
 - Page and `nextToken` pagination helpers
 - The API's `{error, message}` envelope surfaced as typed errors
+
+## License
+
+MIT, see [LICENSE](LICENSE). Each package directory carries its own copy for the registry it is published to.

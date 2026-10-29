@@ -2,6 +2,7 @@
   "name": "@heir/sdk",
   "version": "0.1.0",
   "description": "Official TypeScript SDK for the Heir public API: League reads, eligibility, inventory and stat submission.",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "main": "./dist/index.cjs",
@@ -16,7 +17,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=20"

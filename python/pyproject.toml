@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.25"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
@@ -8,7 +8,8 @@ version = "0.1.0"
 description = "Official Python SDK for the Heir public API: League reads, eligibility, inventory and stat submission."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "UNLICENSED"}
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["heir", "heir.gg", "league", "esports", "mordhau", "api", "sdk"]
 classifiers = [
   "Private :: Do Not Upload",
