@@ -14,6 +14,18 @@ updates:
     groups:
       development:
         update-types: [minor, patch]
+  - package-ecosystem: npm
+    directory: /typescript/tools/codegen
+    schedule:
+      interval: weekly
+    groups:
+      generator:
+        update-types: [minor, patch]
+    ignore:
+      # Only the private generation/build toolchain still needs the TS 5 API.
+      # The primary checker in /typescript tracks current native TypeScript.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
   - package-ecosystem: pip
     directory: /python
     schedule:
@@ -28,3 +40,12 @@ updates:
     groups:
       codegen:
         update-types: [minor, patch]
+    ignore:
+      # Stable oapi-codegen still uses gopkg.in/yaml.v3.Node. Upgrade these
+      # together when its API migrates; see go/internal/gen/README.md.
+      - dependency-name: github.com/speakeasy-api/openapi
+        versions: [">=1.26.0"]
+      - dependency-name: github.com/speakeasy-api/jsonpath
+        versions: [">=0.7.0"]
+      - dependency-name: github.com/dprotaso/go-yit
+        versions: [">0.0.0-20250513224043-18a80f8f6df4"]

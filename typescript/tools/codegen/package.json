@@ -1,0 +1,15 @@
+{
+  "name": "@heirgg/sdk-build-tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Isolated compiler-API tools for the SDK; never published.",
+  "engines": {
+    "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0",
+    "tsup": "^9.0.0",
+    "typescript": "^5.9.3"
+  }
+}

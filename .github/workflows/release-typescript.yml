@@ -32,7 +32,7 @@ jobs:
       - id: version
         run: python3 scripts/release.py typescript "$GITHUB_REF_NAME" --github-output --require-committed-spec --require-main
       - run: python3 scripts/check-contracts.py
-      - run: npm ci
+      - run: npm ci && npm --prefix tools/codegen ci
         working-directory: typescript
       - run: npm run generate:check && npm run typecheck && npm test && npm run test:package
         working-directory: typescript

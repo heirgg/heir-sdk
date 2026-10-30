@@ -4,9 +4,11 @@ Use this guide to set up a checkout, change a client, and run its checks. Keep c
 
 Maintainers configure [contributor and release protections](docs/contributor-security.md). External contributions use fork pull requests and do not require repository write access.
 
+See [dependency maintenance](docs/dependency-updates.md) for the current toolchains and the upstream compatibility limits that require coordinated updates.
+
 ## Set up your checkout
 
-Clone the repository or your fork. You need Python 3.10+ for root tooling, Node 20+ for TypeScript, and Go 1.23+ for the Go runtime. Go's generator may require a newer toolchain; use current stable Go when regenerating models.
+Clone the repository or your fork. You need Python 3.10+ for root tooling, current Node 24 or 26 for TypeScript development, and Go 1.23+ for the Go runtime. The published JavaScript SDK still supports Node 20; its build and test tools need a newer Node version. Go's generator may require a newer toolchain; use current stable Go when regenerating models.
 
 From the repository root, verify the contract snapshot and shared fixtures:
 
@@ -24,13 +26,14 @@ Run these commands from `typescript/`:
 
 ```bash
 npm ci
+npm --prefix tools/codegen ci
 npm run generate:check
 npm run typecheck
 npm test
 npm run test:package
 ```
 
-`test:package` builds and installs the actual tarball into a temporary consumer. It compiles ESM/CommonJS imports, runs them, checks retry behavior in a child process, and runs offline examples. Add tests for request lifetime, cancellation, body-stream failures, or declaration exports when touching those paths.
+`test:package` builds and installs the actual tarball into a temporary consumer. It compiles ESM/CommonJS imports with both the compatibility and native TypeScript compilers, runs them, checks retry behavior in a child process, and runs offline examples. After building with current Node, `npm run test:runtime` runs only installed-package and example checks on Node 20. Add tests for request lifetime, cancellation, body-stream failures, or declaration exports when touching those paths.
 
 ## Work on Python
 
@@ -39,17 +42,19 @@ Create an environment and run these commands from `python/`:
 ```bash
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e '.[dev]' build
+python -m pip install -e '.[dev]' -c requirements-dev.txt
 python scripts/generate.py --check
 ruff check .
 ruff format --check .
 mypy
 pytest
-python -m build
+python -m build --no-isolation
 python scripts/check_wheel.py
 ```
 
 Exercise sync and async behavior together. Preserve omitted versus explicit-null fields, including mutations of nested defaults. The test suite covers asyncio and Trio.
+
+`requirements-dev.txt` pins the newest tested toolchain with Python-version markers. On Python 3.11+, audit it with `pip-audit -r requirements-dev.txt --no-deps --disable-pip --strict --progress-spinner off`. The Python README documents how to refresh the universal constraints; keep the public SDK's runtime ranges compatible rather than pinning every consumer to the development environment.
 
 ## Work on Go
 

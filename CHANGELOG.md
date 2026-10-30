@@ -23,4 +23,5 @@ User-visible changes are recorded here before release. TypeScript, Python, and G
 
 - Invalid retry/timeout settings and empty explicit idempotency keys now fail before sending requests.
 - TypeScript creates League wrappers on demand and snapshots pagination filters/options. Cached responses with `Vary` bypass storage conservatively.
-- TypeScript development tooling uses patched esbuild 0.28.1. The published runtime remains dependency-free.
+- TypeScript uses the native TypeScript 7 checker, Vitest 5, tsup 9, and patched esbuild 0.28.2. Compiler-API generation tools are isolated from the primary checker; the published runtime remains dependency-free and supports Node 20.
+- Python requires AnyIO 4.14.2 or newer for upstream security fixes. Its development and build dependencies now use a universal, tested constraints file while retaining Python 3.10 support.

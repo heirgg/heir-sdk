@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const temporary = mkdtempSync(join(tmpdir(), "heir-consumer-"));
+const runtimeOnly = process.argv.includes("--runtime-only");
 const npm = process.env.npm_execpath;
 if (!npm) throw new Error("Run this check with npm run test:package.");
 const run = (command, args, cwd = temporary) => execFileSync(command, args, {cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"]});
@@ -15,16 +16,25 @@ try {
   const packed = JSON.parse(runNpm(["pack", "--json", "--ignore-scripts", "--pack-destination", temporary, "--cache", join(temporary, "cache")], root))[0];
   assert(packed.files.some(file => file.path === "LICENSE"));
   assert(packed.files.some(file => file.path === "dist/index.d.cts"));
+  assert(!packed.files.some(file => file.path.startsWith("tools/")), "Private build tools must stay out of the published package.");
   writeFileSync(join(temporary, "package.json"), JSON.stringify({private: true}));
   // The tarball has no runtime dependencies. Installation is offline and runs no lifecycle scripts.
   runNpm(["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", "--cache", join(temporary, "cache"), join(temporary, packed.filename)]);
   const source = 'import {Heir, HeirInputError, type HeirMatchFile} from "@heirgg/sdk";\nconst client = new Heir();\nconst file: HeirMatchFile = {format:"heir-match-v1", startedAt:"2026-10-30T12:00:00Z", maps:[]};\nvoid [client, file, HeirInputError];\n';
   writeFileSync(join(temporary, "consumer.cts"), source);
   writeFileSync(join(temporary, "consumer.mts"), source);
-  const compiler = join(root, "node_modules", "typescript", "bin", "tsc");
-  for (const mode of ["Node16", "NodeNext"]) {
-    run(process.execPath, [compiler, "--noEmit", "--strict", "--skipLibCheck", "--target", "ES2022", "--module", mode, "--moduleResolution", mode, "consumer.cts", "consumer.mts"]);
-    console.log(`Packed ESM/CommonJS consumer declarations passed (${mode}).`);
+  if (!runtimeOnly) {
+    // Check current native TypeScript and the compiler-API version required by
+    // the isolated generator. Consumers need neither of these development tools.
+    for (const [compilerName, compiler] of [
+      ["TypeScript 7", join(root, "node_modules", "typescript", "bin", "tsc")],
+      ["TypeScript 5", join(root, "tools", "codegen", "node_modules", "typescript", "bin", "tsc")]
+    ]) {
+      for (const mode of ["Node16", "NodeNext"]) {
+        run(process.execPath, [compiler, "--noEmit", "--strict", "--skipLibCheck", "--target", "ES2022", "--module", mode, "--moduleResolution", mode, "consumer.cts", "consumer.mts"]);
+        console.log(`Packed ESM/CommonJS consumer declarations passed (${compilerName}, ${mode}).`);
+      }
+    }
   }
   for (const [file, load] of [["runtime.cjs", 'const {Heir} = require("@heirgg/sdk");'], ["runtime.mjs", 'import {Heir} from "@heirgg/sdk";']]) {
     writeFileSync(join(temporary, file), `${load}\nif (new Heir().authenticated) throw new Error("Unexpected authentication");\n`);
