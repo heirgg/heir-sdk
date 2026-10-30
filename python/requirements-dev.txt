@@ -72,7 +72,7 @@ inflect==7.6.0
     # via datamodel-code-generator
 iniconfig==2.3.1
     # via pytest
-isort==8.0.1 ; sys_platform != 'emscripten'
+isort==9.0.2 ; sys_platform != 'emscripten'
     # via datamodel-code-generator
 jaraco-functools==4.6.0
     # via inflect
