@@ -139,7 +139,7 @@ From this directory, activate the environment before using its commands:
 ```bash
 uv venv
 source .venv/bin/activate
-uv pip install -e ".[dev]"
+uv pip install -e ".[dev]" -c requirements-dev.txt
 python scripts/generate.py --check
 pytest
 ruff check .
@@ -152,10 +152,33 @@ Generated models come from `../spec` and the shared `type-names.json`; regenerat
 Check the built distribution in a separate environment:
 
 ```bash
-uv build
+python -m build --no-isolation
 python scripts/check_wheel.py
 # On Python 3.10, also exercise the oldest declared runtime dependencies:
 python scripts/check_wheel.py --minimum
 ```
 
-The smoke test rejects editable installs and makes only mock HTTP calls. Test the minimum dependency range separately on Python 3.10 by installing the wheel with `anyio==4.0.0`, `httpx==0.27.0`, and `pydantic==2.7.0`, then running the smoke test and pytest with the development test tools installed. Keep that environment separate from generation/lint tooling so newer development-tool dependencies do not silently raise runtime minimums.
+The smoke test rejects editable installs and makes only mock HTTP calls. Test the minimum dependency range separately on Python 3.10 by installing the wheel with `anyio==4.14.2`, `httpx==0.27.0`, and `pydantic==2.7.0`, then running the smoke test and pytest with the development test tools installed. Keep that environment separate from generation/lint tooling so newer development-tool dependencies do not silently raise runtime minimums.
+
+### Dependency maintenance
+
+`requirements-dev.txt` records the exact runtime, test, generation, lint, and build dependency versions exercised by CI. It is a universal resolution with Python and platform markers, so Python 3.10 and newer and different operating systems can use the same file. Install it as a constraint alongside the editable development extra, as shown above. The published SDK retains compatible runtime ranges rather than requiring every application to use these exact development versions. Build with `--no-isolation` after that constrained installation to use the recorded build toolchain.
+
+Refresh the constraints using the same resolver version, then run generation, lint, typing, tests, builds, and both installed-wheel checks:
+
+```bash
+uvx --from uv==0.13.6 uv pip compile pyproject.toml \
+  --extra dev --universal --python-version 3.10 --upgrade \
+  --output-file requirements-dev.txt
+uv pip install --upgrade -e ".[dev]" -c requirements-dev.txt
+```
+
+Run the dependency advisory check on Python 3.11 or newer:
+
+```bash
+pip-audit -r requirements-dev.txt --no-deps --disable-pip --strict
+```
+
+The audit tool is a development dependency only on Python 3.11+, because its cache's patched `filelock` releases require that version. This keeps its vulnerable older dependency chain out of Python 3.10 environments; it does not change the SDK's Python 3.10 support. The SDK requires AnyIO 4.14.2 or newer to include the fixes for [GHSA-82r6-8w77-94w6](https://osv.dev/vulnerability/GHSA-82r6-8w77-94w6) and [GHSA-5p39-cfhj-2xmp](https://osv.dev/vulnerability/GHSA-5p39-cfhj-2xmp).
+
+Some transitive development packages can be newer only after an upstream constraint changes. The generator currently requires `isort<9`. Python 3.10 uses the newest compatible `more-itertools`, `platformdirs`, and Windows `pycparser`; newer releases require Python 3.11. Python 3.10.0–3.10.1 also needs an older compatible `importlib-metadata`. These exceptions are represented by markers in the constraints, while newer Python environments receive the newer compatible releases.

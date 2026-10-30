@@ -6,7 +6,7 @@ Start with the [TypeScript](typescript/README.md), [Python](python/README.md), o
 
 | SDK | Minimum runtime | CI coverage |
 | --- | --- | --- |
-| TypeScript | Node 20 | Node 20, 22, 24; TypeScript 5.9; Node16/NodeNext declarations |
+| TypeScript | Node 20 | Tooling on Node 22, 24, 26; installed-package checks on Node 20; TypeScript 5.9 and native 7 declarations |
 | Python | Python 3.10 | Python 3.10, 3.13, current 3.x; asyncio and Trio |
 | Go | Go 1.23 | Go 1.23 and current stable; race detector |
 

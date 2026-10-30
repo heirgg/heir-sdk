@@ -30,11 +30,11 @@ jobs:
       - id: version
         run: python3 scripts/release.py python "$GITHUB_REF_NAME" --github-output --require-committed-spec --require-main
       - run: python3 scripts/check-contracts.py
-      - run: pip install -e ".[dev]" build
+      - run: pip install -e ".[dev]" -c requirements-dev.txt
         working-directory: python
       - run: python scripts/generate.py --check && ruff check . && ruff format --check . && mypy && pytest
         working-directory: python
-      - run: SOURCE_DATE_EPOCH="$(git show -s --format=%ct)" python -m build
+      - run: SOURCE_DATE_EPOCH="$(git show -s --format=%ct)" python -m build --no-isolation
         working-directory: python
       - run: python scripts/check_wheel.py
         working-directory: python

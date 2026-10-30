@@ -1,6 +1,6 @@
 # @heirgg/sdk
 
-The official TypeScript client for the [Heir public API](https://api.heir.gg/public/v1/openapi.json): League players, ratings, Rosters, schedules, results and shop inventory, fixture eligibility checks, and stat submission. Node 20 or later, or a modern runtime with `fetch`, `AbortController`, and `crypto.randomUUID`. ESM and CommonJS, fully typed from the API's own OpenAPI document. Declarations are tested with TypeScript 5.9 using Node16 and NodeNext module resolution.
+The official TypeScript client for the [Heir public API](https://api.heir.gg/public/v1/openapi.json): League players, ratings, Rosters, schedules, results and shop inventory, fixture eligibility checks, and stat submission. Node 20 or later, or a modern runtime with `fetch`, `AbortController`, and `crypto.randomUUID`. ESM and CommonJS, fully typed from the API's own OpenAPI document. Declarations are tested with TypeScript 5.9 and 7 using Node16 and NodeNext module resolution.
 
 ## Install
 
@@ -142,7 +142,7 @@ To rotate credentials, construct a new client with the replacement key and move 
 
 ## Runnable examples
 
-From this repository, run `npm ci && npm run build` in `typescript/`, then:
+From this repository, complete the development setup below in `typescript/`, then run the examples:
 
 ```bash
 node examples/public-read.mjs
@@ -161,8 +161,11 @@ All request and response types are exported by the names the API document gives 
 
 ## Developing
 
+The development tools require Node 22.18+, 24.11+, or 26+ on their respective supported release lines. The published SDK still supports Node 20; `test:runtime` verifies the built tarball on that runtime without invoking the newer build/test tools.
+
 ```bash
-npm install
+npm ci
+npm --prefix tools/codegen ci
 npm run generate   # src/generated from ../spec
 npm test
 npm run test:package   # build, install the tarball offline, compile/run consumers, run offline examples
@@ -170,4 +173,6 @@ npm run test:package   # build, install the tarball offline, compile/run consume
 
 `src/generated` is written from `../spec` by `npm run generate` and checked in; CI fails when it is out of date.
 
-The tests also exercise all operations using `../tests/contracts.json`. Package checks cover ESM and CommonJS declarations/runtime imports and a real-timer child process to catch retry-lifecycle regressions. The pinned esbuild override patches GHSA-g7r4-m6w7-qqqr in development tooling without changing the public SDK's dependency-free runtime; revisit it when upgrading tsup to a version that requests the patched release itself.
+The tests also exercise all operations using `../tests/contracts.json`. Package checks cover ESM and CommonJS declarations/runtime imports and a real-timer child process to catch retry-lifecycle regressions. To check Node 20 compatibility, build with a supported development runtime, switch to Node 20, then run `npm run test:runtime`.
+
+`npm run typecheck` uses stable TypeScript 7. Generation and declaration bundling use the separate private [build-tools project](tools/codegen/README.md), whose own lockfile retains TypeScript 5.9.3 because the latest `openapi-typescript` requires its `^5.x` compiler API. This isolates the compatibility constraint without forced peer dependencies or npm aliases. Package checks compile consumers with both versions. Dependabot tracks the two projects separately; revisit the build-tools compiler's major-version hold when the generator supports the newer API. tsup now requests the current patched esbuild directly, so no esbuild override is needed.

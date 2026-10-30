@@ -25,10 +25,11 @@
   "scripts": {
     "generate": "node scripts/generate.mjs",
     "generate:check": "node scripts/generate.mjs --check",
-    "build": "tsup",
+    "build": "node tools/codegen/node_modules/tsup/dist/cli-default.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:package": "npm run build && node scripts/test-package.mjs && node scripts/test-examples.mjs",
+    "test:runtime": "node scripts/test-package.mjs --runtime-only && node scripts/test-examples.mjs",
     "prepublishOnly": "npm run generate:check && npm run typecheck && npm test && npm run build"
   },
   "repository": {
@@ -47,17 +48,12 @@
     "sdk"
   ],
   "devDependencies": {
-    "@types/node": "^24.19.2",
-    "openapi-typescript": "^7.13.0",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.11"
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
   },
   "publishConfig": {
     "access": "public",
     "provenance": true
-  },
-  "overrides": {
-    "esbuild": "0.28.1"
   }
 }

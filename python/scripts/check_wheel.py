@@ -20,10 +20,12 @@ def main() -> None:
         parser.error("Expected exactly one wheel in dist/. Clean dist and run python -m build first.")
     requirements = [str(wheels[0])]
     if args.minimum:
-        requirements += ["anyio==4.0.0", "httpx==0.27.0", "pydantic==2.7.0"]
+        requirements += ["anyio==4.14.2", "httpx==0.27.0", "pydantic==2.7.0"]
     with tempfile.TemporaryDirectory(prefix="heir-wheel-") as directory:
         environment = Path(directory)
-        venv.EnvBuilder(with_pip=True).create(environment)
+        # Match the venv CLI's Unix behavior: copying a relocatable, uv-managed Python out of an existing venv
+        # can lose its standard-library path. Windows normally uses copies to avoid symlink privilege requirements.
+        venv.EnvBuilder(with_pip=True, symlinks=os.name != "nt").create(environment)
         python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
         subprocess.run([str(python), "-m", "pip", "install", "--disable-pip-version-check", *requirements], check=True)
         subprocess.run([str(python), str(root / "scripts/smoke_installed.py")], cwd=environment, check=True)

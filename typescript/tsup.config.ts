@@ -1,6 +1,4 @@
-import {defineConfig} from "tsup";
-
-export default defineConfig({
+export default {
   entry: ["src/index.ts"],
   format: ["esm", "cjs"],
   dts: true,
@@ -9,4 +7,4 @@ export default defineConfig({
   target: "node20",
   keepNames: true,
   platform: "neutral"
-});
+};

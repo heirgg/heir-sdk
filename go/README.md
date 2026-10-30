@@ -174,4 +174,4 @@ govulncheck ./...
 
 `types_public.gen.go` and `types_stats.gen.go` are written from `../spec` by `internal/gen`, which uses oapi-codegen for models and first names the document's inline shapes; CI fails when they are out of date.
 
-`contracts_test.go` consumes `../tests/contracts.json` to check all 24 API operations against the same request and response fixtures as the other SDKs. The runtime module supports Go 1.23; the separate generator module and development tools may require a newer Go toolchain.
+`contracts_test.go` consumes `../tests/contracts.json` to check all 24 API operations against the same request and response fixtures as the other SDKs. The runtime module supports Go 1.23; the separate generator module requires Go 1.26 or newer. See [generator dependencies](internal/gen/README.md) for the current YAML compatibility constraints and upgrade checks.

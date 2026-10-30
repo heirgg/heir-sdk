@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [20, 22, 24]
+        node: [22, 24, 26]
     defaults:
       run:
         working-directory: typescript
@@ -54,13 +54,24 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-          cache-dependency-path: typescript/package-lock.json
-      - run: npm ci
+          cache-dependency-path: |
+            typescript/package-lock.json
+            typescript/tools/codegen/package-lock.json
+      - run: npm ci && npm --prefix tools/codegen ci
       - run: npm run generate:check
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:package
-      - run: npm audit --omit=dev
+      - run: npm audit --audit-level=high && npm --prefix tools/codegen audit --audit-level=high
+      - name: Select the minimum SDK runtime after building with current tooling
+        if: matrix.node == 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+          package-manager-cache: false
+      - name: Installed package works on Node 20
+        if: matrix.node == 24
+        run: npm run test:runtime
 
   go:
     name: Go (${{ matrix.go }})
@@ -92,6 +103,10 @@ jobs:
           working-directory: go
       - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
         if: matrix.go == 'stable'
+      - name: Verify and audit generator dependencies
+        if: matrix.go == 'stable'
+        working-directory: go/internal/gen
+        run: go mod verify && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
   python:
     name: Python (${{ matrix.python }})
@@ -111,14 +126,19 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: pip
-          cache-dependency-path: python/pyproject.toml
-      - run: pip install -e ".[dev]" build
+          cache-dependency-path: |
+            python/pyproject.toml
+            python/requirements-dev.txt
+      - run: pip install -e ".[dev]" -c requirements-dev.txt
       - run: python scripts/generate.py --check
       - run: ruff check .
       - run: ruff format --check .
       - run: mypy
       - run: pytest
-      - run: python -m build
+      - name: Audit the resolved Python toolchain
+        if: matrix.python == '3.x'
+        run: pip-audit -r requirements-dev.txt --no-deps --disable-pip --strict --progress-spinner off
+      - run: python -m build --no-isolation
       - run: python scripts/check_wheel.py
       - name: Minimum supported runtime dependencies
         if: matrix.python == '3.10'
