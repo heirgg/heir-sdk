@@ -1,41 +1,60 @@
 name: Release Go
 
-# A Go module is released by its tag alone: `go/vX.Y.Z` is what `go get github.com/heirgg/heir-sdk/go@vX.Y.Z`
-# resolves. This workflow checks the tag matches version.go, runs the checks once more, and asks the module proxy
-# for the version so pkg.go.dev picks it up without waiting for the first user.
+# Public Go tags are discoverable before this workflow runs. Run the local
+# scripts/release.py preflight BEFORE creating or pushing a release tag.
 on:
   push:
     tags: ["go/v*"]
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  release:
+  verify:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: go
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Include origin/main and annotated tags for the ancestry gate.
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: stable
-          cache-dependency-path: go/internal/gen/go.sum
-      - name: Tag matches version.go
+          cache: false
+      - id: version
+        run: python3 scripts/release.py go "$GITHUB_REF_NAME" --github-output --require-committed-spec --require-main
+      - run: python3 scripts/check-contracts.py
+      - run: test -z "$(gofmt -l .)" && go run -C internal/gen . -check && go vet ./... && go test -race -shuffle=on -count=1 ./...
+        working-directory: go
+      - name: Ask the public module proxy for the validated version
         run: |
-          tag="${GITHUB_REF_NAME#go/v}"
-          version="$(sed -n 's/^const Version = "\(.*\)"$/\1/p' version.go)"
-          test "$tag" = "$version" || { echo "tag go/v$tag but version.go says $version"; exit 1; }
-      - run: test -z "$(gofmt -l .)"
-      - run: go run -C internal/gen . -check
-      - run: go vet ./...
-      - run: go test ./...
-      - name: Tell the module proxy
+          cd "$(mktemp -d)"
+          go mod init probe
+          GOPROXY=https://proxy.golang.org GONOSUMDB= GOFLAGS=-mod=mod go list -m "github.com/heirgg/heir-sdk/go@v$RELEASE_VERSION"
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+
+  release:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create release notes, or resume an existing release
         run: |
-          cd "$(mktemp -d)" && go mod init probe >/dev/null
-          GOPROXY=https://proxy.golang.org GONOSUMDB= GOFLAGS=-mod=mod go list -m "github.com/heirgg/heir-sdk/go@${GITHUB_REF_NAME#go/}"
-      - name: GitHub release
-        run: gh release create "$GITHUB_REF_NAME" --title "heir-sdk/go ${GITHUB_REF_NAME#go/}" --generate-notes
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then exit 0; fi
+          args=(--repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --latest=false)
+          if [ "$PRERELEASE" = true ]; then args+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" --title "heir-sdk/go $RELEASE_VERSION" "${args[@]}"
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+          PRERELEASE: ${{ needs.verify.outputs.prerelease }}

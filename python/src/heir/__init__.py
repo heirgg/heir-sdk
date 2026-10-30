@@ -2,7 +2,15 @@
 
 from . import models
 from ._client import AsyncHeir, Heir
-from ._errors import APIIssue, HeirAPIError, HeirConnectionError, HeirError, HeirTimeoutError
+from ._errors import (
+    APIIssue,
+    HeirAPIError,
+    HeirConnectionError,
+    HeirError,
+    HeirInputError,
+    HeirProtocolError,
+    HeirTimeoutError,
+)
 from ._league import AsyncLeague, League
 from ._pagination import AsyncPage, Page
 from ._stats import AsyncStats, Stats, new_idempotency_key
@@ -24,6 +32,8 @@ __all__ = [
     "HeirAPIError",
     "HeirConnectionError",
     "HeirError",
+    "HeirInputError",
+    "HeirProtocolError",
     "HeirTimeoutError",
     "League",
     "Metric",

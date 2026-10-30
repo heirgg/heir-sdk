@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
+from ._errors import HeirInputError
 from ._pagination import AsyncPage, Page
-from ._transport import Call, RequestOptions
+from ._transport import Call, RequestOptions, validate_request
 from ._types import Category, FixtureStatus, Metric
 from .models import (
     EligibilityRequest,
@@ -40,6 +41,8 @@ if TYPE_CHECKING:
 
 
 def _segment(value: str) -> str:
+    if not isinstance(value, str) or not value or value in {".", ".."}:
+        raise HeirInputError("URL path parameters must be non-empty strings other than '.' or '..'")
     return quote(value, safe="")
 
 
@@ -124,8 +127,9 @@ class League(_LeagueCalls):
         options: RequestOptions | None = None,
     ) -> PlayerLookupResponse:
         """Up to 100 game accounts at once, each answered in order, including duplicates and unavailable identities."""
-        request = PlayerLookupRequest(
-            credential=credential, identifiers=identifiers, **_set(category=category, gamemode=gamemode)
+        request = validate_request(
+            PlayerLookupRequest,
+            dict(credential=credential, identifiers=identifiers, **_set(category=category, gamemode=gamemode)),
         )
         return self._client._send(self._post("/players/lookup", request), PlayerLookupResponse, options)
 
@@ -338,7 +342,6 @@ class League(_LeagueCalls):
         fixture_id: str,
         roster_id: str,
         gamemode: str,
-        category: Category | None = None,
         options: RequestOptions | None = None,
     ) -> EligibilityResponse:
         """Check up to 100 game accounts against a fixture and one of its Rosters.
@@ -346,13 +349,15 @@ class League(_LeagueCalls):
         Requires the League's developer key with the gamemode granted. Advisory: it reserves no seats. Call it from
         your server.
         """
-        request = EligibilityRequest(
-            credential=credential,
-            identifiers=identifiers,
-            fixture_id=fixture_id,
-            roster_id=roster_id,
-            gamemode=gamemode,
-            **_set(category=category),
+        request = validate_request(
+            EligibilityRequest,
+            dict(
+                credential=credential,
+                identifiers=identifiers,
+                fixture_id=fixture_id,
+                roster_id=roster_id,
+                gamemode=gamemode,
+            ),
         )
         return self._client._send(self._post("/eligibility/check", request), EligibilityResponse, options)
 
@@ -370,7 +375,7 @@ class League(_LeagueCalls):
         self, credential: str, identifiers: list[str], *, item: str | None = None, options: RequestOptions | None = None
     ) -> InventoryBatchResponse:
         """The same for up to 100 game accounts at once, such as everyone on a server. Not cached."""
-        request = InventoryBatchRequest(identifiers=identifiers, **_set(item=item))
+        request = validate_request(InventoryBatchRequest, dict(identifiers=identifiers, **_set(item=item)))
         return self._client._send(
             self._post(f"/inventory/{_segment(credential)}", request), InventoryBatchResponse, options
         )
@@ -411,8 +416,9 @@ class AsyncLeague(_LeagueCalls):
         gamemode: str | None = None,
         options: RequestOptions | None = None,
     ) -> PlayerLookupResponse:
-        request = PlayerLookupRequest(
-            credential=credential, identifiers=identifiers, **_set(category=category, gamemode=gamemode)
+        request = validate_request(
+            PlayerLookupRequest,
+            dict(credential=credential, identifiers=identifiers, **_set(category=category, gamemode=gamemode)),
         )
         return await self._client._send(self._post("/players/lookup", request), PlayerLookupResponse, options)
 
@@ -612,16 +618,17 @@ class AsyncLeague(_LeagueCalls):
         fixture_id: str,
         roster_id: str,
         gamemode: str,
-        category: Category | None = None,
         options: RequestOptions | None = None,
     ) -> EligibilityResponse:
-        request = EligibilityRequest(
-            credential=credential,
-            identifiers=identifiers,
-            fixture_id=fixture_id,
-            roster_id=roster_id,
-            gamemode=gamemode,
-            **_set(category=category),
+        request = validate_request(
+            EligibilityRequest,
+            dict(
+                credential=credential,
+                identifiers=identifiers,
+                fixture_id=fixture_id,
+                roster_id=roster_id,
+                gamemode=gamemode,
+            ),
         )
         return await self._client._send(self._post("/eligibility/check", request), EligibilityResponse, options)
 
@@ -637,7 +644,7 @@ class AsyncLeague(_LeagueCalls):
     async def inventories(
         self, credential: str, identifiers: list[str], *, item: str | None = None, options: RequestOptions | None = None
     ) -> InventoryBatchResponse:
-        request = InventoryBatchRequest(identifiers=identifiers, **_set(item=item))
+        request = validate_request(InventoryBatchRequest, dict(identifiers=identifiers, **_set(item=item)))
         return await self._client._send(
             self._post(f"/inventory/{_segment(credential)}", request), InventoryBatchResponse, options
         )

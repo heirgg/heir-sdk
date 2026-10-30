@@ -10,7 +10,7 @@ import anyio
 import httpx
 from pydantic import BaseModel
 
-from ._errors import HeirAPIError
+from ._errors import HeirAPIError, HeirProtocolError
 from ._league import AsyncLeague, League
 from ._stats import AsyncStats, Stats
 from ._transport import DEFAULT_BASE_URL, Call, RequestOptions, Transport, decode
@@ -30,7 +30,8 @@ _OPTIONS_DOC = """
             backoff. Default 2.
         max_retry_delay: The longest the client waits before one retry, in seconds. A Retry-After beyond it is not
             waited for: the error is raised with ``retry_after`` set. Default 30.
-        timeout: How long one attempt may take, in seconds, before it fails with HeirTimeoutError. Default 30.
+        timeout: HTTPX's inactivity timeout for each connect, read, write or pool operation, in seconds. Default 30.
+            This is not an overall request deadline. A custom http_client owns its timeout settings.
         cache: Keep League reads as the API's Cache-Control allows (a minute) and revalidate them with ETag, so a
             server asking on every event does not spend its request allowance. Default True. Paginated and stat
             answers are never cached: the API marks them no-store.
@@ -74,6 +75,7 @@ class Heir:
             timeout=timeout,
             cache=cache,
             user_agent=user_agent,
+            owns_timeout=http_client is None,
         )
         self._owns_http = http_client is None
         self._http = http_client or httpx.Client(timeout=timeout)
@@ -125,7 +127,11 @@ class Heir:
                 continue
             outcome = self._transport.outcome(prepared, call, response)
             if isinstance(outcome, bytes):
-                return decode(model, outcome)
+                try:
+                    return decode(model, outcome)
+                except HeirProtocolError:
+                    self._transport.evict(prepared.cache_key)
+                    raise
             if isinstance(outcome, HeirAPIError):
                 raise outcome
             self._sleep(outcome)
@@ -164,6 +170,7 @@ class AsyncHeir:
             timeout=timeout,
             cache=cache,
             user_agent=user_agent,
+            owns_timeout=http_client is None,
         )
         self._owns_http = http_client is None
         self._http = http_client or httpx.AsyncClient(timeout=timeout)
@@ -198,6 +205,8 @@ class AsyncHeir:
         await self.aclose()
 
     async def _send(self, call: Call, model: type[ModelT], options: RequestOptions | None = None) -> ModelT:
+        # A cached result must still respect cancellation in either supported AnyIO backend.
+        await anyio.lowlevel.checkpoint()
         prepared = self._transport.prepare(call, options or RequestOptions())
         fresh = self._transport.fresh(prepared)
         if fresh is not None:
@@ -215,7 +224,11 @@ class AsyncHeir:
                 continue
             outcome = self._transport.outcome(prepared, call, response)
             if isinstance(outcome, bytes):
-                return decode(model, outcome)
+                try:
+                    return decode(model, outcome)
+                except HeirProtocolError:
+                    self._transport.evict(prepared.cache_key)
+                    raise
             if isinstance(outcome, HeirAPIError):
                 raise outcome
             await self._sleep(outcome)

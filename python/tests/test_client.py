@@ -161,7 +161,7 @@ def test_timeout_of_one_attempt_is_not_retried() -> None:
     h = Harness(slow, slow, timeout=1.5)
     with pytest.raises(HeirTimeoutError) as caught:
         h.heir.league("nacl").config()
-    assert caught.value.timeout == 1.5 and h.api.calls == 1
+    assert caught.value.timeout is None and h.api.calls == 1
 
 
 def test_retry_after_is_waited_for() -> None:

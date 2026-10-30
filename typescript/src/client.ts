@@ -6,7 +6,7 @@ import {Stats} from "./stats.js";
  * The Heir API client.
  *
  * ```ts
- * import {Heir} from "@heir/sdk";
+ * import {Heir} from "@heirgg/sdk";
  *
  * const heir = new Heir({apiKey: process.env.HEIR_API_KEY});
  * const nacl = heir.league("nacl");
@@ -20,7 +20,6 @@ export class Heir {
   /** Stat submission for the key's League. */
   readonly stats: Stats;
   private readonly http: Http;
-  private readonly leagues = new Map<string, League>();
 
   constructor(options: HeirOptions = {}) {
     this.http = new Http(options);
@@ -29,12 +28,7 @@ export class Heir {
 
   /** A League's public reads, by vanity name (`heir.gg/nacl`) or Discord server ID. */
   league(ref: string): League {
-    let league = this.leagues.get(ref);
-    if (!league) {
-      league = new League(this.http, ref);
-      this.leagues.set(ref, league);
-    }
-    return league;
+    return new League(this.http, ref);
   }
 
   /** Whether this client sends a developer key. */

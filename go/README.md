@@ -29,7 +29,7 @@ inventory, err := nacl.Inventory(ctx, "mordhau", "A1B2C3D4E5F67890", nil)
 config, err := nacl.Config(ctx)
 ```
 
-A nullable field is a pointer: `answer.Player` is nil for an identity Heir does not know. Answers the API marks cacheable are kept for the minute it allows and revalidated with `ETag` after that, so asking on every join or every event costs one request a minute per question. `heir.WithoutCache()` on the client, or `heir.NoCache()` on one call, always asks.
+A nullable field is a pointer: `answer.Player` is nil for an identity Heir does not know. Cacheable answers are retained for their remaining freshness period, accounting for upstream `Age` and `Date`, and revalidated with `ETag` after that. `no-cache` responses are revalidated each time; `no-store` and `Vary` responses are not retained. Calls with any `WithHeader` option bypass the cache, so custom credentials cannot reuse another request's answer. `heir.WithoutCache()` on the client, or `heir.NoCache()` on one call, always asks. The cache keeps up to 1,000 entries and evicts the least recently used entry when full.
 
 ## Use a developer key
 
@@ -49,6 +49,7 @@ A list call returns a `Page`: its rows in `Items`, the whole answer in `Body`, a
 
 ```go
 first, err := nacl.Rosters(ctx, &heir.RostersQuery{Category: heir.CategoryCompetitive, PageSize: 50})
+if err != nil { return err }
 fmt.Println(len(first.Items), first.HasMore())
 
 for roster, err := range first.All(ctx) {
@@ -57,7 +58,9 @@ for roster, err := range first.All(ctx) {
 }
 
 board, err := nacl.Leaderboard(ctx, &heir.LeaderboardQuery{Metric: heir.MetricHeirRating})
-fmt.Println(board.Body.SnapshotAt, board.Items[0])
+if err != nil { return err }
+fmt.Println(board.Body.SnapshotAt)
+if len(board.Items) > 0 { fmt.Println(board.Items[0]) }
 ```
 
 A nil query means the API's defaults.
@@ -85,6 +88,7 @@ receipt, err := client.Stats.SubmitMatch(ctx, heir.HeirMatchFile{
 		},
 	}},
 })
+if err != nil { return err }
 fmt.Println(receipt.Status, receipt.Problems)
 ```
 
@@ -103,6 +107,8 @@ _, err = client.Stats.AppendUnits(ctx, "lobby-42", units, heir.DryRun())
 ```
 
 `client.Stats.Gamemodes` lists the gamemodes a key may submit with their stat keys and an empty document to fill in; `client.Stats.Schemas` lists the tracking schemas and every counter a Player line may carry.
+
+Use `catalog.Template.ToMatchFile()` to turn the catalog's template into a `HeirMatchFile` accepted by `SubmitMatch`. Fill in its timestamps, reference, players and results. The conversion shares slices, maps and pointers with the template, as a Go struct assignment does. An empty `WithIdempotencyKey("")` uses a generated key; keep an explicit nonempty key when retrying the same write across application calls or process restarts.
 
 ## Errors
 
@@ -123,7 +129,9 @@ case errors.Is(err, context.Canceled):
 }
 ```
 
-The client retries a 429 or 503 up to `WithMaxRetries` times (default 2), waiting as `Retry-After` says or with increasing backoff. Reads, and writes that carry an idempotency key, are also retried after a connection failure or a gateway error. A `Retry-After` longer than `WithMaxRetryDelay` (default 30 s) is not waited for: the error is returned with `RetryAfter` set so your code can decide.
+The client retries a 429 or 503 up to `WithMaxRetries` times (default 2), waiting as `Retry-After` says or with increasing backoff. Reads, and writes that carry an idempotency key, are also retried after a connection failure or a gateway error. `WithMaxRetryDelay` (default 30 s) limits each wait, including network-failure backoff; when a delay exceeds it, the original error is returned. A long server delay remains available through `APIError.RetryAfter` so your code can decide.
+
+Timeouts are reported with `ConnectionError.Timeout` and are not automatically retried, including timeouts from a custom `http.Client` or transport. A caller's cancellation or deadline is returned as `context.Canceled` or `context.DeadlineExceeded`. Use a context deadline to bound the entire operation across attempts and backoff; `WithTimeout` limits each attempt separately.
 
 ## Options
 
@@ -142,11 +150,28 @@ heir.NewClient(
 
 Every call also takes options: `heir.WithHeader`, `heir.NoCache`, and for tracking writes `heir.WithIdempotencyKey` and `heir.DryRun`.
 
+`client.Validate()` returns a typed `*heir.ConfigError` for invalid configuration, including a nil HTTP client, negative retries or durations, or a malformed base URL. Call it at startup; every request also returns this error before making an HTTP call. `NewClient` retains its single return value. A zero timeout delegates timing to your context and HTTP client, zero retries disables retries, and zero maximum retry delay allows only immediate retries.
+
+## Runnable example
+
+From this directory, read a player with the example game-server integration:
+
+```bash
+go run ./examples/player -league nacl -credential mordhau -id YOUR_PLAYER_ID
+```
+
+Set `HEIR_API_KEY` in your server environment to authenticate, or omit it for an anonymous read. The example applies a deadline to the full request and prints the player response as JSON. Tests compile the command without contacting the API.
+
 ## Developing
 
 ```bash
 go generate ./...   # types_*.gen.go from ../spec
-go test ./...
+go test -race -shuffle=on ./...
+go vet ./...
+golangci-lint run ./...
+govulncheck ./...
 ```
 
 `types_public.gen.go` and `types_stats.gen.go` are written from `../spec` by `internal/gen`, which uses oapi-codegen for models and first names the document's inline shapes; CI fails when they are out of date.
+
+`contracts_test.go` consumes `../tests/contracts.json` to check all 24 API operations against the same request and response fixtures as the other SDKs. The runtime module supports Go 1.23; the separate generator module and development tools may require a newer Go toolchain.

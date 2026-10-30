@@ -1,0 +1,29 @@
+name: Bug report
+description: Report a reproducible SDK defect. Do not include credentials or vulnerability details.
+body:
+  - type: dropdown
+    id: language
+    attributes:
+      label: Affected SDK
+      options: [TypeScript, Python, Go, Multiple languages, Repository tooling]
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: SDK and runtime versions
+      placeholder: "@heirgg/sdk 0.1.0, Node 24, TypeScript 5.9"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Include a minimal example, expected behavior, actual behavior, and sanitized error/status codes. Use mock data.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include relevant transport options or differences between sync/async and runtime environments. Remove secrets.

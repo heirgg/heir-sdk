@@ -1,0 +1,3 @@
+# Outside contributors use fork pull requests. The release owner reviews changes
+# before merge, including this file, workflows, manifests, and generation scripts.
+* @ethanzs

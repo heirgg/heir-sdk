@@ -1,4 +1,4 @@
-import {HeirApiError, HeirConnectionError, HeirTimeoutError} from "./errors.js";
+import {HeirApiError, HeirConnectionError, HeirInputError, HeirProtocolError, HeirTimeoutError} from "./errors.js";
 import {VERSION} from "./version.js";
 
 export const DEFAULT_BASE_URL = "https://api.heir.gg";
@@ -36,7 +36,7 @@ export interface HeirOptions {
 export interface RequestOptions {
   /** Abort the call. A timed-out call throws HeirTimeoutError; an aborted one rethrows the signal's reason. */
   signal?: AbortSignal | undefined;
-  /** Extra headers for this call. */
+  /** Extra headers for this call. Bypasses caching. SDK-controlled headers take precedence. */
   headers?: Record<string, string> | undefined;
   maxRetries?: number | undefined;
   timeoutMs?: number | undefined;
@@ -45,6 +45,13 @@ export interface RequestOptions {
 }
 
 export type Query = Record<string, string | number | boolean | null | undefined>;
+
+/** Encode one path segment without allowing dot-segment URL normalization. */
+export const segment = (value: string): string => {
+  if (typeof value !== "string" || !value || value === "." || value === "..") throw new HeirInputError("Path parameters must be nonempty strings other than '.' or '..'.");
+  try { return encodeURIComponent(value); }
+  catch (cause) { throw new HeirInputError("Path parameters must contain valid Unicode.", {cause}); }
+};
 
 /** One API call as the resources describe it to the transport. */
 export interface Call {
@@ -61,8 +68,8 @@ export interface Call {
 }
 
 interface CacheEntry {
-  etag: string | null;
-  body: unknown;
+  headers: Headers;
+  body: string;
   /** When the entry stops being served without asking the API, as a timestamp; 0 when it must always be revalidated. */
   freshUntil: number;
 }
@@ -84,14 +91,19 @@ export class Http {
   private readonly cache = new Map<string, CacheEntry>();
 
   constructor(options: HeirOptions = {}) {
+    if (options.apiKey !== undefined && typeof options.apiKey !== "string") throw new HeirInputError("apiKey must be a string.");
+    if (options.userAgent !== undefined && typeof options.userAgent !== "string") throw new HeirInputError("userAgent must be a string.");
+    if (options.cache !== undefined && typeof options.cache !== "boolean") throw new HeirInputError("cache must be a boolean.");
+    if (options.fetch !== undefined && typeof options.fetch !== "function") throw new HeirInputError("fetch must be a function.");
     this.apiKey = options.apiKey?.trim() || undefined;
-    this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+    this.baseUrl = baseUrl(options.baseUrl ?? DEFAULT_BASE_URL);
     const fetchImpl = options.fetch ?? globalThis.fetch;
     if (typeof fetchImpl !== "function") throw new HeirConnectionError("No fetch is available in this runtime. Pass one in the `fetch` option.");
     this.fetch = fetchImpl;
-    this.maxRetries = options.maxRetries ?? 2;
-    this.maxRetryDelayMs = options.maxRetryDelayMs ?? 30_000;
-    this.timeoutMs = options.timeoutMs ?? 30_000;
+    this.maxRetries = nonnegative("maxRetries", options.maxRetries ?? 2, true);
+    this.maxRetryDelayMs = nonnegative("maxRetryDelayMs", options.maxRetryDelayMs ?? 30_000);
+    if (this.maxRetryDelayMs > 2_147_483_647) throw new HeirInputError("maxRetryDelayMs must not exceed 2147483647 milliseconds.");
+    this.timeoutMs = timeout(options.timeoutMs ?? 30_000);
     this.cacheEnabled = options.cache ?? true;
     this.userAgent = `heir-sdk-typescript/${VERSION}${options.userAgent ? ` ${options.userAgent}` : ""}`;
   }
@@ -108,48 +120,72 @@ export class Http {
   }
 
   async request<T>(call: Call, options: RequestOptions = {}): Promise<T> {
+    options = {...options, ...(options.headers ? {headers: {...options.headers}} : {})};
+    options.signal?.throwIfAborted();
+    if (options.cache !== undefined && typeof options.cache !== "boolean") throw new HeirInputError("cache must be a boolean.");
+    const maxRetries = nonnegative("maxRetries", options.maxRetries ?? this.maxRetries, true);
+    const timeoutMs = timeout(options.timeoutMs ?? this.timeoutMs);
     const url = this.url(call.path, call.query);
-    const useCache = call.cacheable && this.cacheEnabled && options.cache !== false;
+    const useCache = call.cacheable && this.cacheEnabled && options.cache !== false && Object.keys(options.headers ?? {}).length === 0;
     const cacheKey = `${this.apiKey ? "key" : "anon"} ${url}`;
     const cached = useCache ? this.cache.get(cacheKey) : undefined;
-    if (cached && cached.freshUntil > Date.now()) return cached.body as T;
+    if (cached && cached.freshUntil > Date.now()) return parseBody<T>(cached.body, 200);
 
-    const headers = new Headers(options.headers);
-    headers.set("Accept", "application/json");
-    if (call.body !== undefined) headers.set("Content-Type", "application/json");
-    if (this.apiKey) headers.set("Authorization", `Bearer ${this.apiKey}`);
-    if (call.idempotencyKey) headers.set("Idempotency-Key", call.idempotencyKey);
-    if (cached?.etag) headers.set("If-None-Match", cached.etag);
-    headers.set("User-Agent", this.userAgent);
-    const body = call.body === undefined ? undefined : JSON.stringify(call.body);
-    const maxRetries = options.maxRetries ?? this.maxRetries;
+    let headers: Headers;
+    let body: string | undefined;
+    try {
+      headers = new Headers(options.headers);
+      headers.set("Accept", "application/json");
+      if (call.body !== undefined) headers.set("Content-Type", "application/json");
+      if (this.apiKey) headers.set("Authorization", `Bearer ${this.apiKey}`);
+      if (call.idempotencyKey !== undefined) {
+        if (!call.idempotencyKey.trim()) throw new Error("idempotencyKey must not be empty.");
+        headers.set("Idempotency-Key", call.idempotencyKey);
+      }
+      const etag = cached?.headers.get("etag");
+      if (etag) headers.set("If-None-Match", etag);
+      headers.set("User-Agent", this.userAgent);
+      body = call.body === undefined ? undefined : JSON.stringify(call.body);
+      if (call.body !== undefined && body === undefined) throw new Error("The request body cannot be encoded as JSON.");
+    } catch (cause) {
+      throw new HeirInputError("Could not encode request body or headers.", {cause});
+    }
 
     for (let attempt = 0; ; attempt++) {
+      options.signal?.throwIfAborted();
       let response: Response;
+      let text: string;
       try {
-        response = await this.send(url, {method: call.method, headers, body}, options);
+        ({response, text} = await this.send(url, {method: call.method, headers, body}, {...options, timeoutMs}));
       } catch (error) {
         if (error instanceof HeirConnectionError && !(error instanceof HeirTimeoutError) && call.idempotent && attempt < maxRetries) {
-          await sleep(backoff(attempt));
-          continue;
+          const delay = backoff(attempt);
+          if (delay <= this.maxRetryDelayMs) {
+            await sleep(delay, options.signal);
+            continue;
+          }
         }
         throw error;
       }
       if (response.status === 304 && cached) {
-        this.cache.set(cacheKey, {...cached, freshUntil: freshUntil(response.headers)});
-        return cached.body as T;
+        const merged = new Headers(cached.headers);
+        // Age and Date describe this validation response, not the earlier response.
+        merged.delete("age"); merged.delete("date");
+        response.headers.forEach((value, name) => merged.set(name, value));
+        this.store(cacheKey, merged, cached.body);
+        return parseBody<T>(cached.body, 200);
       }
       if (response.ok) {
-        const data: unknown = response.status === 204 ? undefined : await response.json();
-        if (useCache) this.store(cacheKey, response.headers, data);
-        return data as T;
+        const data = parseBody<T>(text, response.status);
+        if (useCache) this.store(cacheKey, response.headers, text);
+        return data;
       }
-      const failure = await HeirApiError.from(response);
+      const failure = await HeirApiError.from(response, text);
       const retryable = RETRY_STATUSES.has(failure.status) || (call.idempotent && RETRY_STATUSES_IF_IDEMPOTENT.has(failure.status));
       if (retryable && attempt < maxRetries) {
         const delay = failure.retryAfter !== undefined ? failure.retryAfter * 1000 : backoff(attempt);
         if (delay <= this.maxRetryDelayMs) {
-          await sleep(delay);
+          await sleep(delay, options.signal);
           continue;
         }
       }
@@ -162,9 +198,11 @@ export class Http {
     this.cache.clear();
   }
 
-  private store(key: string, headers: Headers, body: unknown): void {
+  private store(key: string, headers: Headers, body: string): void {
+    this.cache.delete(key);
     const control = headers.get("cache-control") ?? "";
-    if (/\bno-store\b/i.test(control)) return;
+    // Conservatively bypass all response variations rather than risk mixing representations.
+    if (/\bno-store\b/i.test(control) || headers.get("vary")?.trim()) return;
     const etag = headers.get("etag");
     const until = freshUntil(headers);
     if (!etag && until === 0) return;
@@ -172,24 +210,25 @@ export class Http {
       const oldest = this.cache.keys().next().value;
       if (oldest !== undefined) this.cache.delete(oldest);
     }
-    this.cache.delete(key);
-    this.cache.set(key, {etag, body, freshUntil: until});
+    this.cache.set(key, {headers: new Headers(headers), body, freshUntil: until});
   }
 
-  private async send(url: string, init: {method: string; headers: Headers; body: string | undefined}, options: RequestOptions): Promise<Response> {
+  private async send(url: string, init: {method: string; headers: Headers; body: string | undefined}, options: RequestOptions): Promise<{response: Response; text: string}> {
     const timeoutMs = options.timeoutMs ?? this.timeoutMs;
     const controller = new AbortController();
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
-    unref(timer);
     const onAbort = () => controller.abort(options.signal?.reason);
     if (options.signal?.aborted) onAbort();
     else options.signal?.addEventListener("abort", onAbort, {once: true});
     try {
-      return await this.fetch(url, {method: init.method, headers: init.headers, signal: controller.signal, ...(init.body !== undefined ? {body: init.body} : {})});
+      const response = await this.fetch(url, {method: init.method, headers: init.headers, signal: controller.signal, ...(init.body !== undefined ? {body: init.body} : {})});
+      const text = response.status === 204 || response.status === 304 ? "" : await response.text();
+      controller.signal.throwIfAborted();
+      return {response, text};
     } catch (error) {
       if (timedOut) throw new HeirTimeoutError(timeoutMs, url);
-      if (options.signal?.aborted) throw error;
+      if (options.signal?.aborted) throw options.signal.reason;
       throw new HeirConnectionError(`Could not reach ${url}: ${error instanceof Error ? error.message : String(error)}`, error);
     } finally {
       clearTimeout(timer);
@@ -200,19 +239,51 @@ export class Http {
 
 /** When an answer stops being fresh, from its `Cache-Control: max-age`; 0 when it has none and must be revalidated. */
 const freshUntil = (headers: Headers): number => {
-  const match = /\bmax-age=(\d+)/i.exec(headers.get("cache-control") ?? "");
-  return match ? Date.now() + Number(match[1]) * 1000 : 0;
+  const control = headers.get("cache-control") ?? "";
+  if (/\bno-cache\b/i.test(control)) return 0;
+  const match = /(?:^|,)\s*max-age\s*=\s*"?(\d+)"?/i.exec(control);
+  if (!match) return 0;
+  const now = Date.now();
+  const date = Date.parse(headers.get("date") ?? "");
+  const age = Number(headers.get("age") ?? 0);
+  const apparentAge = Number.isFinite(date) ? Math.max(0, now - date) : 0;
+  const ageMs = Number.isFinite(age) ? Math.max(0, age) * 1000 : 0;
+  return now + Math.max(0, Number(match[1]) * 1000 - Math.max(apparentAge, ageMs));
 };
 
 /** 500 ms, 1 s, 2 s, ... with jitter, capped at 8 s. */
-const backoff = (attempt: number): number => Math.min(8000, 500 * 2 ** attempt) * (0.75 + Math.random() * 0.5);
+const backoff = (attempt: number): number => Math.min(8000, 500 * 2 ** attempt * (0.75 + Math.random() * 0.5));
 
-const sleep = (ms: number): Promise<void> => new Promise(resolve => {
-  const timer = setTimeout(resolve, ms);
-  unref(timer);
+const sleep = (ms: number, signal?: AbortSignal): Promise<void> => new Promise((resolve, reject) => {
+  signal?.throwIfAborted();
+  const timer = setTimeout(() => { signal?.removeEventListener("abort", onAbort); resolve(); }, ms);
+  const onAbort = () => { clearTimeout(timer); reject(signal?.reason); };
+  signal?.addEventListener("abort", onAbort, {once: true});
 });
 
-/** A timer must not keep a Node process alive on its own. Browsers have no such thing. */
-const unref = (timer: ReturnType<typeof setTimeout>): void => {
-  (timer as unknown as {unref?: () => void}).unref?.();
+const nonnegative = (name: string, value: number, integer = false): number => {
+  if (!Number.isFinite(value) || value < 0 || (integer && !Number.isSafeInteger(value))) throw new HeirInputError(`${name} must be a finite, nonnegative ${integer ? "integer" : "number"}.`);
+  return value;
+};
+
+const timeout = (value: number): number => {
+  if (!Number.isFinite(value) || value <= 0 || value > 2_147_483_647) throw new HeirInputError("timeoutMs must be positive and at most 2147483647 milliseconds.");
+  return value;
+};
+
+const baseUrl = (value: string): string => {
+  try {
+    if (typeof value !== "string" || value.includes("?") || value.includes("#")) throw new Error("Expected a URL without query or fragment delimiters.");
+    const url = new URL(value);
+    if (!["https:", "http:"].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error("Expected an HTTP(S) URL without credentials, query, or fragment.");
+    return url.toString().replace(/\/+$/, "");
+  } catch (cause) { throw new HeirInputError("baseUrl must be an HTTP(S) API URL without credentials, query, or fragment.", {cause}); }
+};
+
+const parseBody = <T>(text: string, status: number): T => {
+  let data: unknown;
+  try { data = JSON.parse(text); }
+  catch (cause) { throw new HeirProtocolError("The API returned invalid JSON.", status, cause); }
+  if (typeof data !== "object" || data === null || Array.isArray(data)) throw new HeirProtocolError("The API returned JSON that is not an object.", status);
+  return data as T;
 };

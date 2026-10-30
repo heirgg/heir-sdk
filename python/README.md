@@ -1,178 +1,161 @@
 # heir-sdk
 
-The official Python client for the [Heir public API](https://api.heir.gg/public/v1/openapi.json): League players, ratings, Rosters, schedules, results and shop inventory, fixture eligibility checks, and stat submission. Python 3.10 or later, synchronous and asyncio clients, every type a pydantic model generated from the API's own OpenAPI document.
+The official Python client for the [Heir public API](https://api.heir.gg/public/v1/openapi.json): League players, ratings, rosters, schedules, results, inventory, fixture eligibility, and stat submission. Requires Python 3.10 or later. Includes synchronous and asynchronous clients with typed Pydantic models.
 
 ```bash
 pip install heir-sdk
 ```
 
-```python
-from heir import Heir, AsyncHeir
-```
-
 ## Read a League
 
-Reads need no key. Without one, each address may make 120 requests a minute across every League.
+Public reads need no key. The unauthenticated limit is 120 requests per minute per address across Leagues.
 
 ```python
-heir = Heir()
-nacl = heir.league("nacl")  # vanity name or Discord server ID
+from heir import Heir
 
-answer = nacl.player("mordhau", "A1B2C3D4E5F67890")
-if answer.player:
-    print(answer.player.display_name, answer.player.mmr, answer.player.rank)
-
-lookup = nacl.lookup_players("steam", ["76561198000000000"])
-inventory = nacl.inventory("mordhau", "A1B2C3D4E5F67890")
-config = nacl.config()
+with Heir() as client:
+    league = client.league("nacl")  # vanity name or Discord server ID
+    answer = league.player("mordhau", "A1B2C3D4E5F67890")
+    if answer.player:
+        print(answer.player.display_name, answer.player.mmr, answer.player.rank)
+    for roster in league.rosters(category="competitive", page_size=50):
+        print(roster.name, roster.team_mmr)
 ```
 
-Models use snake_case fields (`display_name`) for what the API spells in camelCase (`displayName`); both spellings construct a model, and unknown fields in an answer are ignored, as the API asks. Answers the API marks cacheable are kept for the minute it allows and revalidated with `ETag` after that, so asking on every join or every event costs one request a minute per question. `Heir(cache=False)`, or `options=RequestOptions(no_cache=True)` on one call, always asks.
+Models use snake_case fields (`display_name`) for the API's camelCase (`displayName`); either spelling constructs a model. Unknown response fields are ignored. Use `model_dump(mode="json", by_alias=True)` when exporting a model in the API's spelling.
+
+A list call returns a `Page`: `.items` contains the current page, `.body` contains the full response, and `.next()` fetches the following page. Iteration fetches subsequent pages with the same filters. Stop iteration when you have enough rows to avoid unnecessary requests. Leaderboard and standings bodies include snapshot timestamps.
 
 ## Use a developer key
 
-A League Organizer creates a developer key under Manage League, Developer. With it, reads of that League draw on the plan's allowance instead of the per-address limit, eligibility checks work, and stat submission is available. Call from your server. Never put a key in a game client or a browser.
+A League Organizer creates a key under Manage League → Developer. With it, reads use that League's plan allowance, and permitted eligibility checks and stat submission become available. Keep keys on your server, outside browser and game-client bundles.
 
 ```python
-heir = Heir(api_key=os.environ["HEIR_API_KEY"])
+import os
 
-verdicts = heir.league("nacl").check_eligibility(
-    "mordhau", playfab_ids, fixture_id=fixture_id, roster_id=roster_id, gamemode="SKM"
-)
+from heir import Heir
+
+with Heir(api_key=os.environ["HEIR_API_KEY"]) as client:
+    league = client.league(os.environ["HEIR_LEAGUE"])
+    result = league.check_eligibility(
+        "mordhau",
+        [os.environ["HEIR_PLAYER_ID"]],
+        fixture_id=os.environ["HEIR_FIXTURE_ID"],
+        roster_id=os.environ["HEIR_ROSTER_ID"],
+        gamemode="SKM",
+    )
+    for player in result.players:
+        print(player.identifier, player.eligible, player.reasons)
 ```
 
-## Lists
-
-A list call returns a `Page`: its rows in `.items`, the whole answer in `.body`, and `.next()` for the page after. Iterating a page walks it and every page after it, with the same filters.
-
-```python
-first = nacl.rosters(category="competitive", page_size=50)
-print(len(first.items), first.has_more)
-
-for roster in first:
-    print(roster.name, roster.team_mmr)
-
-board = nacl.leaderboard(metric="heirRating")
-print(board.body.snapshot_at, board.items[0])
-```
+Eligibility is advisory and does not reserve roster seats. The fixture and gamemode determine its scope; it has no category option.
 
 ## Async
 
-`AsyncHeir` has the same methods, awaited, and pages are walked with `async for`. It runs on asyncio or any anyio backend.
+`AsyncHeir` exposes the same operations, awaited. Use `async for` for pages. The SDK tests both asyncio and Trio; install Trio separately if it is your application's backend.
 
 ```python
-async with AsyncHeir(api_key=os.environ["HEIR_API_KEY"]) as heir:
-    page = await heir.league("nacl").rosters()
-    async for roster in page:
-        print(roster.name)
+import asyncio
+
+from heir import AsyncHeir
+
+
+async def main() -> None:
+    async with AsyncHeir() as client:
+        page = await client.league("nacl").rosters()
+        async for roster in page:
+            print(roster.name)
+
+
+asyncio.run(main())
 ```
 
 ## Submit stats
 
-Requires a key whose gamemode permissions include the gamemode. Any gamemode a League plays can be sent as one finished `heir-match-v1` document, as a model or a plain dict. Set `reference` to your own id for the match: a repeat with the same contents is a no-op, and the client will then also resend it after a connection failure. Datetimes are sent in UTC at millisecond precision, which is what the API accepts.
+`client.stats.submit_match(document)` accepts a completed `HeirMatchFile`, a dictionary using either field spelling, or the `MatchTemplate` returned by `client.stats.gamemodes()`. The key must permit the gamemode. Fill in actual player identities, scores, and match times before submitting. The catalog lists supported gamemodes and stat keys; `client.stats.schemas()` describes tracking counters.
+
+Set `reference` to your application's stable match ID. An identical repeat with the same reference is a no-op, allowing safe retries after connection failures. Without a reference, ambiguous connection failures and gateway errors are not automatically retried. Datetimes serialize in UTC at millisecond precision. Optional fields you omit stay omitted; explicit `None` remains JSON `null`, so use it only where the API accepts null.
 
 ```python
-from heir import HeirMatchFile, HeirMatchGamemode, HeirMatchMap, HeirMatchPlayer, HeirMatchScore
+import json
+import os
+from pathlib import Path
 
-receipt = heir.stats.submit_match(
-    HeirMatchFile(
-        format="heir-match-v1",
-        gamemode=HeirMatchGamemode(key="SKM"),
-        type="pug",
-        reference="lobby-42-2026-10-16-1900",
-        started_at=datetime(2026, 10, 16, 19, 0, tzinfo=timezone.utc),
-        maps=[
-            HeirMatchMap(
-                map="Camp",
-                winner="a",
-                score=HeirMatchScore(a=7, b=4),
-                players=[
-                    HeirMatchPlayer(
-                        identity="A1B2C3D4E5F67890",
-                        name="Ada",
-                        side="a",
-                        stats={"kills": 18, "deaths": 9, "score": 2140},
-                    ),
-                    HeirMatchPlayer(
-                        identity="0F1E2D3C4B5A6978",
-                        name="Brann",
-                        side="b",
-                        stats={"kills": 11, "deaths": 15, "score": 1310},
-                    ),
-                ],
-            )
-        ],
-    )
-)
-print(receipt.status, receipt.problems)
+from heir import Heir
+
+# match.json contains your completed heir-match-v1 document, including a stable reference.
+document = json.loads(Path("match.json").read_text())
+with Heir(api_key=os.environ["HEIR_API_KEY"]) as client:
+    receipt = client.stats.submit_match(document)
+    print(receipt.status, receipt.problems)
 ```
 
-Team matches can also be tracked live, a round at a time. Every tracking write carries an `Idempotency-Key`. The client generates one per call so its own retries never write twice; pass `idempotency_key=` when your code may send the same request again later.
+For live tracking, use `begin_match`, `append_units`, `heartbeat`, then `finalize`; `upload` submits a completed tracked match. Every tracking write receives one generated `Idempotency-Key` reused by internal retries. Pass `idempotency_key="your-stable-operation-id"` when your application may repeat the call later. `begin_match`, `append_units`, and `upload` accept `dry_run=True` to validate without storing. Heartbeats and finalization are writes and have no dry-run option.
+
+Runnable examples with complete imports and command-line inputs:
+
+- [Public player lookup](examples/read_league.py): `python examples/read_league.py nacl mordhau PLAYER_ID`
+- [Async roster pagination](examples/async_rosters.py): `python examples/async_rosters.py nacl`
+- [Completed match submission](examples/submit_match.py): set `HEIR_API_KEY`, then run `python examples/submit_match.py match.json`
+
+## Errors and retries
+
+SDK operations expose `HeirError` subclasses:
+
+| Error | Meaning |
+| --- | --- |
+| `HeirInputError` | Invalid client configuration or a request that cannot be validated/encoded; inspect `__cause__` for details. |
+| `HeirProtocolError` | A successful HTTP response could not be decoded as the expected model; `.body` preserves its bytes. |
+| `HeirAPIError` | An HTTP error response; inspect `.code`, `.message`, `.status_code`, `.issues`, `.retry_after`, `.headers`, and `.body`. |
+| `HeirTimeoutError` | An HTTPX operation timed out; also a `HeirConnectionError`. `.timeout` is the SDK's configured limit, or `None` when an injected HTTP client owns the limits. |
+| `HeirConnectionError` | Another HTTP transport failure; `__cause__` contains the original exception. |
+
+Directly constructing a Pydantic model may raise Pydantic's `ValidationError`. Cancellation and programming errors are allowed to propagate. An API error's `.code` is stable; its human-readable message may change. `.is_rate_limited` indicates status 429.
+
+The SDK retries 429 and 503 responses up to `max_retries` times (default 2). Reads and idempotent writes also retry connection failures and 500/502/504 responses. Timeouts are not retried. Delays honor `Retry-After` or use exponential backoff with jitter. If any proposed delay exceeds `max_retry_delay` (default 30 seconds), the error is returned immediately. An API error retains `retry_after` so your application can schedule a later attempt.
+
+## Configuration, caching, and lifetime
 
 ```python
-begun = heir.stats.begin_match({"match_id": "lobby-42", "started_at": int(time.time() * 1000)})
-heir.stats.append_units(
-    "lobby-42",
-    {"games": [{"schema_ref": "mordhau.skirmish@1", "game_id": "map-1", "rounds": [round]}]},
-    idempotency_key="lobby-42:map-1:round-0",
-)
-heir.stats.heartbeat("lobby-42")
-done = heir.stats.finalize("lobby-42")
+from heir import Heir, RequestOptions
 
-# Or check a request without storing anything:
-heir.stats.append_units("lobby-42", units, dry_run=True)
+with Heir(timeout=30.0, max_retries=2, max_retry_delay=30.0, cache=True, user_agent="my-server/1.0") as client:
+    answer = client.league("nacl").player("mordhau", "A1B2C3D4E5F67890", options=RequestOptions(no_cache=True))
+    print(answer.player)
 ```
 
-`heir.stats.gamemodes()` lists the gamemodes a key may submit with their stat keys and an empty document to fill in; `heir.stats.schemas()` lists the tracking schemas and every counter a Player line may carry.
+`timeout` is the HTTPX inactivity timeout for each connect, read, write, or connection-pool operation, **not an overall request deadline**. Set `None` to disable it. Async applications can impose an overall deadline with their own cancellation scope. Retry counts must be non-negative integers; delays must be finite and non-negative; timeouts must be finite and positive or `None`. Numeric delays and timeouts must fit the platform's `threading.TIMEOUT_MAX` seconds.
 
-## Errors
+`base_url` defaults to `https://api.heir.gg` and accepts an absolute HTTP(S) URL without credentials, query, or fragment. An injected `http_client=httpx.Client(...)` or `httpx.AsyncClient(...)` supplies your own transport, proxy, and timeouts. You own that client's lifetime; the SDK closes only clients it creates. Keep an injected client's auth/header context stable, or disable SDK caching when changing it.
 
-Everything the SDK raises extends `HeirError`.
+Cacheable League reads use `Cache-Control`, `Age`, `Date`, and `ETag`/`If-None-Match`. `no-cache` forces revalidation; `no-store` and responses with any `Vary` header are not retained. A 304 updates metadata while retaining the response body. Up to 1,000 responses are kept per client, evicting the least recently used entry. Concurrent misses may make separate requests.
 
-```python
-from heir import HeirAPIError, HeirConnectionError, HeirTimeoutError
-
-try:
-    nacl.player("mordhau", identifier)
-except HeirAPIError as error:
-    # error.code is the stable code to branch on; error.message is a sentence for a person.
-    if error.code == "league-not-found":
-        ...
-    if error.is_rate_limited:
-        print("wait", error.retry_after, "seconds")
-    print(error.status_code, error.issues)
-except HeirTimeoutError:
-    ...  # no answer within the timeout
-except HeirConnectionError as error:
-    ...  # could not reach the API; error.__cause__ has the underlying failure
-```
-
-The client retries a 429 or 503 up to `max_retries` times (default 2), waiting as `Retry-After` says or with increasing backoff. Reads, and writes that carry an idempotency key, are also retried after a connection failure or a gateway error. A `Retry-After` longer than `max_retry_delay` (default 30 s) is not waited for: the error is raised with `retry_after` set so your code can decide.
-
-## Options
-
-```python
-Heir(
-    api_key=key,  # a League developer key; leave out to read without one
-    base_url="https://api.heir.gg",
-    http_client=httpx.Client(),  # your own client: proxy, transport, fake; you then own its timeout
-    max_retries=2,
-    max_retry_delay=30.0,
-    timeout=30.0,  # per attempt, in seconds
-    cache=True,  # honour Cache-Control and ETag on League reads
-    user_agent="my-server/1.0",
-)
-```
-
-Every call also takes `options=RequestOptions(headers=..., no_cache=...)`. The client owns the `httpx` client it makes; close it with `heir.close()` or a `with` block.
+`cache=False` disables caching. `RequestOptions(no_cache=True)` bypasses it for one call. Calls with custom `RequestOptions(headers=...)` also bypass caching so header-dependent responses cannot mix. Header names are case-insensitive; SDK-controlled headers, including a configured API key and generated idempotency key, take precedence. `client.clear_cache()` discards all retained responses.
 
 ## Developing
 
+From this directory, activate the environment before using its commands:
+
 ```bash
-uv venv && uv pip install -e ".[dev]"   # or: pip install -e ".[dev]"
-python scripts/generate.py               # src/heir/models from ../spec
+uv venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
+python scripts/generate.py --check
 pytest
-ruff check . && ruff format --check . && mypy
+ruff check .
+ruff format --check .
+mypy
 ```
 
-`src/heir/models/public.py` and `stats.py` are written from `../spec` by `scripts/generate.py`, which uses datamodel-code-generator and first names the document's inline shapes with the table in `../spec/type-names.json`, shared with the other SDKs; CI fails when they are out of date.
+Generated models come from `../spec` and the shared `type-names.json`; regenerate with `python scripts/generate.py`. Shared fixtures in `../tests/contracts.json` exercise all 24 operations through sync, asyncio, and Trio clients. Work from a repository checkout to run these contract tests and regenerate models.
+
+Check the built distribution in a separate environment:
+
+```bash
+uv build
+python scripts/check_wheel.py
+# On Python 3.10, also exercise the oldest declared runtime dependencies:
+python scripts/check_wheel.py --minimum
+```
+
+The smoke test rejects editable installs and makes only mock HTTP calls. Test the minimum dependency range separately on Python 3.10 by installing the wheel with `anyio==4.0.0`, `httpx==0.27.0`, and `pydantic==2.7.0`, then running the smoke test and pytest with the development test tools installed. Keep that environment separate from generation/lint tooling so newer development-tool dependencies do not silently raise runtime minimums.

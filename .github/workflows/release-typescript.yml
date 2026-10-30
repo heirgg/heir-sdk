@@ -1,43 +1,94 @@
 name: Release TypeScript
 
-# Publishes @heir/sdk to npm when a `typescript/vX.Y.Z` tag is pushed. The tag must match package.json.
 on:
   push:
     tags: ["typescript/v*"]
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      channel: ${{ steps.version.outputs.channel }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      artifact: ${{ steps.artifact.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Include origin/main and annotated tags for the ancestry gate.
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - id: version
+        run: python3 scripts/release.py typescript "$GITHUB_REF_NAME" --github-output --require-committed-spec --require-main
+      - run: python3 scripts/check-contracts.py
+      - run: npm ci
+        working-directory: typescript
+      - run: npm run generate:check && npm run typecheck && npm test && npm run test:package
+        working-directory: typescript
+      - run: mkdir release-artifacts && npm pack ./typescript --ignore-scripts --pack-destination release-artifacts
+      - id: artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: npm-package
+          path: release-artifacts/*.tgz
+          if-no-files-found: error
+
   publish:
+    needs: build
     runs-on: ubuntu-latest
     environment: npm
-    defaults:
-      run:
-        working-directory: typescript
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org
-          cache: npm
-          cache-dependency-path: typescript/package-lock.json
-      - name: Tag matches package.json
-        run: |
-          tag="${GITHUB_REF_NAME#typescript/v}"
-          version="$(node -p "require('./package.json').version")"
-          test "$tag" = "$version" || { echo "tag typescript/v$tag but package.json says $version"; exit 1; }
-      - run: npm ci
-      - run: npm run generate:check
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
-      - run: npm publish
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Require an OIDC-capable npm CLI
+        run: node -e 'const v = require("node:child_process").execFileSync("npm", ["--version"], {encoding:"utf8"}).trim().split(".").map(Number); if (v[0] < 11 || (v[0] === 11 && (v[1] < 5 || (v[1] === 5 && v[2] < 1)))) process.exit(1);'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact }}
+          path: release-artifacts
+          merge-multiple: true
+      - id: existing
+        run: python3 scripts/check-published.py typescript "$RELEASE_VERSION" release-artifacts
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: GitHub release
-        run: gh release create "$GITHUB_REF_NAME" --title "@heir/sdk ${GITHUB_REF_NAME#typescript/}" --generate-notes
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+      - name: Publish the validated tarball with npm Trusted Publishing
+        if: steps.existing.outputs.publish == 'true'
+        run: npm publish release-artifacts/*.tgz --registry=https://registry.npmjs.org --ignore-scripts --access public --provenance --tag "$RELEASE_CHANNEL"
+        env:
+          RELEASE_CHANNEL: ${{ needs.build.outputs.channel }}
+
+  release:
+    needs: [build, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create release notes, or resume an existing release
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then exit 0; fi
+          args=(--repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --latest=false)
+          if [ "$PRERELEASE" = true ]; then args+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" --title "@heirgg/sdk $RELEASE_VERSION" "${args[@]}"
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+          PRERELEASE: ${{ needs.build.outputs.prerelease }}

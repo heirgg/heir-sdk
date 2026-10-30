@@ -92,3 +92,15 @@ func ExampleStats_BeginMatch() {
 	}
 	fmt.Println(done.Status, done.HeldForReview)
 }
+
+func ExampleMatchTemplate_ToMatchFile() {
+	// In an integration, get this template from client.Stats.Gamemodes(ctx).
+	template := heir.MatchTemplate{Format: heir.HeirMatchFormatHeirMatchV1}
+	file := template.ToMatchFile()
+	reference := "game-server-match-42"
+	file.Reference = &reference
+	file.StartedAt = time.Date(2026, 10, 30, 12, 0, 0, 0, time.UTC)
+	fmt.Println(file.Format, *file.Reference, file.StartedAt.Format(time.RFC3339))
+	// Add the match's players and results to file.Maps, then call client.Stats.SubmitMatch(ctx, file).
+	// Output: heir-match-v1 game-server-match-42 2026-10-30T12:00:00Z
+}

@@ -1,0 +1,21 @@
+name: Integration help
+description: Ask about an SDK integration or request setup for a private reporting channel.
+body:
+  - type: input
+    id: environment
+    attributes:
+      label: Language, SDK version, and runtime
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to do?
+      description: Describe the operation and the part that is unclear. Do not include developer keys, private payloads, or vulnerability details.
+    validations:
+      required: true
+  - type: textarea
+    id: attempted
+    attributes:
+      label: What have you tried?
+      description: Link relevant documentation and include a sanitized example when useful.

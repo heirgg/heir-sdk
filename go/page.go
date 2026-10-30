@@ -40,7 +40,17 @@ func (p *Page[Item, Body]) Next(ctx context.Context) (*Page[Item, Body], error) 
 func (p *Page[Item, Body]) All(ctx context.Context) iter.Seq2[Item, error] {
 	return func(yield func(Item, error) bool) {
 		for page := p; page != nil; {
+			if err := ctx.Err(); err != nil {
+				var zero Item
+				yield(zero, err)
+				return
+			}
 			for _, item := range page.Items {
+				if err := ctx.Err(); err != nil {
+					var zero Item
+					yield(zero, err)
+					return
+				}
 				if !yield(item, nil) {
 					return
 				}
