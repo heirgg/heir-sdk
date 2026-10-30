@@ -1,6 +1,20 @@
-/** Every error this SDK throws extends HeirError, so one `instanceof` catches them all. */
+/** SDK errors extend HeirError. Caller-initiated cancellation preserves the caller's reason. */
 export class HeirError extends Error {
   override readonly name: string = "HeirError";
+}
+
+/** Invalid SDK configuration or a request that cannot be encoded. */
+export class HeirInputError extends HeirError {
+  override readonly name = "HeirInputError";
+}
+
+/** A successful HTTP response that is not a JSON object. */
+export class HeirProtocolError extends HeirError {
+  override readonly name = "HeirProtocolError";
+
+  constructor(message: string, readonly status: number, cause?: unknown) {
+    super(message, {cause});
+  }
 }
 
 /** One field the API could not accept, named when it can be. */
@@ -39,8 +53,8 @@ export class HeirApiError extends HeirError {
   }
 
   /** Reads the API's `{error, message, issues?}` envelope; an answer that is not one still becomes an error you can inspect. */
-  static async from(response: Response): Promise<HeirApiError> {
-    const text = await response.text().catch(() => "");
+  static async from(response: Response, text?: string): Promise<HeirApiError> {
+    text ??= await response.text();
     let body: unknown = text;
     try { body = text ? JSON.parse(text) : undefined; } catch { /* not JSON: keep the text */ }
     const envelope = isEnvelope(body) ? body : undefined;
@@ -48,7 +62,7 @@ export class HeirApiError extends HeirError {
       status: response.status,
       code: envelope?.error ?? "unknown",
       message: envelope?.message ?? `The API answered ${response.status}${response.statusText ? ` ${response.statusText}` : ""}.`,
-      issues: envelope?.issues,
+      issues: Array.isArray(envelope?.issues) ? envelope.issues.filter(isIssue) : undefined,
       retryAfter: parseRetryAfter(response.headers.get("retry-after")),
       headers: response.headers,
       body
@@ -78,8 +92,11 @@ export class HeirTimeoutError extends HeirConnectionError {
   }
 }
 
-const isEnvelope = (value: unknown): value is {error: string; message: string; issues?: ApiIssue[]} =>
+const isEnvelope = (value: unknown): value is {error: string; message: string; issues?: unknown} =>
   typeof value === "object" && value !== null && typeof (value as {error?: unknown}).error === "string" && typeof (value as {message?: unknown}).message === "string";
+
+const isIssue = (value: unknown): value is ApiIssue => typeof value === "object" && value !== null &&
+  typeof (value as ApiIssue).path === "string" && typeof (value as ApiIssue).message === "string";
 
 /** `Retry-After` as seconds, from either form the header takes: a count of seconds or an HTTP date. */
 export const parseRetryAfter = (header: string | null): number | undefined => {

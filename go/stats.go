@@ -78,10 +78,14 @@ func (s *Stats) Upload(ctx context.Context, request UploadMatchRequest, options 
 func write[T any](ctx context.Context, s *Stats, path string, body any, options []RequestOption) (*T, error) {
 	var opts requestOptions
 	for _, option := range options {
+		if option == nil {
+			return nil, &ConfigError{Field: "requestOption", Message: "must not be nil"}
+		}
 		option(&opts)
 	}
 	if opts.idempotencyKey == "" {
-		options = append([]RequestOption{WithIdempotencyKey(NewIdempotencyKey())}, options...)
+		// Apply the fallback last so an explicitly empty option cannot erase it. Do not mutate the caller's slice.
+		options = append(append([]RequestOption(nil), options...), WithIdempotencyKey(NewIdempotencyKey()))
 	}
 	var out T
 	if err := s.client.do(ctx, call{method: "POST", path: path, body: body, idempotent: true}, &out, options...); err != nil {

@@ -1,0 +1,543 @@
+{
+  "description": "Shared request/response fixtures for every bundled OpenAPI operation. Requests use API defaults (no query); separate tests cover optional filters, retries and pagination.",
+  "cases": [
+    {
+      "operationId": "getLeaguePlayer",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/players/mordhau/A1B2C3D4E5F67890",
+      "responseBody": {
+        "player": null
+      }
+    },
+    {
+      "operationId": "lookupLeaguePlayers",
+      "method": "POST",
+      "path": "/public/v1/leagues/nacl/players/lookup",
+      "responseBody": {
+        "players": [
+          {
+            "identifier": "A1B2C3D4E5F67890",
+            "status": "found",
+            "player": null
+          }
+        ]
+      },
+      "requestBody": {
+        "credential": "mordhau",
+        "identifiers": [
+          "A1B2C3D4E5F67890"
+        ]
+      }
+    },
+    {
+      "operationId": "getLeaguePlayerStats",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/players/mordhau/A1B2C3D4E5F67890/stats",
+      "responseBody": {
+        "player": null,
+        "category": "example",
+        "record": null,
+        "totals": null
+      }
+    },
+    {
+      "operationId": "getLeaguePlayerMatches",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/players/mordhau/A1B2C3D4E5F67890/matches",
+      "responseBody": {
+        "category": "example",
+        "matches": [
+          {
+            "sourceKey": "example",
+            "matchId": null,
+            "playedAt": "example",
+            "mmrBefore": 0,
+            "mmrAfter": 0,
+            "mmrDelta": 0
+          }
+        ],
+        "page": 0,
+        "pageSize": 25,
+        "hasMore": false,
+        "nextToken": null
+      }
+    },
+    {
+      "operationId": "listLeagueRosters",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/rosters",
+      "responseBody": {
+        "rosters": [
+          {
+            "id": "9f6d2a70-0000-4000-8000-000000000000",
+            "name": "Example",
+            "tag": null,
+            "logoUrl": null,
+            "teamMmr": null,
+            "provisional": false,
+            "category": "example",
+            "captain": null
+          }
+        ],
+        "page": 0,
+        "pageSize": 25,
+        "hasMore": false,
+        "nextToken": null
+      }
+    },
+    {
+      "operationId": "getLeagueRoster",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/rosters/9f6d2a70-0000-4000-8000-000000000000",
+      "responseBody": {
+        "roster": {
+          "id": "9f6d2a70-0000-4000-8000-000000000000",
+          "name": "Example",
+          "tag": null,
+          "logoUrl": null,
+          "teamMmr": null,
+          "provisional": false,
+          "category": "example",
+          "captain": null
+        },
+        "members": [
+          {
+            "displayName": "Ada",
+            "profileUrl": null,
+            "isCaptain": false
+          }
+        ]
+      }
+    },
+    {
+      "operationId": "getLeagueLeaderboard",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/leaderboards",
+      "responseBody": {
+        "metric": "example",
+        "category": "example",
+        "entries": [
+          {
+            "position": 0,
+            "displayName": "Ada",
+            "profileUrl": null,
+            "value": 0,
+            "provisional": false
+          }
+        ],
+        "page": 0,
+        "pageSize": 25,
+        "hasMore": false,
+        "nextToken": null,
+        "snapshotAt": "2026-10-30T12:00:00.000Z",
+        "snapshotExpiresAt": "2026-10-30T12:00:00.000Z"
+      }
+    },
+    {
+      "operationId": "getLeagueStandings",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/standings",
+      "responseBody": {
+        "season": null,
+        "standings": [
+          {
+            "rosterId": "9f6d2a70-0000-4000-8000-000000000000",
+            "name": "Example",
+            "position": 0,
+            "wins": 0,
+            "losses": 0,
+            "roundsWon": 0,
+            "roundsLost": 0,
+            "teamMmr": 0,
+            "provisional": false
+          }
+        ],
+        "page": 0,
+        "pageSize": 25,
+        "hasMore": false,
+        "nextToken": null,
+        "snapshotAt": "2026-10-30T12:00:00.000Z",
+        "snapshotExpiresAt": "2026-10-30T12:00:00.000Z"
+      }
+    },
+    {
+      "operationId": "listLeagueFixtures",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/fixtures",
+      "responseBody": {
+        "fixtures": [
+          {
+            "id": "9f6d2a70-0000-4000-8000-000000000000",
+            "code": null,
+            "rosterA": {
+              "id": "9f6d2a70-0000-4000-8000-000000000000",
+              "name": "Example"
+            },
+            "rosterB": {
+              "id": "9f6d2a70-0000-4000-8000-000000000000",
+              "name": "Example"
+            },
+            "scheduledAt": null,
+            "status": "example",
+            "resultMatchId": null,
+            "scoreA": null,
+            "scoreB": null,
+            "streamUrl": null
+          }
+        ],
+        "page": 0,
+        "pageSize": 25,
+        "hasMore": false,
+        "nextToken": null
+      }
+    },
+    {
+      "operationId": "getLeagueFixture",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/fixtures/9f6d2a70-0000-4000-8000-000000000000",
+      "responseBody": {
+        "fixture": {
+          "id": "9f6d2a70-0000-4000-8000-000000000000",
+          "code": null,
+          "rosterA": {
+            "id": "9f6d2a70-0000-4000-8000-000000000000",
+            "name": "Example"
+          },
+          "rosterB": {
+            "id": "9f6d2a70-0000-4000-8000-000000000000",
+            "name": "Example"
+          },
+          "scheduledAt": null,
+          "status": "example",
+          "resultMatchId": null,
+          "scoreA": null,
+          "scoreB": null,
+          "streamUrl": null
+        }
+      }
+    },
+    {
+      "operationId": "getLeagueMatch",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/matches/9f6d2a70-0000-4000-8000-000000000000",
+      "responseBody": {
+        "match": {
+          "id": "9f6d2a70-0000-4000-8000-000000000000",
+          "kind": "official",
+          "status": "example",
+          "playedAt": null,
+          "officialMatchId": null,
+          "result": null,
+          "ratingStatus": "rated",
+          "games": [
+            {
+              "gamemode": null,
+              "players": [
+                {
+                  "identifier": null,
+                  "displayName": "Ada",
+                  "stats": {}
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "operationId": "getLeagueConfig",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/config",
+      "responseBody": {
+        "id": "9f6d2a70-0000-4000-8000-000000000000",
+        "name": "Example",
+        "gameKey": null,
+        "season": null,
+        "credentials": [
+          {
+            "key": "example",
+            "label": "example",
+            "idLabel": "example",
+            "pattern": "example"
+          }
+        ],
+        "categories": [
+          "example"
+        ],
+        "gamemodes": [
+          {
+            "key": "example",
+            "name": "Example"
+          }
+        ],
+        "ranks": null,
+        "leaderboardMetrics": [
+          "example"
+        ],
+        "batchMax": 0
+      }
+    },
+    {
+      "operationId": "checkLeagueEligibility",
+      "method": "POST",
+      "path": "/public/v1/leagues/nacl/eligibility/check",
+      "responseBody": {
+        "fixtureId": "9f6d2a70-0000-4000-8000-000000000000",
+        "rosterId": "9f6d2a70-0000-4000-8000-000000000000",
+        "checkedAt": "2026-10-30T12:00:00.000Z",
+        "players": [
+          {
+            "identifier": "A1B2C3D4E5F67890",
+            "eligible": false,
+            "reasons": [
+              "example"
+            ]
+          }
+        ]
+      },
+      "requestBody": {
+        "credential": "mordhau",
+        "identifiers": [
+          "A1B2C3D4E5F67890"
+        ],
+        "fixtureId": "9f6d2a70-0000-4000-8000-000000000000",
+        "rosterId": "9f6d2a70-0000-4000-8000-000000000000",
+        "gamemode": "SKM"
+      }
+    },
+    {
+      "operationId": "getPlayerInventory",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/inventory/mordhau/A1B2C3D4E5F67890",
+      "responseBody": {
+        "items": [
+          {
+            "key": "example",
+            "name": "Example",
+            "expiresAt": null,
+            "edition": null,
+            "imageUrl": null
+          }
+        ]
+      }
+    },
+    {
+      "operationId": "getPlayersInventory",
+      "method": "POST",
+      "path": "/public/v1/leagues/nacl/inventory/mordhau",
+      "responseBody": {
+        "players": {}
+      },
+      "requestBody": {
+        "identifiers": [
+          "A1B2C3D4E5F67890"
+        ]
+      }
+    },
+    {
+      "operationId": "getLeagueItems",
+      "method": "GET",
+      "path": "/public/v1/leagues/nacl/items",
+      "responseBody": {
+        "items": [
+          {
+            "key": "example",
+            "name": "Example",
+            "description": "example",
+            "lasts": "permanent",
+            "imageUrl": null
+          }
+        ],
+        "credentials": [
+          {
+            "key": "example",
+            "label": "example",
+            "idLabel": "example",
+            "hint": "example"
+          }
+        ]
+      }
+    },
+    {
+      "operationId": "submitCompleteMatch",
+      "method": "POST",
+      "path": "/public/v1/stats/matches/complete",
+      "responseBody": {
+        "kind": "match",
+        "id": "9f6d2a70-0000-4000-8000-000000000000",
+        "status": "pending",
+        "created": false,
+        "replayed": false,
+        "problems": [
+          "example"
+        ]
+      },
+      "requestBody": {
+        "format": "heir-match-v1",
+        "startedAt": "2026-10-30T12:00:00.000Z",
+        "maps": [
+          {
+            "players": [
+              {
+                "identity": "A1B2C3D4E5F67890",
+                "stats": {
+                  "kills": 2
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "operationId": "listGamemodes",
+      "method": "GET",
+      "path": "/public/v1/stats/gamemodes",
+      "responseBody": {
+        "gameKey": "example",
+        "identity": null,
+        "gamemodes": [
+          {
+            "id": "9f6d2a70-0000-4000-8000-000000000000",
+            "key": "example",
+            "name": "Example",
+            "builtin": false,
+            "playedBy": "team",
+            "rounds": false,
+            "decidedBy": "winner",
+            "version": 1,
+            "stats": [
+              {
+                "key": "example",
+                "name": "Example",
+                "scope": "player",
+                "direction": "higher",
+                "format": "integer",
+                "gauge": false,
+                "hidden": false
+              }
+            ]
+          }
+        ],
+        "template": {
+          "format": "heir-match-v1",
+          "startedAt": "2026-10-30T12:00:00.000Z",
+          "maps": [
+            {
+              "players": [
+                {
+                  "identity": "A1B2C3D4E5F67890",
+                  "stats": {
+                    "kills": 2
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "operationId": "listStatSchemas",
+      "method": "GET",
+      "path": "/public/v1/stats/schemas",
+      "responseBody": {
+        "game": "example",
+        "liveSessions": 0,
+        "requestsPerMinute": 0,
+        "schemas": [
+          {
+            "schemaRef": "mordhau.skirmish@1",
+            "id": "9f6d2a70-0000-4000-8000-000000000000",
+            "key": "example",
+            "label": "example",
+            "record": "match",
+            "unit": "round",
+            "counters": [
+              {
+                "name": "Example",
+                "required": false
+              }
+            ],
+            "events": [
+              "example"
+            ],
+            "scoreCeiling": null
+          }
+        ]
+      }
+    },
+    {
+      "operationId": "beginMatch",
+      "method": "POST",
+      "path": "/public/v1/stats/matches",
+      "responseBody": {
+        "matchId": "9f6d2a70-0000-4000-8000-000000000000",
+        "created": false,
+        "approval": "automatic"
+      },
+      "requestBody": {
+        "matchId": "9f6d2a70-0000-4000-8000-000000000000",
+        "startedAt": 1793361600000
+      }
+    },
+    {
+      "operationId": "appendUnits",
+      "method": "POST",
+      "path": "/public/v1/stats/matches/9f6d2a70-0000-4000-8000-000000000000/units",
+      "responseBody": {
+        "accepted": 0,
+        "duplicates": 0
+      },
+      "requestBody": {
+        "games": [
+          {
+            "schemaRef": "mordhau.skirmish@1",
+            "gameId": "game-1"
+          }
+        ]
+      }
+    },
+    {
+      "operationId": "heartbeatMatch",
+      "method": "POST",
+      "path": "/public/v1/stats/matches/9f6d2a70-0000-4000-8000-000000000000/heartbeat",
+      "responseBody": {
+        "deadline": 1793361600000
+      },
+      "requestBody": {}
+    },
+    {
+      "operationId": "finalizeMatch",
+      "method": "POST",
+      "path": "/public/v1/stats/matches/9f6d2a70-0000-4000-8000-000000000000/finalize",
+      "responseBody": {
+        "closed": false,
+        "status": "example",
+        "heldForReview": false
+      },
+      "requestBody": {}
+    },
+    {
+      "operationId": "uploadMatch",
+      "method": "POST",
+      "path": "/public/v1/stats/uploads",
+      "responseBody": {
+        "matchId": "9f6d2a70-0000-4000-8000-000000000000",
+        "created": false,
+        "status": "example",
+        "heldForReview": false
+      },
+      "requestBody": {
+        "matchId": "9f6d2a70-0000-4000-8000-000000000000",
+        "startedAt": 1793361600000,
+        "games": [
+          {
+            "schemaRef": "mordhau.skirmish@1",
+            "gameId": "game-1"
+          }
+        ]
+      }
+    }
+  ]
+}

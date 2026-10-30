@@ -1,4 +1,5 @@
-import type {Http, RequestOptions} from "./http.js";
+import {segment, type Http, type RequestOptions} from "./http.js";
+import {HeirInputError} from "./errors.js";
 import type {
   AppendUnitsRequest, AppendUnitsResponse, BeginMatchRequest, BeginMatchResponse, FinalizeMatchResponse, GamemodeCatalog, HeartbeatMatchResponse, HeirMatchFile, MatchEntryReceipt,
   StatSchemaCatalog, UploadMatchRequest, UploadMatchResponse
@@ -16,7 +17,6 @@ export interface WriteOptions extends RequestOptions {
 }
 
 const STATS = "/public/v1/stats";
-const segment = (value: string): string => encodeURIComponent(value);
 
 /**
  * Stat submission: send your game's stats to a League, for any gamemode it plays. Every call needs an API key with
@@ -80,4 +80,7 @@ export class Stats {
 }
 
 /** A fresh idempotency key: a UUID. */
-export const newIdempotencyKey = (): string => globalThis.crypto.randomUUID();
+export const newIdempotencyKey = (): string => {
+  if (typeof globalThis.crypto?.randomUUID !== "function") throw new HeirInputError("This runtime requires crypto.randomUUID(), or an explicit idempotencyKey for tracking writes.");
+  return globalThis.crypto.randomUUID();
+};

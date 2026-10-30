@@ -1,5 +1,5 @@
 {
-  "name": "@heir/sdk",
+  "name": "@heirgg/sdk",
   "version": "0.1.0",
   "description": "Official TypeScript SDK for the Heir public API: League reads, eligibility, inventory and stat submission.",
   "license": "MIT",
@@ -9,9 +9,8 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {"types": "./dist/index.d.ts", "default": "./dist/index.js"},
+      "require": {"types": "./dist/index.d.cts", "default": "./dist/index.cjs"}
     }
   },
   "files": [
@@ -29,6 +28,7 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:package": "npm run build && node scripts/test-package.mjs && node scripts/test-examples.mjs",
     "prepublishOnly": "npm run generate:check && npm run typecheck && npm test && npm run build"
   },
   "repository": {
@@ -56,5 +56,8 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
   }
 }

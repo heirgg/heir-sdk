@@ -7,10 +7,9 @@ import (
 	"errors"
 	"io"
 	"math/rand/v2"
+	"net"
 	"net/http"
 	"net/url"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -33,6 +32,7 @@ type Client struct {
 	cacheEnabled  bool
 	cache         cache
 	userAgent     string
+	configErr     error
 
 	// Replaced by tests.
 	sleep func(ctx context.Context, d time.Duration) error
@@ -75,7 +75,8 @@ func WithoutCache() Option { return func(c *Client) { c.cacheEnabled = false } }
 // WithUserAgent adds to the User-Agent, to say which integration is calling.
 func WithUserAgent(agent string) Option { return func(c *Client) { c.userAgent = agent } }
 
-// NewClient makes a client. Reads need no option at all.
+// NewClient makes a client. Reads need no option at all. Invalid configuration is returned by Validate and by
+// every request before any network activity, preserving the constructor's single return value.
 func NewClient(options ...Option) *Client {
 	c := &Client{
 		baseURL:       DefaultBaseURL,
@@ -97,10 +98,43 @@ func NewClient(options ...Option) *Client {
 		}
 	}
 	for _, option := range options {
+		if option == nil {
+			c.configErr = &ConfigError{Field: "option", Message: "must not be nil"}
+			continue
+		}
 		option(c)
 	}
 	c.Stats = &Stats{client: c}
+	if c.configErr == nil {
+		c.configErr = c.validateConfig()
+	}
 	return c
+}
+
+// Validate reports invalid client configuration. Call it at startup to fail before the first API request.
+func (c *Client) Validate() error { return c.configErr }
+
+func (c *Client) validateConfig() error {
+	u, err := url.Parse(c.baseURL)
+	if err != nil || u.Hostname() == "" || (u.Scheme != "https" && u.Scheme != "http") || u.User != nil || u.RawQuery != "" || u.ForceQuery || strings.Contains(c.baseURL, "#") {
+		return &ConfigError{Field: "baseURL", Message: "must be an absolute HTTP or HTTPS URL without credentials, query, or fragment"}
+	}
+	if c.http == nil {
+		return &ConfigError{Field: "httpClient", Message: "must not be nil"}
+	}
+	if c.maxRetries < 0 {
+		return &ConfigError{Field: "maxRetries", Message: "must be non-negative"}
+	}
+	if c.maxRetryDelay < 0 {
+		return &ConfigError{Field: "maxRetryDelay", Message: "must be non-negative"}
+	}
+	if c.timeout < 0 {
+		return &ConfigError{Field: "timeout", Message: "must be non-negative"}
+	}
+	if strings.ContainsAny(c.apiKey, "\r\n") || strings.ContainsAny(c.userAgent, "\r\n") {
+		return &ConfigError{Field: "headers", Message: "API key and user agent must not contain newlines"}
+	}
+	return nil
 }
 
 // League gives one League's public reads, by vanity name (`heir.gg/nacl`) or Discord server ID.
@@ -137,7 +171,8 @@ func DryRun() RequestOption { return func(o *requestOptions) { o.dryRun = true }
 // NoCache asks the API even when a fresh cached answer exists.
 func NoCache() RequestOption { return func(o *requestOptions) { o.noCache = true } }
 
-// WithHeader adds a header to one call.
+// WithHeader adds a header to one call. Calls with custom headers bypass the cache so credentials and other
+// response-varying values cannot reuse another request's answer.
 func WithHeader(name, value string) RequestOption {
 	return func(o *requestOptions) {
 		if o.header == nil {
@@ -160,12 +195,19 @@ type call struct {
 	cacheable bool
 }
 
-var maxAgePattern = regexp.MustCompile(`(?i)\bmax-age=(\d+)`)
-
 // do sends a call and decodes its answer into out, retrying and caching as the client is configured to.
 func (c *Client) do(ctx context.Context, call call, out any, options ...RequestOption) error {
+	if err := c.Validate(); err != nil {
+		return err
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	var opts requestOptions
 	for _, option := range options {
+		if option == nil {
+			return &ConfigError{Field: "requestOption", Message: "must not be nil"}
+		}
 		option(&opts)
 	}
 	if opts.dryRun {
@@ -178,7 +220,7 @@ func (c *Client) do(ctx context.Context, call call, out any, options ...RequestO
 	if len(call.query) > 0 {
 		target += "?" + call.query.Encode()
 	}
-	useCache := call.cacheable && c.cacheEnabled && !opts.noCache
+	useCache := call.cacheable && c.cacheEnabled && !opts.noCache && len(opts.header) == 0
 	cacheKey := "anon " + target
 	if c.apiKey != "" {
 		cacheKey = "key " + target
@@ -225,7 +267,11 @@ func (c *Client) do(ctx context.Context, call call, out any, options ...RequestO
 		if err != nil {
 			var connErr *ConnectionError
 			if errors.As(err, &connErr) && !connErr.Timeout && call.idempotent && attempt < c.maxRetries {
-				if err := c.sleep(ctx, backoff(attempt)); err != nil {
+				delay := backoff(attempt)
+				if delay > c.maxRetryDelay {
+					return err
+				}
+				if err := c.sleep(ctx, delay); err != nil {
 					return err
 				}
 				continue
@@ -233,24 +279,26 @@ func (c *Client) do(ctx context.Context, call call, out any, options ...RequestO
 			return err
 		}
 		if response.StatusCode == http.StatusNotModified && cached != nil {
-			c.cache.put(cacheKey, &cacheEntry{etag: cached.etag, body: cached.body, freshUntil: c.freshUntil(response.Header)})
+			c.store(cacheKey, revalidatedHeader(cached.header, response.Header), cached.body)
 			return json.Unmarshal(cached.body, out)
 		}
 		if response.StatusCode >= 200 && response.StatusCode < 300 {
+			if out != nil && response.StatusCode != http.StatusNoContent {
+				if err := json.Unmarshal(body, out); err != nil {
+					return err
+				}
+			}
 			if useCache {
 				c.store(cacheKey, response.Header, body)
 			}
-			if out == nil || response.StatusCode == http.StatusNoContent {
-				return nil
-			}
-			return json.Unmarshal(body, out)
+			return nil
 		}
 		apiErr := newAPIError(response, body)
 		retryable := apiErr.StatusCode == 429 || apiErr.StatusCode == 503 ||
 			(call.idempotent && (apiErr.StatusCode == 500 || apiErr.StatusCode == 502 || apiErr.StatusCode == 504))
 		if retryable && attempt < c.maxRetries {
 			delay := backoff(attempt)
-			if apiErr.RetryAfter > 0 || response.Header.Get("Retry-After") != "" {
+			if apiErr.retryAfterValid {
 				delay = apiErr.RetryAfter
 			}
 			if delay <= c.maxRetryDelay {
@@ -284,7 +332,10 @@ func (c *Client) send(ctx context.Context, method, target string, header http.He
 	if err != nil {
 		return nil, nil, c.connectionError(ctx, attemptCtx, target, err)
 	}
-	defer response.Body.Close()
+	defer func() {
+		// The response is read in full below; a cleanup error must not trigger another write.
+		_ = response.Body.Close()
+	}()
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, nil, c.connectionError(ctx, attemptCtx, target, err)
@@ -297,38 +348,16 @@ func (c *Client) connectionError(ctx, attemptCtx context.Context, target string,
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	timedOut := attemptCtx.Err() != nil
+	var timeoutErr net.Error
+	timedOut := attemptCtx.Err() != nil || errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &timeoutErr) && timeoutErr.Timeout())
 	return &ConnectionError{URL: target, Err: err, Timeout: timedOut}
-}
-
-func (c *Client) store(key string, header http.Header, body []byte) {
-	control := header.Get("Cache-Control")
-	if strings.Contains(strings.ToLower(control), "no-store") {
-		return
-	}
-	etag := header.Get("ETag")
-	until := c.freshUntil(header)
-	if etag == "" && until.IsZero() {
-		return
-	}
-	c.cache.put(key, &cacheEntry{etag: etag, body: body, freshUntil: until})
-}
-
-// freshUntil is when an answer stops being fresh, from its Cache-Control max-age; the zero time when it has none.
-func (c *Client) freshUntil(header http.Header) time.Time {
-	match := maxAgePattern.FindStringSubmatch(header.Get("Cache-Control"))
-	if match == nil {
-		return time.Time{}
-	}
-	seconds, _ := strconv.Atoi(match[1])
-	return c.now().Add(time.Duration(seconds) * time.Second)
 }
 
 // backoff is 500 ms, 1 s, 2 s, ... with jitter, capped at 8 s.
 func backoff(attempt int) time.Duration {
-	base := 500 * time.Millisecond << uint(attempt)
-	if base > 8*time.Second {
-		base = 8 * time.Second
+	base := 8 * time.Second
+	if attempt < 4 {
+		base = 500 * time.Millisecond << uint(attempt)
 	}
-	return time.Duration(float64(base) * (0.75 + rand.Float64()*0.5))
+	return min(8*time.Second, time.Duration(float64(base)*(0.75+rand.Float64()*0.5)))
 }

@@ -1,0 +1,21 @@
+name: Feature request
+description: Describe an integration need or a public API improvement.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Integration need
+      description: Explain the task you cannot complete and the affected SDK languages.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the public API you would like and any compatibility constraints.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

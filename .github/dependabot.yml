@@ -1,0 +1,30 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: npm
+    directory: /typescript
+    schedule:
+      interval: weekly
+    groups:
+      development:
+        update-types: [minor, patch]
+  - package-ecosystem: pip
+    directory: /python
+    schedule:
+      interval: weekly
+    groups:
+      python:
+        update-types: [minor, patch]
+  - package-ecosystem: gomod
+    directory: /go/internal/gen
+    schedule:
+      interval: weekly
+    groups:
+      codegen:
+        update-types: [minor, patch]

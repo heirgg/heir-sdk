@@ -1,4 +1,4 @@
-import type {Http, RequestOptions} from "./http.js";
+import {segment, type Http, type RequestOptions} from "./http.js";
 import {Page} from "./pagination.js";
 import type {
   EligibilityRequest, EligibilityResponse, Fixture, FixtureResponse, FixturesQuery, FixturesResponse, InventoryBatchRequest, InventoryBatchResponse, InventoryQuery,
@@ -6,8 +6,6 @@ import type {
   PlayerMatch, PlayerMatchesQuery, PlayerMatchesResponse, PlayerQuery, PlayerResponse, PlayerStatsResponse, Roster, RosterQuery, RosterResponse, RostersQuery, RostersResponse,
   Standing, StandingsQuery, StandingsResponse
 } from "./types.js";
-
-const segment = (value: string): string => encodeURIComponent(value);
 
 /**
  * One League's public reads: players, ratings, Rosters, schedules, results and shop inventory. Reads need no key and
@@ -38,12 +36,12 @@ export class League {
 
   /** The Player's rated results and MMR changes, newest first. */
   playerMatches(credential: string, identifier: string, query: PlayerMatchesQuery = {}, options?: RequestOptions): Promise<Page<PlayerMatch, PlayerMatchesResponse>> {
-    return this.page(`/players/${segment(credential)}/${segment(identifier)}/matches`, query, body => body.matches, next => this.playerMatches(credential, identifier, next, options), options);
+    return this.page(`/players/${segment(credential)}/${segment(identifier)}/matches`, query, body => body.matches, (next, saved) => this.playerMatches(credential, identifier, next, saved), options);
   }
 
   /** Active Rosters with their Team tags, logos, captain and Team MMR. */
   rosters(query: RostersQuery = {}, options?: RequestOptions): Promise<Page<Roster, RostersResponse>> {
-    return this.page("/rosters", query, body => body.rosters, next => this.rosters(next, options), options);
+    return this.page("/rosters", query, body => body.rosters, (next, saved) => this.rosters(next, saved), options);
   }
 
   /** One active Roster and its seated Members. */
@@ -53,17 +51,17 @@ export class League {
 
   /** Current Members ordered by MMR, Heir Rating, wins or losses. A five-minute snapshot; `body.snapshotAt` says which. */
   leaderboard(query: LeaderboardQuery = {}, options?: RequestOptions): Promise<Page<LeaderboardEntry, LeaderboardResponse>> {
-    return this.page("/leaderboards", query, body => body.entries, next => this.leaderboard(next, options), options);
+    return this.page("/leaderboards", query, body => body.entries, (next, saved) => this.leaderboard(next, saved), options);
   }
 
   /** Current-season Roster standings in competition order. */
   standings(query: StandingsQuery = {}, options?: RequestOptions): Promise<Page<Standing, StandingsResponse>> {
-    return this.page("/standings", query, body => body.standings, next => this.standings(next, options), options);
+    return this.page("/standings", query, body => body.standings, (next, saved) => this.standings(next, saved), options);
   }
 
   /** Fixtures in scheduled-time order: scheduled by default, or played or cancelled with `status`. */
   fixtures(query: FixturesQuery = {}, options?: RequestOptions): Promise<Page<Fixture, FixturesResponse>> {
-    return this.page("/fixtures", query, body => body.fixtures, next => this.fixtures(next, options), options);
+    return this.page("/fixtures", query, body => body.fixtures, (next, saved) => this.fixtures(next, saved), options);
   }
 
   /** One fixture: its Rosters, time, status, stream link and recorded result. */
@@ -114,13 +112,15 @@ export class League {
   }
 
   private async page<Item, Body extends {page: number; pageSize: number; hasMore: boolean; nextToken: string | null}, Q extends {page?: number; pageSize?: number; nextToken?: string}>(
-    path: string, query: Q, items: (body: Body) => readonly Item[], fetchNext: (query: Q) => Promise<Page<Item, Body>>, options?: RequestOptions
+    path: string, query: Q, items: (body: Body) => readonly Item[], fetchNext: (query: Q, options: RequestOptions) => Promise<Page<Item, Body>>, options?: RequestOptions
   ): Promise<Page<Item, Body>> {
-    const body = await this.get<Body>(path, query as Record<string, string | number | undefined>, options);
+    const savedQuery = {...query};
+    const savedOptions = {...options, ...(options?.headers ? {headers: {...options.headers}} : {})};
+    const body = await this.get<Body>(path, savedQuery as Record<string, string | number | undefined>, savedOptions);
     // A continuation keeps the filters and page size; `page` cannot be combined with a token.
     return new Page(body, items(body), nextToken => {
-      const {page: _page, ...rest} = query;
-      return fetchNext({...rest, nextToken} as Q);
+      const {page: _page, ...rest} = savedQuery;
+      return fetchNext({...rest, nextToken} as Q, savedOptions);
     });
   }
 }

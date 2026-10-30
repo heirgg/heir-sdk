@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from pydantic import BaseModel
 
-from ._transport import Call, RequestOptions
+from ._errors import HeirInputError
+from ._transport import Call, RequestOptions, encode, validate_request
 from .models import (
     AppendUnitsRequest,
     AppendUnitsResponse,
@@ -19,6 +20,7 @@ from .models import (
     HeartbeatMatchResponse,
     HeirMatchFile,
     MatchEntryReceipt,
+    MatchTemplate,
     StatSchemaCatalog,
     UploadMatchRequest,
     UploadMatchResponse,
@@ -38,12 +40,20 @@ def new_idempotency_key() -> str:
 
 def _as(model: type[ModelT], value: ModelT | Mapping[str, Any]) -> ModelT:
     """A request as its model, whether it came as one or as a dict in either spelling of its fields."""
-    return value if isinstance(value, model) else model.model_validate(value)
+    return value if isinstance(value, model) else validate_request(model, value)
+
+
+def _match_file(value: HeirMatchFile | MatchTemplate | Mapping[str, Any]) -> HeirMatchFile:
+    if isinstance(value, MatchTemplate):
+        return validate_request(HeirMatchFile, encode(value))
+    return _as(HeirMatchFile, value)
 
 
 def _match_path(match_id: str, tail: str) -> str:
     from urllib.parse import quote
 
+    if not isinstance(match_id, str) or not match_id or match_id in {".", ".."}:
+        raise HeirInputError("match_id must be a non-empty string other than '.' or '..'")
     return f"{_BASE}/matches/{quote(match_id, safe='')}{tail}"
 
 
@@ -56,6 +66,14 @@ class _StatsCalls:
         return Call("POST", _BASE + "/matches/complete", body=file, idempotent=file.reference is not None)
 
     def _write(self, path: str, body: Any, idempotency_key: str | None, dry_run: bool) -> Call:
+        if idempotency_key is not None and (
+            not isinstance(idempotency_key, str)
+            or not idempotency_key.strip()
+            or not idempotency_key.isascii()
+            or "\r" in idempotency_key
+            or "\n" in idempotency_key
+        ):
+            raise HeirInputError("idempotency_key must be a non-empty ASCII header value")
         return Call(
             "POST",
             path,
@@ -94,14 +112,14 @@ class Stats(_StatsCalls):
         return self._client._send(self._read("/schemas"), StatSchemaCatalog, options)
 
     def submit_match(
-        self, file: HeirMatchFile | Mapping[str, Any], *, options: RequestOptions | None = None
+        self, file: HeirMatchFile | MatchTemplate | Mapping[str, Any], *, options: RequestOptions | None = None
     ) -> MatchEntryReceipt:
         """One finished match as a heir-match-v1 document, for any gamemode.
 
         Set ``reference`` to your own id for the match: a repeat with the same contents is a no-op, and the client
         may then safely send it again after a connection failure.
         """
-        return self._client._send(self._submit(_as(HeirMatchFile, file)), MatchEntryReceipt, options)
+        return self._client._send(self._submit(_match_file(file)), MatchEntryReceipt, options)
 
     def begin_match(
         self,
@@ -194,9 +212,9 @@ class AsyncStats(_StatsCalls):
         return await self._client._send(self._read("/schemas"), StatSchemaCatalog, options)
 
     async def submit_match(
-        self, file: HeirMatchFile | Mapping[str, Any], *, options: RequestOptions | None = None
+        self, file: HeirMatchFile | MatchTemplate | Mapping[str, Any], *, options: RequestOptions | None = None
     ) -> MatchEntryReceipt:
-        return await self._client._send(self._submit(_as(HeirMatchFile, file)), MatchEntryReceipt, options)
+        return await self._client._send(self._submit(_match_file(file)), MatchEntryReceipt, options)
 
     async def begin_match(
         self,

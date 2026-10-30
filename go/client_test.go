@@ -71,8 +71,8 @@ type harness struct {
 func newHarness(steps []step, options ...Option) *harness {
 	h := &harness{api: &fakeAPI{steps: steps}, clock: time.Date(2026, 10, 29, 12, 0, 0, 0, time.UTC)}
 	h.Client = NewClient(append([]Option{WithHTTPClient(&http.Client{Transport: h.api})}, options...)...)
-	h.Client.sleep = func(ctx context.Context, d time.Duration) error { h.sleeps = append(h.sleeps, d); return nil }
-	h.Client.now = func() time.Time { return h.clock }
+	h.sleep = func(ctx context.Context, d time.Duration) error { h.sleeps = append(h.sleeps, d); return nil }
+	h.now = func() time.Time { return h.clock }
 	return h
 }
 
@@ -270,7 +270,8 @@ func TestCacheServesFreshAnswersThenRevalidates(t *testing.T) {
 		}
 		return len(answer.Items)
 	}
-	if read() != 1 || read() != 1 || h.api.calls() != 1 {
+	first, cached := read(), read()
+	if first != 1 || cached != 1 || h.api.calls() != 1 {
 		t.Fatalf("a fresh answer was not served from memory: calls=%d", h.api.calls())
 	}
 	h.clock = h.clock.Add(61 * time.Second)

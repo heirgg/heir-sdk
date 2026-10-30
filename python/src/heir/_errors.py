@@ -1,9 +1,10 @@
-"""Everything the SDK raises extends HeirError, so one `except` catches it all."""
+"""Operational errors raised by the SDK, with one common base."""
 
 from __future__ import annotations
 
 import contextlib
 import json
+import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -13,7 +14,19 @@ import httpx
 
 
 class HeirError(Exception):
-    """The base of every error this SDK raises."""
+    """The base of SDK input, protocol, API and transport errors."""
+
+
+class HeirInputError(HeirError, ValueError):
+    """Client configuration or a request could not be encoded. ``__cause__`` preserves validation details."""
+
+
+class HeirProtocolError(HeirError):
+    """A successful HTTP response was not a valid API answer."""
+
+    def __init__(self, message: str, body: bytes) -> None:
+        super().__init__(message)
+        self.body = body
 
 
 @dataclass(frozen=True)
@@ -74,12 +87,14 @@ class HeirAPIError(HeirError):
             if isinstance(body, dict) and isinstance(body.get("error"), str) and isinstance(body.get("message"), str)
             else None
         )
+        raw_issues = envelope.get("issues") if envelope else None
         issues = (
             [
                 APIIssue(path=str(i.get("path", "")), message=str(i.get("message", "")))
-                for i in envelope.get("issues") or []
+                for i in raw_issues
+                if isinstance(i, dict)
             ]
-            if envelope
+            if isinstance(raw_issues, list)
             else []
         )
         fallback = f"The API answered {response.status_code} {response.reason_phrase}".rstrip() + "."
@@ -113,7 +128,8 @@ def parse_retry_after(header: str | None) -> float | None:
     if not header:
         return None
     try:
-        return max(0.0, float(header))
+        seconds = float(header)
+        return max(0.0, seconds) if math.isfinite(seconds) else None
     except ValueError:
         pass
     try:
