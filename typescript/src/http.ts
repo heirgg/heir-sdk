@@ -276,7 +276,11 @@ const baseUrl = (value: string): string => {
     if (typeof value !== "string" || value.includes("?") || value.includes("#")) throw new Error("Expected a URL without query or fragment delimiters.");
     const url = new URL(value);
     if (!["https:", "http:"].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error("Expected an HTTP(S) URL without credentials, query, or fragment.");
-    return url.toString().replace(/\/+$/, "");
+    // Scan once: an unanchored suffix regex retries long runs of interior slashes.
+    const normalized = url.toString();
+    let end = normalized.length;
+    while (end > 0 && normalized[end - 1] === "/") end--;
+    return normalized.slice(0, end);
   } catch (cause) { throw new HeirInputError("baseUrl must be an HTTP(S) API URL without credentials, query, or fragment.", {cause}); }
 };
 
