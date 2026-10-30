@@ -33,6 +33,11 @@ updates:
     groups:
       python:
         update-types: [minor, patch]
+    ignore:
+      # datamodel-code-generator 0.87 requires isort<9. Remove this hold
+      # when the generator supports newer isort; see python/README.md.
+      - dependency-name: isort
+        versions: [">=9"]
   - package-ecosystem: gomod
     directory: /go/internal/gen
     schedule:
