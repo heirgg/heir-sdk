@@ -452,11 +452,11 @@ func TestMMRFieldsAreWholeNumbers(t *testing.T) {
 	if err := json.Unmarshal([]byte(`{"sourceKey":"official:x","matchId":null,"playedAt":"2026-10-30T12:00:00.000Z","mmrBefore":1500,"mmrAfter":1512,"mmrDelta":12}`), &history); err != nil {
 		t.Fatal(err)
 	}
-	// Each assignment compiles only while the field is an integer.
-	var delta, before, after int64 = history.MMRDelta, history.MMRBefore, history.MMRAfter
-	var standing int64 = Standing{}.TeamMMR
-	var mmr int64 = PlayerMMR{}.Value
-	var roster *int64 = Roster{}.TeamMMR
+	// Each call compiles only while the field is an integer.
+	wholeNumber := func(value int64) int64 { return value }
+	optionalWholeNumber := func(value *int64) *int64 { return value }
+	delta, before, after := wholeNumber(history.MMRDelta), wholeNumber(history.MMRBefore), wholeNumber(history.MMRAfter)
+	standing, mmr, roster := wholeNumber(Standing{}.TeamMMR), wholeNumber(PlayerMMR{}.Value), optionalWholeNumber(Roster{}.TeamMMR)
 	if delta != 12 || before != 1500 || after != 1512 || standing != 0 || mmr != 0 || roster != nil {
 		t.Errorf("history=%+v", history)
 	}
