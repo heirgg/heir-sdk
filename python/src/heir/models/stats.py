@@ -7,36 +7,6 @@ from heir.models._base import HeirModel
 from pydantic import AwareDatetime, ConfigDict, Field
 
 
-class HeirMatchGamemode(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    id: str | None = None
-    key: str | None = None
-    name: str | None = None
-    version: int | None = None
-
-
-class HeirMatchPlayer(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    identity: str | None = None
-    member: str | None = None
-    name: str | None = None
-    side: str | None = None
-    stats: dict[str, float | None] | None = {}
-
-
-class HeirMatchRound(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    index: int
-    winner: str | None = None
-    players: list[HeirMatchPlayer]
-
-
 class MatchEntryReceipt(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
@@ -49,83 +19,152 @@ class MatchEntryReceipt(HeirModel):
     problems: list[str]
 
 
-class BeginMatchRequest(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    match_id: str = Field(..., alias="matchId")
-    started_at: int = Field(..., alias="startedAt")
-
-
-class RoundUnit(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    index: int
-    winner_side: int | None = Field(None, alias="winnerSide")
-    players: list[dict[str, Any]]
-    kills: list[dict[str, Any]] | None = None
-
-
 class BeginMatchResponse(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    match_id: str = Field(..., alias="matchId")
-    created: bool
-    approval: Literal["automatic", "manual"]
-    replayed: bool | None = None
-    dry_run: bool | None = Field(None, alias="dryRun")
+    match_id: str = Field(
+        ...,
+        alias="matchId",
+        description="Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'.",
+    )
+    created: bool = Field(
+        ...,
+        description="False when the match was already begun; beginning it again takes no second live session.",
+    )
+    approval: Literal["automatic", "manual"] = Field(
+        ...,
+        description="Whether the match will count when it is finalized (`automatic`) or wait for an Organizer (`manual`).",
+    )
+    replayed: bool | None = Field(
+        None,
+        description="True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run.",
+    )
+    dry_run: bool | None = Field(
+        None,
+        alias="dryRun",
+        description="Present on a dry run: this is what would have happened, and nothing was stored.",
+    )
 
 
 class AppendUnitsResponse(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    accepted: int
-    duplicates: int
-    replayed: bool | None = None
-    dry_run: bool | None = Field(None, alias="dryRun")
+    accepted: int = Field(..., description="Units stored by this request.")
+    duplicates: int = Field(
+        ...,
+        description="Units already accepted with the same data, which changed nothing.",
+    )
+    replayed: bool | None = Field(
+        None,
+        description="True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run.",
+    )
+    dry_run: bool | None = Field(
+        None,
+        alias="dryRun",
+        description="Present on a dry run: this is what would have happened, and nothing was stored.",
+    )
 
 
 class HeartbeatMatchResponse(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    deadline: int
-    replayed: bool | None = None
-    dry_run: bool | None = Field(None, alias="dryRun")
+    deadline: int = Field(
+        ...,
+        description="When the match closes if nothing more is heard, in milliseconds since the Unix epoch.",
+    )
+    replayed: bool | None = Field(
+        None,
+        description="True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run.",
+    )
+    dry_run: bool | None = Field(
+        None,
+        alias="dryRun",
+        description="Present on a dry run: this is what would have happened, and nothing was stored.",
+    )
 
 
 class FinalizeMatchResponse(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    closed: bool
-    status: str
-    held_for_review: bool = Field(..., alias="heldForReview")
-    replayed: bool | None = None
-    dry_run: bool | None = Field(None, alias="dryRun")
+    closed: bool = Field(..., description="False when the match was already closed.")
+    status: str = Field(
+        ...,
+        description="The match's state: `approved` (it counts), `pending` (it waits for an Organizer) or `voided`.",
+    )
+    held_for_review: bool = Field(
+        ...,
+        alias="heldForReview",
+        description="True when this request held the match for an Organizer's review.",
+    )
+    replayed: bool | None = Field(
+        None,
+        description="True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run.",
+    )
+    dry_run: bool | None = Field(
+        None,
+        alias="dryRun",
+        description="Present on a dry run: this is what would have happened, and nothing was stored.",
+    )
 
 
 class UploadMatchResponse(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    match_id: str = Field(..., alias="matchId")
-    created: bool
-    status: str
-    held_for_review: bool = Field(..., alias="heldForReview")
-    replayed: bool | None = None
-    dry_run: bool | None = Field(None, alias="dryRun")
+    match_id: str = Field(
+        ...,
+        alias="matchId",
+        description="Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'.",
+    )
+    created: bool = Field(
+        ..., description="False when this same upload was already stored."
+    )
+    status: str = Field(
+        ...,
+        description="The match's state: `approved` (it counts), `pending` (it waits for an Organizer) or `voided`.",
+    )
+    held_for_review: bool = Field(
+        ...,
+        alias="heldForReview",
+        description="True when this upload held the match for an Organizer's review.",
+    )
+    replayed: bool | None = Field(
+        None,
+        description="True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run.",
+    )
+    dry_run: bool | None = Field(
+        None,
+        alias="dryRun",
+        description="Present on a dry run: this is what would have happened, and nothing was stored.",
+    )
+
+
+class BeginMatchRequest(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    match_id: str = Field(
+        ...,
+        alias="matchId",
+        description="Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'.",
+    )
+    started_at: int = Field(
+        ...,
+        alias="startedAt",
+        description="When the match started, in milliseconds since the Unix epoch.",
+    )
 
 
 class FinalScore(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    side0: float
-    side1: float
+    side0: int | float
+    side1: int | float
 
 
 class GameSegment(HeirModel):
@@ -133,8 +172,28 @@ class GameSegment(HeirModel):
         populate_by_name=True,
     )
     side: int
-    seconds: float
-    points: float
+    seconds: int | float
+    points: int | float
+
+
+class RoundUnit(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    index: int = Field(
+        ...,
+        description="The round's number within its game, from 0. Rounds may be sent in any order.",
+    )
+    winner_side: int | None = Field(
+        None,
+        alias="winnerSide",
+        description="The side that won the round; null if nobody did.",
+    )
+    players: list[dict[str, Any]]
+    kills: list[dict[str, Any]] | None = Field(
+        None,
+        description="Kill events, when the gamemode takes them. Heir derives clutches and Round Impact from these.",
+    )
 
 
 class GamemodeStat(HeirModel):
@@ -148,8 +207,8 @@ class GamemodeStat(HeirModel):
     format: Literal["integer", "decimal"]
     gauge: bool
     hidden: bool
-    min: float | None = None
-    max: float | None = None
+    min: int | float | None = None
+    max: int | float | None = None
     added: bool | None = None
 
 
@@ -160,6 +219,67 @@ class GamemodeIdentity(HeirModel):
     credential: str
     label: str
     pattern: str
+
+
+class HeirMatchGamemode(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    id: str | None = None
+    key: str | None = None
+    name: str | None = None
+    version: int | None = None
+
+
+class HeirMatchPlacement(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    identity: str | None = None
+    member: str | None = None
+    side: str | None = Field(
+        None,
+        description="A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two.",
+    )
+    place: int | None
+
+
+class HeirMatchPlayer(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    identity: str | None = None
+    member: str | None = None
+    name: str | None = None
+    side: str | None = Field(
+        None,
+        description="A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two.",
+    )
+    stats: dict[str, int | float | None] | None = {}
+
+
+class HeirMatchRound(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    index: int
+    winner: str | None = Field(
+        None,
+        description="A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two.",
+    )
+    players: list[HeirMatchPlayer]
+
+
+class HeirMatchScore(HeirModel):
+    model_config = ConfigDict(
+        extra="allow",
+        populate_by_name=True,
+    )
+    __annotations__ = {
+        "__pydantic_extra__": Dict[str, int],
+    }
+    a: int
+    b: int
 
 
 class MatchTemplateRoster(HeirModel):
@@ -178,36 +298,51 @@ class HeirMatchRoster(HeirModel):
     name: str | None = None
 
 
-class HeirMatchPlacement(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    identity: str | None = None
-    member: str | None = None
-    side: str | None = None
-    place: int | None
-
-
-class HeirMatchScore(HeirModel):
-    model_config = ConfigDict(
-        extra="allow",
-        populate_by_name=True,
-    )
-    __annotations__ = {
-        "__pydantic_extra__": Dict[str, int],
-    }
-    a: int
-    b: int
-
-
 class StatCounter(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
     name: str
     required: bool
-    signed: bool | None = None
-    whole: bool | None = None
+    signed: bool | None = Field(
+        None, description="Present when the counter may be below 0."
+    )
+    whole: bool | None = Field(
+        None, description="Present when the counter takes whole numbers only."
+    )
+
+
+class GameResult(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    winner_side: int | None = Field(..., alias="winnerSide")
+    final_score: FinalScore | None = Field(None, alias="finalScore")
+    ended_at: int | None = Field(
+        None,
+        alias="endedAt",
+        description="When the game ended, in milliseconds since the Unix epoch.",
+    )
+    attacking_side: int | None = Field(None, alias="attackingSide")
+    players: list[dict[str, Any]] | None = Field(
+        None, description="Player lines, for a gamemode submitted as a whole game."
+    )
+    segments: list[GameSegment] | None = None
+
+
+class Gamemode(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    id: str
+    key: str
+    name: str
+    builtin: bool
+    played_by: Literal["team", "individual"] = Field(..., alias="playedBy")
+    rounds: bool
+    decided_by: Literal["winner", "placement", "none"] = Field(..., alias="decidedBy")
+    version: int
+    stats: list[GamemodeStat]
 
 
 class HeirMatchMap(HeirModel):
@@ -227,58 +362,6 @@ class HeirMatchMap(HeirModel):
     rounds: list[HeirMatchRound] | None = None
 
 
-class StatSchema(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    schema_ref: str = Field(..., alias="schemaRef")
-    id: str
-    key: str
-    label: str
-    record: Literal["match"]
-    unit: Literal["round", "game"]
-    counters: list[StatCounter]
-    events: list[str]
-    score_ceiling: float | None = Field(..., alias="scoreCeiling")
-
-
-class StatSchemaCatalog(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    game: str
-    live_sessions: int = Field(..., alias="liveSessions")
-    requests_per_minute: int = Field(..., alias="requestsPerMinute")
-    schemas: list[StatSchema]
-
-
-class GameResult(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    winner_side: int | None = Field(..., alias="winnerSide")
-    final_score: FinalScore | None = Field(None, alias="finalScore")
-    ended_at: int | None = Field(None, alias="endedAt")
-    attacking_side: int | None = Field(None, alias="attackingSide")
-    players: list[dict[str, Any]] | None = None
-    segments: list[GameSegment] | None = None
-
-
-class Gamemode(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    id: str
-    key: str
-    name: str
-    builtin: bool
-    played_by: Literal["team", "individual"] = Field(..., alias="playedBy")
-    rounds: bool
-    decided_by: Literal["winner", "placement", "none"] = Field(..., alias="decidedBy")
-    version: int
-    stats: list[GamemodeStat]
-
-
 class MatchTemplateRosters(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
@@ -293,6 +376,34 @@ class HeirMatchRosters(HeirModel):
     )
     a: HeirMatchRoster
     b: HeirMatchRoster
+
+
+class StatSchema(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    schema_ref: str = Field(
+        ..., alias="schemaRef", description="Send this as a game's `schemaRef`."
+    )
+    id: str
+    key: str = Field(..., description="The gamemode's key.")
+    label: str
+    record: Literal["match"]
+    unit: Literal["round", "game"] = Field(
+        ...,
+        description="What one unit is: a round, or the whole game once it has ended.",
+    )
+    counters: list[StatCounter] = Field(
+        ..., description="Every counter a Player line may carry."
+    )
+    events: list[str] = Field(
+        ..., description="The kinds of event a round may carry, such as `kill`."
+    )
+    score_ceiling: int | float | None = Field(
+        ...,
+        alias="scoreCeiling",
+        description="The score that takes a map, or null when there is none.",
+    )
 
 
 class HeirMatchFile(HeirModel):
@@ -311,32 +422,53 @@ class HeirMatchFile(HeirModel):
     note: str | None = None
 
 
+class StatSchemaCatalog(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    game: str = Field(..., description="The League's game.")
+    live_sessions: int = Field(
+        ...,
+        alias="liveSessions",
+        description="How many tracked matches the League's plan allows open at once.",
+    )
+    requests_per_minute: int = Field(
+        ...,
+        alias="requestsPerMinute",
+        description="How many requests this key may make a minute.",
+    )
+    schemas: list[StatSchema] = Field(
+        ..., description="The gamemode schemas this key may track a match under."
+    )
+
+
 class GameSubmission(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    schema_ref: str = Field(..., alias="schemaRef")
-    game_id: str = Field(..., alias="gameId")
+    schema_ref: str = Field(
+        ...,
+        alias="schemaRef",
+        description="The gamemode schema this game follows, as `<schema id>@<version>`, for example `mordhau.skirmish@1`.",
+    )
+    game_id: str = Field(
+        ...,
+        alias="gameId",
+        description="Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'.",
+    )
     map: str | None = None
-    started_at: int | None = Field(None, alias="startedAt")
-    rounds: list[RoundUnit] | None = None
-    result: GameResult | None = None
-
-
-class AppendUnitsRequest(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
+    started_at: int | None = Field(
+        None,
+        alias="startedAt",
+        description="When the game started, in milliseconds since the Unix epoch.",
     )
-    games: list[GameSubmission]
-
-
-class UploadMatchRequest(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
+    rounds: list[RoundUnit] | None = Field(
+        None, description="Round units, for a gamemode submitted round by round."
     )
-    match_id: str = Field(..., alias="matchId")
-    started_at: int = Field(..., alias="startedAt")
-    games: list[GameSubmission]
+    result: GameResult | None = Field(
+        None,
+        description="Ends the game. For a gamemode submitted as a whole game, this is the unit.",
+    )
 
 
 class MatchTemplate(HeirModel):
@@ -363,3 +495,27 @@ class GamemodeCatalog(HeirModel):
     identity: GamemodeIdentity | None
     gamemodes: list[Gamemode]
     template: MatchTemplate
+
+
+class AppendUnitsRequest(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    games: list[GameSubmission]
+
+
+class UploadMatchRequest(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    match_id: str = Field(
+        ...,
+        alias="matchId",
+        description="Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'.",
+    )
+    started_at: int = Field(
+        ...,
+        alias="startedAt",
+        description="When the match started, in milliseconds since the Unix epoch.",
+    )
+    games: list[GameSubmission]

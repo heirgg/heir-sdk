@@ -29,6 +29,8 @@ inventory, err := nacl.Inventory(ctx, "mordhau", "A1B2C3D4E5F67890", nil)
 config, err := nacl.Config(ctx)
 ```
 
+`config.Recognition` is `heir.LeagueRecognitionVerified` or `heir.LeagueRecognitionOfficial` when Heir has marked the League, and nil otherwise. Player reads, lookups and eligibility verdicts carry `CanonicalIdentifier`, the identifier in its credential's canonical form; join on it rather than on the identifier as you sent it.
+
 A nullable field is a pointer: `answer.Player` is nil for an identity Heir does not know. Cacheable answers are retained for their remaining freshness period, accounting for upstream `Age` and `Date`, and revalidated with `ETag` after that. `no-cache` responses are revalidated each time; `no-store` and `Vary` responses are not retained. Calls with any `WithHeader` option bypass the cache, so custom credentials cannot reuse another request's answer. `heir.WithoutCache()` on the client, or `heir.NoCache()` on one call, always asks. The cache keeps up to 1,000 entries and evicts the least recently used entry when full.
 
 ## Use a developer key
@@ -172,6 +174,6 @@ golangci-lint run ./...
 govulncheck ./...
 ```
 
-`types_public.gen.go` and `types_stats.gen.go` are written from `../spec` by `internal/gen`, which uses oapi-codegen for models and first names the document's inline shapes; CI fails when they are out of date.
+`types_public.gen.go` and `types_stats.gen.go` are written from `../spec` by `internal/gen`, which uses oapi-codegen for models and first names the document's inline bodies and shapes from `../spec/type-names.json`; CI fails when they are out of date.
 
 `contracts_test.go` consumes `../tests/contracts.json` to check all 24 API operations against the same request and response fixtures as the other SDKs. The runtime module supports Go 1.23; the separate generator module requires Go 1.26 or newer. See [generator dependencies](internal/gen/README.md) for the current YAML compatibility constraints and upgrade checks.

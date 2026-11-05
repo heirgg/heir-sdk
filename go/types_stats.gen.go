@@ -261,10 +261,17 @@ type AppendUnitsRequest struct {
 
 // AppendUnitsResponse defines model for AppendUnitsResponse.
 type AppendUnitsResponse struct {
-	Accepted   int64 `json:"accepted"`
-	DryRun     *bool `json:"dryRun,omitempty"`
+	// Accepted Units stored by this request.
+	Accepted int64 `json:"accepted"`
+
+	// DryRun Present on a dry run: this is what would have happened, and nothing was stored.
+	DryRun *bool `json:"dryRun,omitempty"`
+
+	// Duplicates Units already accepted with the same data, which changed nothing.
 	Duplicates int64 `json:"duplicates"`
-	Replayed   *bool `json:"replayed,omitempty"`
+
+	// Replayed True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run.
+	Replayed *bool `json:"replayed,omitempty"`
 }
 
 // Approval defines model for Approval.
@@ -272,17 +279,29 @@ type Approval string
 
 // BeginMatchRequest defines model for BeginMatchRequest.
 type BeginMatchRequest struct {
-	MatchID   string `json:"matchId"`
-	StartedAt int64  `json:"startedAt"`
+	// MatchID Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'.
+	MatchID string `json:"matchId"`
+
+	// StartedAt When the match started, in milliseconds since the Unix epoch.
+	StartedAt int64 `json:"startedAt"`
 }
 
 // BeginMatchResponse defines model for BeginMatchResponse.
 type BeginMatchResponse struct {
+	// Approval Whether the match will count when it is finalized (`automatic`) or wait for an Organizer (`manual`).
 	Approval Approval `json:"approval"`
-	Created  bool     `json:"created"`
-	DryRun   *bool    `json:"dryRun,omitempty"`
-	MatchID  string   `json:"matchId"`
-	Replayed *bool    `json:"replayed,omitempty"`
+
+	// Created False when the match was already begun; beginning it again takes no second live session.
+	Created bool `json:"created"`
+
+	// DryRun Present on a dry run: this is what would have happened, and nothing was stored.
+	DryRun *bool `json:"dryRun,omitempty"`
+
+	// MatchID Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'.
+	MatchID string `json:"matchId"`
+
+	// Replayed True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run.
+	Replayed *bool `json:"replayed,omitempty"`
 }
 
 // DecidedBy defines model for DecidedBy.
@@ -296,21 +315,34 @@ type FinalScore struct {
 
 // FinalizeMatchResponse defines model for FinalizeMatchResponse.
 type FinalizeMatchResponse struct {
-	Closed        bool   `json:"closed"`
-	DryRun        *bool  `json:"dryRun,omitempty"`
-	HeldForReview bool   `json:"heldForReview"`
-	Replayed      *bool  `json:"replayed,omitempty"`
-	Status        string `json:"status"`
+	// Closed False when the match was already closed.
+	Closed bool `json:"closed"`
+
+	// DryRun Present on a dry run: this is what would have happened, and nothing was stored.
+	DryRun *bool `json:"dryRun,omitempty"`
+
+	// HeldForReview True when this request held the match for an Organizer's review.
+	HeldForReview bool `json:"heldForReview"`
+
+	// Replayed True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run.
+	Replayed *bool `json:"replayed,omitempty"`
+
+	// Status The match's state: `approved` (it counts), `pending` (it waits for an Organizer) or `voided`.
+	Status string `json:"status"`
 }
 
 // GameResult defines model for GameResult.
 type GameResult struct {
-	AttackingSide *int64                   `json:"attackingSide,omitempty"`
-	EndedAt       *int64                   `json:"endedAt,omitempty"`
-	FinalScore    *FinalScore              `json:"finalScore,omitempty"`
-	Players       []map[string]interface{} `json:"players,omitempty"`
-	Segments      []GameSegment            `json:"segments,omitempty"`
-	WinnerSide    *int64                   `json:"winnerSide"`
+	AttackingSide *int64 `json:"attackingSide,omitempty"`
+
+	// EndedAt When the game ended, in milliseconds since the Unix epoch.
+	EndedAt    *int64      `json:"endedAt,omitempty"`
+	FinalScore *FinalScore `json:"finalScore,omitempty"`
+
+	// Players Player lines, for a gamemode submitted as a whole game.
+	Players    []map[string]interface{} `json:"players,omitempty"`
+	Segments   []GameSegment            `json:"segments,omitempty"`
+	WinnerSide *int64                   `json:"winnerSide"`
 }
 
 // GameSegment defines model for GameSegment.
@@ -322,12 +354,21 @@ type GameSegment struct {
 
 // GameSubmission defines model for GameSubmission.
 type GameSubmission struct {
-	GameID    string      `json:"gameId"`
-	Map       *string     `json:"map,omitempty"`
-	Result    *GameResult `json:"result,omitempty"`
-	Rounds    []RoundUnit `json:"rounds,omitempty"`
-	SchemaRef string      `json:"schemaRef"`
-	StartedAt *int64      `json:"startedAt,omitempty"`
+	// GameID Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'.
+	GameID string  `json:"gameId"`
+	Map    *string `json:"map,omitempty"`
+
+	// Result Ends the game. For a gamemode submitted as a whole game, this is the unit.
+	Result *GameResult `json:"result,omitempty"`
+
+	// Rounds Round units, for a gamemode submitted round by round.
+	Rounds []RoundUnit `json:"rounds,omitempty"`
+
+	// SchemaRef The gamemode schema this game follows, as `<schema id>@<version>`, for example `mordhau.skirmish@1`.
+	SchemaRef string `json:"schemaRef"`
+
+	// StartedAt When the game started, in milliseconds since the Unix epoch.
+	StartedAt *int64 `json:"startedAt,omitempty"`
 }
 
 // Gamemode defines model for Gamemode.
@@ -374,8 +415,13 @@ type GamemodeStat struct {
 
 // HeartbeatMatchResponse defines model for HeartbeatMatchResponse.
 type HeartbeatMatchResponse struct {
+	// Deadline When the match closes if nothing more is heard, in milliseconds since the Unix epoch.
 	Deadline int64 `json:"deadline"`
-	DryRun   *bool `json:"dryRun,omitempty"`
+
+	// DryRun Present on a dry run: this is what would have happened, and nothing was stored.
+	DryRun *bool `json:"dryRun,omitempty"`
+
+	// Replayed True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run.
 	Replayed *bool `json:"replayed,omitempty"`
 }
 
@@ -424,16 +470,20 @@ type HeirMatchPlacement struct {
 	Identity *string `json:"identity,omitempty"`
 	Member   *string `json:"member,omitempty"`
 	Place    *int64  `json:"place"`
-	Side     *string `json:"side,omitempty"`
+
+	// Side A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two.
+	Side *string `json:"side,omitempty"`
 }
 
 // HeirMatchPlayer defines model for HeirMatchPlayer.
 type HeirMatchPlayer struct {
-	Identity *string             `json:"identity,omitempty"`
-	Member   *string             `json:"member,omitempty"`
-	Name     *string             `json:"name,omitempty"`
-	Side     *string             `json:"side,omitempty"`
-	Stats    map[string]*float64 `json:"stats,omitempty"`
+	Identity *string `json:"identity,omitempty"`
+	Member   *string `json:"member,omitempty"`
+	Name     *string `json:"name,omitempty"`
+
+	// Side A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two.
+	Side  *string             `json:"side,omitempty"`
+	Stats map[string]*float64 `json:"stats,omitempty"`
 }
 
 // HeirMatchRoster defines model for HeirMatchRoster.
@@ -512,10 +562,15 @@ type ReceiptStatus string
 
 // RoundUnit defines model for RoundUnit.
 type RoundUnit struct {
-	Index      int64                    `json:"index"`
-	Kills      []map[string]interface{} `json:"kills,omitempty"`
-	Players    []map[string]interface{} `json:"players"`
-	WinnerSide *int64                   `json:"winnerSide,omitempty"`
+	// Index The round's number within its game, from 0. Rounds may be sent in any order.
+	Index int64 `json:"index"`
+
+	// Kills Kill events, when the gamemode takes them. Heir derives clutches and Round Impact from these.
+	Kills   []map[string]interface{} `json:"kills,omitempty"`
+	Players []map[string]interface{} `json:"players"`
+
+	// WinnerSide The side that won the round; null if nobody did.
+	WinnerSide *int64 `json:"winnerSide,omitempty"`
 }
 
 // Side defines model for Side.
@@ -525,8 +580,12 @@ type Side string
 type StatCounter struct {
 	Name     string `json:"name"`
 	Required bool   `json:"required"`
-	Signed   *bool  `json:"signed,omitempty"`
-	Whole    *bool  `json:"whole,omitempty"`
+
+	// Signed Present when the counter may be below 0.
+	Signed *bool `json:"signed,omitempty"`
+
+	// Whole Present when the counter takes whole numbers only.
+	Whole *bool `json:"whole,omitempty"`
 }
 
 // StatDirection defines model for StatDirection.
@@ -540,23 +599,41 @@ type StatRecord string
 
 // StatSchema defines model for StatSchema.
 type StatSchema struct {
-	Counters     []StatCounter `json:"counters"`
-	Events       []string      `json:"events"`
-	ID           string        `json:"id"`
-	Key          string        `json:"key"`
-	Label        string        `json:"label"`
-	Record       StatRecord    `json:"record"`
-	SchemaRef    string        `json:"schemaRef"`
-	ScoreCeiling *float64      `json:"scoreCeiling"`
-	Unit         StatUnit      `json:"unit"`
+	// Counters Every counter a Player line may carry.
+	Counters []StatCounter `json:"counters"`
+
+	// Events The kinds of event a round may carry, such as `kill`.
+	Events []string `json:"events"`
+	ID     string   `json:"id"`
+
+	// Key The gamemode's key.
+	Key    string     `json:"key"`
+	Label  string     `json:"label"`
+	Record StatRecord `json:"record"`
+
+	// SchemaRef Send this as a game's `schemaRef`.
+	SchemaRef string `json:"schemaRef"`
+
+	// ScoreCeiling The score that takes a map, or null when there is none.
+	ScoreCeiling *float64 `json:"scoreCeiling"`
+
+	// Unit What one unit is: a round, or the whole game once it has ended.
+	Unit StatUnit `json:"unit"`
 }
 
 // StatSchemaCatalog defines model for StatSchemaCatalog.
 type StatSchemaCatalog struct {
-	Game              string       `json:"game"`
-	LiveSessions      int64        `json:"liveSessions"`
-	RequestsPerMinute int64        `json:"requestsPerMinute"`
-	Schemas           []StatSchema `json:"schemas"`
+	// Game The League's game.
+	Game string `json:"game"`
+
+	// LiveSessions How many tracked matches the League's plan allows open at once.
+	LiveSessions int64 `json:"liveSessions"`
+
+	// RequestsPerMinute How many requests this key may make a minute.
+	RequestsPerMinute int64 `json:"requestsPerMinute"`
+
+	// Schemas The gamemode schemas this key may track a match under.
+	Schemas []StatSchema `json:"schemas"`
 }
 
 // StatScope defines model for StatScope.
@@ -567,19 +644,34 @@ type StatUnit string
 
 // UploadMatchRequest defines model for UploadMatchRequest.
 type UploadMatchRequest struct {
-	Games     []GameSubmission `json:"games"`
-	MatchID   string           `json:"matchId"`
-	StartedAt int64            `json:"startedAt"`
+	Games []GameSubmission `json:"games"`
+
+	// MatchID Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'.
+	MatchID string `json:"matchId"`
+
+	// StartedAt When the match started, in milliseconds since the Unix epoch.
+	StartedAt int64 `json:"startedAt"`
 }
 
 // UploadMatchResponse defines model for UploadMatchResponse.
 type UploadMatchResponse struct {
-	Created       bool   `json:"created"`
-	DryRun        *bool  `json:"dryRun,omitempty"`
-	HeldForReview bool   `json:"heldForReview"`
-	MatchID       string `json:"matchId"`
-	Replayed      *bool  `json:"replayed,omitempty"`
-	Status        string `json:"status"`
+	// Created False when this same upload was already stored.
+	Created bool `json:"created"`
+
+	// DryRun Present on a dry run: this is what would have happened, and nothing was stored.
+	DryRun *bool `json:"dryRun,omitempty"`
+
+	// HeldForReview True when this upload held the match for an Organizer's review.
+	HeldForReview bool `json:"heldForReview"`
+
+	// MatchID Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'.
+	MatchID string `json:"matchId"`
+
+	// Replayed True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run.
+	Replayed *bool `json:"replayed,omitempty"`
+
+	// Status The match's state: `approved` (it counts), `pending` (it waits for an Organizer) or `voided`.
+	Status string `json:"status"`
 }
 
 // Getter for additional properties for HeirMatchScore. Returns the specified

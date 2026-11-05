@@ -1,6 +1,7 @@
 // Friendly names for the generated types. The generated modules are the whole truth; these are the parts a caller
-// reaches for. Both documents define an `Error` component, exported here as PublicApiError and StatApiError so
-// neither shadows the global Error.
+// reaches for. Each request and response body is a component named by ../../spec/type-names.json; a shape inside one is
+// named here by where it sits. Both documents define an `Error` component, exported here as PublicApiError and
+// StatApiError so neither shadows the global Error.
 import type {components as PublicComponents, operations as PublicOperations} from "./generated/public.js";
 import type {components as StatComponents, operations as StatOperations} from "./generated/stats.js";
 
@@ -12,11 +13,9 @@ type StatSchema<Name extends keyof StatComponents["schemas"]> = StatComponents["
 type QueryOf<Op extends keyof PublicOperations> = NonNullable<PublicOperations[Op]["parameters"]["query"]>;
 
 // League reads.
-export type Player = PublicSchema<"Player">;
-export type Rank = PublicSchema<"Rank">;
-export type Roster = PublicSchema<"Roster">;
-export type Fixture = PublicSchema<"Fixture">;
 export type PlayerResponse = PublicSchema<"PlayerResponse">;
+export type Player = NonNullable<PlayerResponse["player"]>;
+export type Rank = NonNullable<Player["rank"]>;
 export type PlayerLookupRequest = PublicSchema<"PlayerLookupRequest">;
 export type PlayerLookupResponse = PublicSchema<"PlayerLookupResponse">;
 export type PlayerLookupResult = PlayerLookupResponse["players"][number];
@@ -25,6 +24,7 @@ export type PlayerMatchesResponse = PublicSchema<"PlayerMatchesResponse">;
 export type PlayerMatch = PlayerMatchesResponse["matches"][number];
 export type RostersResponse = PublicSchema<"RostersResponse">;
 export type RosterResponse = PublicSchema<"RosterResponse">;
+export type Roster = RosterResponse["roster"];
 export type RosterMember = RosterResponse["members"][number];
 export type LeaderboardResponse = PublicSchema<"LeaderboardResponse">;
 export type LeaderboardEntry = LeaderboardResponse["entries"][number];
@@ -32,13 +32,17 @@ export type StandingsResponse = PublicSchema<"StandingsResponse">;
 export type Standing = StandingsResponse["standings"][number];
 export type FixturesResponse = PublicSchema<"FixturesResponse">;
 export type FixtureResponse = PublicSchema<"FixtureResponse">;
+export type Fixture = FixtureResponse["fixture"];
 export type MatchResponse = PublicSchema<"MatchResponse">;
 export type Match = MatchResponse["match"];
 export type LeagueConfigResponse = PublicSchema<"LeagueConfigResponse">;
+/** Heir's mark on a League: `verified` or `official`. A League without one has no `recognition`, or null. */
+export type LeagueRecognition = NonNullable<LeagueConfigResponse["recognition"]>;
 export type EligibilityRequest = PublicSchema<"EligibilityRequest">;
 export type EligibilityResponse = PublicSchema<"EligibilityResponse">;
 export type EligibilityVerdict = EligibilityResponse["players"][number];
-export type LeagueError = PublicSchema<"LeagueError">;
+// Every League read answers an error in the same shape.
+export type LeagueError = PublicOperations["getLeaguePlayer"]["responses"][400]["content"]["application/json"];
 export type LeagueErrorCode = LeagueError["error"];
 
 // Inventory.
@@ -67,14 +71,14 @@ export type FixtureStatus = NonNullable<FixturesQuery["status"]>;
 
 // Stat submission.
 export type HeirMatchFile = StatSchema<"HeirMatchFile">;
-export type HeirMatchMap = StatSchema<"HeirMatchMap">;
-export type HeirMatchPlayer = StatSchema<"HeirMatchPlayer">;
-export type HeirMatchRound = StatSchema<"HeirMatchRound">;
-export type HeirMatchGamemode = StatSchema<"HeirMatchGamemode">;
+export type HeirMatchMap = HeirMatchFile["maps"][number];
+export type HeirMatchPlayer = NonNullable<HeirMatchMap["players"]>[number];
+export type HeirMatchRound = NonNullable<HeirMatchMap["rounds"]>[number];
+export type HeirMatchGamemode = HeirMatchFile["gamemode"];
 export type MatchEntryReceipt = StatSchema<"MatchEntryReceipt">;
 export type GamemodeCatalog = StatSchema<"GamemodeCatalog">;
 export type StatSchemaCatalog = StatSchema<"StatSchemaCatalog">;
-export type StatSchemaEntry = StatSchema<"StatSchema">;
+export type StatSchemaEntry = StatSchemaCatalog["schemas"][number];
 export type BeginMatchRequest = StatSchema<"BeginMatchRequest">;
 export type BeginMatchResponse = StatSchema<"BeginMatchResponse">;
 export type AppendUnitsRequest = StatSchema<"AppendUnitsRequest">;
@@ -83,9 +87,9 @@ export type HeartbeatMatchResponse = StatSchema<"HeartbeatMatchResponse">;
 export type FinalizeMatchResponse = StatSchema<"FinalizeMatchResponse">;
 export type UploadMatchRequest = StatSchema<"UploadMatchRequest">;
 export type UploadMatchResponse = StatSchema<"UploadMatchResponse">;
-export type GameSubmission = StatSchema<"GameSubmission">;
-export type RoundUnit = StatSchema<"RoundUnit">;
-export type GameResult = StatSchema<"GameResult">;
+export type GameSubmission = AppendUnitsRequest["games"][number];
+export type RoundUnit = NonNullable<GameSubmission["rounds"]>[number];
+export type GameResult = NonNullable<GameSubmission["result"]>;
 export type StatApiError = StatSchema<"Error">;
 export type StatApiErrorCode = StatApiError["error"];
 export type StatOperationId = keyof StatOperations;

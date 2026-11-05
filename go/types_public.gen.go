@@ -48,6 +48,24 @@ func (e ItemLasts) Valid() bool {
 	}
 }
 
+// Defines values for LeagueRecognition.
+const (
+	LeagueRecognitionOfficial LeagueRecognition = "official"
+	LeagueRecognitionVerified LeagueRecognition = "verified"
+)
+
+// Valid indicates whether the value is a known member of the LeagueRecognition enum.
+func (e LeagueRecognition) Valid() bool {
+	switch e {
+	case LeagueRecognitionOfficial:
+		return true
+	case LeagueRecognitionVerified:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for LookupStatus.
 const (
 	LookupStatusFound       LookupStatus = "found"
@@ -163,7 +181,11 @@ type EligibilityResponse struct {
 
 // EligibilityVerdict defines model for EligibilityVerdict.
 type EligibilityVerdict struct {
-	Eligible   bool     `json:"eligible"`
+	// CanonicalIdentifier The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent.
+	CanonicalIdentifier string `json:"canonicalIdentifier"`
+	Eligible            bool   `json:"eligible"`
+
+	// Identifier The identifier exactly as it was sent.
 	Identifier string   `json:"identifier"`
 	Reasons    []string `json:"reasons"`
 }
@@ -204,38 +226,56 @@ type FixturesResponse struct {
 
 // InventoryBatchRequest defines model for InventoryBatchRequest.
 type InventoryBatchRequest struct {
+	// Identifiers Game account IDs in the credential's format, for example PlayFab IDs.
 	Identifiers []string `json:"identifiers"`
-	Item        *string  `json:"item,omitempty"`
+
+	// Item Only answer about this item key.
+	Item *string `json:"item,omitempty"`
 }
 
 // InventoryBatchResponse defines model for InventoryBatchResponse.
 type InventoryBatchResponse struct {
+	// Players One entry per identifier you sent, under the exact spelling you sent it in.
 	Players map[string]InventoryEntry `json:"players"`
 }
 
 // InventoryEntry defines model for InventoryEntry.
 type InventoryEntry struct {
+	// Items What the player holds right now, ordered by key. Empty when there is nothing to show.
 	Items []Item `json:"items"`
 }
 
 // InventoryResponse defines model for InventoryResponse.
 type InventoryResponse struct {
+	// Items What the player holds right now, ordered by key. Empty when there is nothing to show.
 	Items []Item `json:"items"`
 }
 
 // Item defines model for Item.
 type Item struct {
-	Edition   *ItemEdition `json:"edition"`
-	ExpiresAt *int64       `json:"expiresAt"`
-	ImageURL  *string      `json:"imageUrl"`
-	Key       string       `json:"key"`
-	Name      string       `json:"name"`
+	// Edition Set when the item came from a limited listing, such as #3 of 10. Null otherwise.
+	Edition *ItemEdition `json:"edition"`
+
+	// ExpiresAt When the player stops holding it, in Unix milliseconds. Null for an item kept for good.
+	ExpiresAt *int64 `json:"expiresAt"`
+
+	// ImageURL The item's cover image, or null when it has none.
+	ImageURL *string `json:"imageUrl"`
+
+	// Key The item's stable key. Match on this: it never changes once a member has held the item.
+	Key string `json:"key"`
+
+	// Name The item's display name. It can change; do not match on it.
+	Name string `json:"name"`
 }
 
 // ItemEdition defines model for ItemEdition.
 type ItemEdition struct {
-	Number int64  `json:"number"`
-	Size   *int64 `json:"size"`
+	// Number The player's place in the edition: 1 for the first buyer.
+	Number int64 `json:"number"`
+
+	// Size How many the edition has. Null if the League has since lifted the limit.
+	Size *int64 `json:"size"`
 }
 
 // ItemLasts defines model for ItemLasts.
@@ -282,15 +322,21 @@ type LeagueConfigResponse struct {
 	LeaderboardMetrics []string                 `json:"leaderboardMetrics"`
 	Name               string                   `json:"name"`
 	Ranks              []Rank                   `json:"ranks"`
+	Recognition        *LeagueRecognition       `json:"recognition,omitempty"`
 	Season             *int64                   `json:"season"`
 }
 
 // LeagueCredential defines model for LeagueCredential.
 type LeagueCredential struct {
-	Hint    string `json:"hint"`
+	// Hint Where a player finds it.
+	Hint string `json:"hint"`
+
+	// IDLabel What players call this ID, for example "PlayFab ID".
 	IDLabel string `json:"idLabel"`
-	Key     string `json:"key"`
-	Label   string `json:"label"`
+
+	// Key What to put in the `{credential}` part of an inventory call.
+	Key   string `json:"key"`
+	Label string `json:"label"`
 }
 
 // LeagueGamemode defines model for LeagueGamemode.
@@ -301,24 +347,37 @@ type LeagueGamemode struct {
 
 // LeagueItem defines model for LeagueItem.
 type LeagueItem struct {
-	Description string    `json:"description"`
-	ImageURL    *string   `json:"imageUrl"`
-	Key         string    `json:"key"`
-	Lasts       ItemLasts `json:"lasts"`
-	Name        string    `json:"name"`
+	Description string `json:"description"`
+
+	// ImageURL The item's cover image, or null.
+	ImageURL *string `json:"imageUrl"`
+
+	// Key The item's stable key.
+	Key string `json:"key"`
+
+	// Lasts `permanent` for an item kept for good, `until-season-end` for one that lapses when the season ends.
+	Lasts ItemLasts `json:"lasts"`
+	Name  string    `json:"name"`
 }
 
 // LeagueItemsResponse defines model for LeagueItemsResponse.
 type LeagueItemsResponse struct {
+	// Credentials The kinds of game account this League's inventory calls accept.
 	Credentials []LeagueCredential `json:"credentials"`
-	Items       []LeagueItem       `json:"items"`
+
+	// Items Every item that is not archived, ordered by key.
+	Items []LeagueItem `json:"items"`
 }
+
+// LeagueRecognition defines model for LeagueRecognition.
+type LeagueRecognition string
 
 // LookupStatus defines model for LookupStatus.
 type LookupStatus string
 
 // Match defines model for Match.
 type Match struct {
+	// Games The maps that count, in play order. An official result lists the maps of the approved tracked matches and recordings that settled it (each names this result as its `officialMatchId`), empty when none did or their stats are past the League's retention.
 	Games           []MatchGame  `json:"games"`
 	ID              string       `json:"id"`
 	Kind            MatchKind    `json:"kind"`
@@ -337,9 +396,14 @@ type MatchGame struct {
 
 // MatchGamePlayer defines model for MatchGamePlayer.
 type MatchGamePlayer struct {
-	DisplayName string             `json:"displayName"`
-	Identifier  *string            `json:"identifier"`
-	Stats       map[string]float64 `json:"stats"`
+	// DisplayName A current Member of the League by their Heir name. Anyone else (an unlinked game account, or a Player who has left the League) by the name they played under, else their identifier, else `Player`.
+	DisplayName string `json:"displayName"`
+
+	// Identifier The Player's game account in its credential's canonical form, the form a player read returns as canonicalIdentifier. Null when the Player was recorded without one, or by a Members-only League, whose Players are never named by Discord ID.
+	Identifier *string `json:"identifier"`
+
+	// Stats The Player's stats. A built-in gamemode's are named by counter, as the stat tracking calls take them (`teamKills`, `damageDealt`), and the stats the League added to it by their stat key; the `counter` of each stat in the built-in gamemode catalog (`builtin-gamemodes.json`, published beside this reference) maps its stat key to its counter. A custom gamemode's are named by stat key. Bookkeeping such as the Player's side is not a stat.
+	Stats map[string]float64 `json:"stats"`
 }
 
 // MatchKind defines model for MatchKind.
@@ -360,13 +424,17 @@ type MatchResult struct {
 
 // Player defines model for Player.
 type Player struct {
-	DisplayName string            `json:"displayName"`
-	HeirRating  *PlayerHeirRating `json:"heirRating"`
-	Identifier  string            `json:"identifier"`
-	MMR         *PlayerMMR        `json:"mmr"`
-	ProfileURL  *string           `json:"profileUrl"`
-	Rank        *Rank             `json:"rank"`
-	Roster      *PlayerRoster     `json:"roster"`
+	// CanonicalIdentifier The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent.
+	CanonicalIdentifier string            `json:"canonicalIdentifier"`
+	DisplayName         string            `json:"displayName"`
+	HeirRating          *PlayerHeirRating `json:"heirRating"`
+
+	// Identifier The identifier exactly as it was sent.
+	Identifier string        `json:"identifier"`
+	MMR        *PlayerMMR    `json:"mmr"`
+	ProfileURL *string       `json:"profileUrl"`
+	Rank       *Rank         `json:"rank"`
+	Roster     *PlayerRoster `json:"roster"`
 }
 
 // PlayerHeirRating defines model for PlayerHeirRating.
@@ -393,6 +461,10 @@ type PlayerLookupResponse struct {
 
 // PlayerLookupResult defines model for PlayerLookupResult.
 type PlayerLookupResult struct {
+	// CanonicalIdentifier The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent.
+	CanonicalIdentifier string `json:"canonicalIdentifier"`
+
+	// Identifier The identifier exactly as it was sent.
 	Identifier string       `json:"identifier"`
 	Player     *Player      `json:"player"`
 	Status     LookupStatus `json:"status"`
@@ -400,18 +472,20 @@ type PlayerLookupResult struct {
 
 // PlayerMMR defines model for PlayerMMR.
 type PlayerMMR struct {
-	Category    string  `json:"category"`
-	Provisional bool    `json:"provisional"`
-	Results     int64   `json:"results"`
-	Value       float64 `json:"value"`
+	Category    string `json:"category"`
+	Provisional bool   `json:"provisional"`
+	Results     int64  `json:"results"`
+
+	// Value MMR is always a whole number.
+	Value int64 `json:"value"`
 }
 
 // PlayerMatch defines model for PlayerMatch.
 type PlayerMatch struct {
 	MatchID   *string `json:"matchId"`
-	MMRAfter  float64 `json:"mmrAfter"`
-	MMRBefore float64 `json:"mmrBefore"`
-	MMRDelta  float64 `json:"mmrDelta"`
+	MMRAfter  int64   `json:"mmrAfter"`
+	MMRBefore int64   `json:"mmrBefore"`
+	MMRDelta  int64   `json:"mmrDelta"`
 	PlayedAt  string  `json:"playedAt"`
 	SourceKey string  `json:"sourceKey"`
 }
@@ -478,7 +552,7 @@ type Roster struct {
 	Name        string         `json:"name"`
 	Provisional bool           `json:"provisional"`
 	Tag         *string        `json:"tag"`
-	TeamMMR     *float64       `json:"teamMmr"`
+	TeamMMR     *int64         `json:"teamMmr"`
 }
 
 // RosterCaptain defines model for RosterCaptain.
@@ -511,15 +585,15 @@ type RostersResponse struct {
 
 // Standing defines model for Standing.
 type Standing struct {
-	Losses      int64   `json:"losses"`
-	Name        string  `json:"name"`
-	Position    int64   `json:"position"`
-	Provisional bool    `json:"provisional"`
-	RosterID    string  `json:"rosterId"`
-	RoundsLost  int64   `json:"roundsLost"`
-	RoundsWon   int64   `json:"roundsWon"`
-	TeamMMR     float64 `json:"teamMmr"`
-	Wins        int64   `json:"wins"`
+	Losses      int64  `json:"losses"`
+	Name        string `json:"name"`
+	Position    int64  `json:"position"`
+	Provisional bool   `json:"provisional"`
+	RosterID    string `json:"rosterId"`
+	RoundsLost  int64  `json:"roundsLost"`
+	RoundsWon   int64  `json:"roundsWon"`
+	TeamMMR     int64  `json:"teamMmr"`
+	Wins        int64  `json:"wins"`
 }
 
 // StandingsResponse defines model for StandingsResponse.

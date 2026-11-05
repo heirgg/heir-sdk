@@ -3,11 +3,16 @@
 Before generating, each document is reshaped so the Python models read well; nothing about the wire format changes,
 only its Python spelling:
 
+- each request and response body named in ../spec/type-names.json (`<operationId> request`, `<operationId> <status>`)
+  becomes the component of that name, whether the document writes it inline or under another component name;
 - every inline object becomes a named component, so a caller can name the type (the names in ../spec/type-names.json,
-  shared with the other SDKs' generators, otherwise <Parent><Field>);
+  shared with the other SDKs' generators, otherwise <Parent><Field>); a named type's own fields are listed under its
+  name (`Player.mmr`), wherever the type appears;
 - a union of numeric literals (0 | 1) or of a string with a literal collapses to one primitive; a boolean literal
   becomes a plain boolean; a nullable primitive is written in the form the generator reads as `X | None`;
 - objects are left open, so a field the API adds later is ignored rather than refused;
+- a `number` is `int | float`, so a whole number in an answer stays an `int` (`10`, not `10.0`) and a fraction stays a
+  `float`; an `integer` is `int`;
 - `uri` and `uuid` strings are plain strings, and no length, range or pattern constraint is kept: like the other SDKs,
   the models do not validate, the API does.
 
@@ -82,9 +87,11 @@ def main() -> int:
 def generate(path: Path, exclude: list[str], names: dict[str, str]) -> str:
     doc = json.loads(path.read_text())
     schemas: Schema = doc["components"]["schemas"]
+    name_operations(doc, names)
     for name in exclude:
         schemas.pop(name, None)
     reshape(schemas, names)
+    keep_whole_numbers(schemas)
     doc.pop("paths", None)
     with tempfile.TemporaryDirectory() as folder:
         source = Path(folder) / path.name
@@ -140,9 +147,72 @@ def init_module(classes: dict[str, list[str]]) -> str:
     return "\n".join(lines)
 
 
+def name_operations(doc: Schema, names: dict[str, str]) -> None:
+    """Make each request and response body named in `names` the component of that name.
+
+    The backend writes most bodies inline, and some under names of its own; the SDKs name them the same way in every
+    language. A body with no documented fields cannot become a model and is refused, so the gap is fixed in the backend
+    document rather than shipped as an empty type.
+    """
+    schemas: Schema = doc["components"]["schemas"]
+    for path, methods in sorted(doc.get("paths", {}).items()):
+        for method, operation in sorted(methods.items()):
+            if not isinstance(operation, dict) or "operationId" not in operation:
+                continue
+            slots = [("request", operation.get("requestBody", {}))]
+            slots += sorted(operation.get("responses", {}).items())
+            for slot, body in slots:
+                key = f"{operation['operationId']} {slot}"
+                media = body.get("content", {}).get("application/json")
+                if key not in names or media is None:
+                    continue
+                name, schema = names[key], media["schema"]
+                if "$ref" in schema:
+                    rename(doc, schema["$ref"].rsplit("/", 1)[-1], name)
+                    continue
+                if "properties" not in schema:
+                    raise SystemExit(f"{key} ({method.upper()} {path}) documents no fields, so {name} would be empty")
+                copied = {k: v for k, v in schema.items() if k not in {"description", "example", "examples"}}
+                if name in schemas and schemas[name] != copied:
+                    raise SystemExit(f"two different shapes are both named {name}: reshaping needs a second name")
+                schemas[name] = copied
+                media["schema"] = {"$ref": f"#/components/schemas/{name}"}
+
+
+def rename(doc: Schema, old: str, new: str) -> None:
+    """Rename the component `old` to `new`, and every reference to it."""
+    if old == new:
+        return
+    schemas: Schema = doc["components"]["schemas"]
+    if new in schemas:
+        raise SystemExit(f"cannot rename {old}: a component is already named {new}")
+    schemas[new] = schemas.pop(old)
+    target, replacement = f"#/components/schemas/{old}", f"#/components/schemas/{new}"
+
+    def visit(node: Any) -> None:
+        if isinstance(node, dict):
+            if node.get("$ref") == target:
+                node["$ref"] = replacement
+            for value in node.values():
+                visit(value)
+        elif isinstance(node, list):
+            for value in node:
+                visit(value)
+
+    visit(doc)
+
+
+# The components reshaped so far. A document's own component can be reached as a field's type before its turn comes as a
+# root; it is reshaped then, so it is compared with a newcomer in the same form.
+reshaped: set[str] = set()
+
+
 def reshape(schemas: Schema, names: dict[str, str]) -> None:
+    reshaped.clear()
     for root in sorted(schemas):
-        walk(schemas, names, root, root, schemas[root])
+        if root not in reshaped:
+            reshaped.add(root)
+            walk(schemas, names, root, root, schemas[root])
 
 
 def walk(schemas: Schema, names: dict[str, str], path: str, type_name: str, node: Schema) -> None:
@@ -158,7 +228,9 @@ def place(schemas: Schema, names: dict[str, str], path: str, auto_name: str, slo
     collapse(inner)
     if "$ref" in inner:
         return
-    if inner.get("type") == "array" and isinstance(inner.get("items"), dict):
+    # A nullable array has been rewritten as `type: ["array", "null"]`; its items are reshaped all the same.
+    kind = inner.get("type")
+    if (kind == "array" or (isinstance(kind, list) and "array" in kind)) and isinstance(inner.get("items"), dict):
         unconstrain(inner["items"])
         place(schemas, names, f"{path}[]", auto_name + "Item", inner["items"])
     values = inner.get("additionalProperties")
@@ -169,11 +241,13 @@ def place(schemas: Schema, names: dict[str, str], path: str, auto_name: str, slo
     inner.pop("propertyNames", None)
     if "properties" in inner:
         name = names.get(path, auto_name)
+        # A named type's fields are listed under its name, so it is spelled the same wherever it appears.
+        within = name if path in names else path
         known = name in schemas
-        hoisted = hoist(schemas, names, path, name, inner)
+        hoisted = hoist(schemas, names, within, name, inner)
         set_ref(name)
         if not known:
-            walk(schemas, names, path, name, hoisted)
+            walk(schemas, names, within, name, hoisted)
 
 
 def unconstrain(node: Schema) -> None:
@@ -191,11 +265,16 @@ def hoist(schemas: Schema, names: dict[str, str], path: str, name: str, node: Sc
     copied = deepcopy(node)
     copied.pop("description", None)
     if name in schemas:
+        stored: Schema = schemas[name]
+        if name not in reshaped:
+            reshaped.add(name)
+            walk(schemas, names, name, name, stored)
         # The stored one has been reshaped all the way down; reshape the newcomer the same way before comparing.
         walk(schemas, names, path, name, copied)
-        if schemas[name] != copied:
+        if {key: value for key, value in stored.items() if key != "description"} != copied:
             raise SystemExit(f"two different shapes are both named {name}: reshaping needs a second name")
-        return schemas[name]  # type: ignore[no-any-return]
+        return stored
+    reshaped.add(name)
     schemas[name] = copied
     return copied
 
@@ -234,6 +313,32 @@ def unwrap_nullable(slot: Schema) -> tuple[Schema, Any]:
             slot["description"] = description
 
     return slot, replace
+
+
+def keep_whole_numbers(node: Any) -> None:
+    """Spell every `number` as `integer | number`, which the models read as `int | float`.
+
+    A stat or a rating may be a fraction, so the API documents a number; most are whole. Pydantic keeps the type the
+    JSON value has, so `10` stays `10` when it is read and when it is sent again, where `float` would make it `10.0`.
+    """
+    if isinstance(node, list):
+        for value in node:
+            keep_whole_numbers(value)
+        return
+    if not isinstance(node, dict):
+        return
+    for value in node.values():
+        keep_whole_numbers(value)
+    kind = node.get("type")
+    if "const" in node or "enum" in node:
+        return
+    if kind == "number":
+        del node["type"]
+        node["anyOf"] = [{"type": "integer"}, {"type": "number"}]
+    elif isinstance(kind, list) and "number" in kind:
+        del node["type"]
+        others = [{"type": other} for other in kind if other != "number"]
+        node["anyOf"] = [{"type": "integer"}, {"type": "number"}, *others]
 
 
 def collapse(node: Schema) -> None:

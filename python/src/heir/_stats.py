@@ -157,25 +157,35 @@ class Stats(_StatsCalls):
         )
 
     def heartbeat(
-        self, match_id: str, *, idempotency_key: str | None = None, options: RequestOptions | None = None
+        self,
+        match_id: str,
+        *,
+        idempotency_key: str | None = None,
+        dry_run: bool = False,
+        options: RequestOptions | None = None,
     ) -> HeartbeatMatchResponse:
         """Say the match is still being played when no unit is ready; a match silent for 30 minutes is closed and held
         for review.
         """
         return self._client._send(
-            self._write(_match_path(match_id, "/heartbeat"), None, idempotency_key, False),
+            self._write(_match_path(match_id, "/heartbeat"), None, idempotency_key, dry_run),
             HeartbeatMatchResponse,
             options,
         )
 
     def finalize(
-        self, match_id: str, *, idempotency_key: str | None = None, options: RequestOptions | None = None
+        self,
+        match_id: str,
+        *,
+        idempotency_key: str | None = None,
+        dry_run: bool = False,
+        options: RequestOptions | None = None,
     ) -> FinalizeMatchResponse:
         """Close the match and free its live session. A game without its result, or a missing round, holds it for an
         Organizer's review.
         """
         return self._client._send(
-            self._write(_match_path(match_id, "/finalize"), None, idempotency_key, False),
+            self._write(_match_path(match_id, "/finalize"), None, idempotency_key, dry_run),
             FinalizeMatchResponse,
             options,
         )
@@ -246,19 +256,29 @@ class AsyncStats(_StatsCalls):
         )
 
     async def heartbeat(
-        self, match_id: str, *, idempotency_key: str | None = None, options: RequestOptions | None = None
+        self,
+        match_id: str,
+        *,
+        idempotency_key: str | None = None,
+        dry_run: bool = False,
+        options: RequestOptions | None = None,
     ) -> HeartbeatMatchResponse:
         return await self._client._send(
-            self._write(_match_path(match_id, "/heartbeat"), None, idempotency_key, False),
+            self._write(_match_path(match_id, "/heartbeat"), None, idempotency_key, dry_run),
             HeartbeatMatchResponse,
             options,
         )
 
     async def finalize(
-        self, match_id: str, *, idempotency_key: str | None = None, options: RequestOptions | None = None
+        self,
+        match_id: str,
+        *,
+        idempotency_key: str | None = None,
+        dry_run: bool = False,
+        options: RequestOptions | None = None,
     ) -> FinalizeMatchResponse:
         return await self._client._send(
-            self._write(_match_path(match_id, "/finalize"), None, idempotency_key, False),
+            self._write(_match_path(match_id, "/finalize"), None, idempotency_key, dry_run),
             FinalizeMatchResponse,
             options,
         )

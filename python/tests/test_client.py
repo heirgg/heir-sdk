@@ -330,6 +330,21 @@ def test_tracking_writes_carry_idempotency_keys_and_dry_run() -> None:
     assert finalize.content == b"{}" and finalize.headers["content-type"] == "application/json"
 
 
+def test_heartbeat_and_finalize_take_dry_run_like_every_tracking_write() -> None:
+    h = Harness(
+        respond(200, {"deadline": 1790001800000, "dryRun": True}),
+        respond(200, {"closed": True, "status": "pending", "heldForReview": True, "dryRun": True}),
+        api_key="k",
+    )
+    beat = h.heir.stats.heartbeat("m1", dry_run=True)
+    closed = h.heir.stats.finalize("m1", idempotency_key="close-1", dry_run=True)
+    assert beat.dry_run is True and closed.dry_run is True and closed.held_for_review is True
+    heartbeat, finalize = h.api.requests
+    assert str(heartbeat.url) == "https://api.heir.gg/public/v1/stats/matches/m1/heartbeat?dryRun=true"
+    assert str(finalize.url) == "https://api.heir.gg/public/v1/stats/matches/m1/finalize?dryRun=true"
+    assert finalize.headers["idempotency-key"] == "close-1"
+
+
 def test_tracking_write_retries_with_the_same_key() -> None:
     h = Harness(broken, respond(200, {"deadline": 1, "replayed": False}), api_key="k")
     h.heir.stats.heartbeat("m1")

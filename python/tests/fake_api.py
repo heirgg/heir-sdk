@@ -58,6 +58,7 @@ def slow(request: httpx.Request) -> httpx.Response:
 PLAYER = {
     "player": {
         "identifier": "A1B2C3D4E5F67890",
+        "canonicalIdentifier": "A1B2C3D4E5F67890",
         "displayName": "Ada",
         "profileUrl": None,
         "mmr": None,

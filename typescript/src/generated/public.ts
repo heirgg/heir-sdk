@@ -210,7 +210,7 @@ export interface paths {
         };
         /**
          * Match result
-         * @description Read an official result or approved tracked/custom recording by UUID. Pending and rejected recordings are not public. Stat history follows the League's retention allowance. ratingStatus is rated when an MMR event exists, otherwise not-rated; not-rated does not imply a processing failure. Official results return the score; recordings return per-game player stats.
+         * @description Read an official result or approved tracked/custom recording by UUID. Pending and rejected recordings are not public. Stat history follows the League's retention allowance. ratingStatus is rated when an MMR event exists, otherwise not-rated; not-rated does not imply a processing failure. Official results return the score, and the per-map Player stats of the approved tracked matches and recordings that settled them; tracked matches and recordings return per-map Player stats. Players are named by canonical identifier, and by their Heir name while they are a Member of the League. Built-in gamemode stats are named by counter, custom gamemode stats by stat key.
          */
         get: operations["getLeagueMatch"];
         put?: never;
@@ -325,165 +325,212 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Error: {
-            /** @enum {string} */
-            error: "league-not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable";
-            message: string;
-        };
         Item: {
+            /** @description The item's stable key. Match on this: it never changes once a member has held the item. */
             key: string;
+            /** @description The item's display name. It can change; do not match on it. */
             name: string;
+            /** @description When the player stops holding it, in Unix milliseconds. Null for an item kept for good. */
             expiresAt: number | null;
+            /** @description Set when the item came from a limited listing, such as #3 of 10. Null otherwise. */
             edition: {
+                /** @description The player's place in the edition: 1 for the first buyer. */
                 number: number;
+                /** @description How many the edition has. Null if the League has since lifted the limit. */
                 size: number | null;
             } | null;
+            /** @description The item's cover image, or null when it has none. */
             imageUrl: string | null;
         };
-        InventoryResponse: {
-            items: components["schemas"]["Item"][];
-        };
         InventoryBatchRequest: {
+            /** @description Game account IDs in the credential's format, for example PlayFab IDs. */
             identifiers: string[];
+            /** @description Only answer about this item key. */
             item?: string;
         };
-        InventoryBatchResponse: {
-            players: {
-                [key: string]: {
-                    items: components["schemas"]["Item"][];
-                };
-            };
+        Error: {
+            /**
+             * @description A stable code to branch on.
+             * @enum {string}
+             */
+            error: "league-not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable";
+            /** @description A sentence for a person. Its wording can change. */
+            message: string;
         };
-        LeagueItemsResponse: {
-            items: {
-                key: string;
-                name: string;
-                description: string;
-                /** @enum {string} */
-                lasts: "permanent" | "until-season-end";
-                imageUrl: string | null;
-            }[];
+        LeagueConfigResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            recognition?: ("verified" | "official") | null;
+            gameKey: string | null;
+            season: number | null;
             credentials: {
                 key: string;
                 label: string;
                 idLabel: string;
-                hint: string;
+                pattern: string;
             }[];
-        };
-        LeagueError: {
-            /** @enum {string} */
-            error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
-            message: string;
-        };
-        Player: {
-            identifier: string;
-            displayName: string;
-            profileUrl: string | null;
-            mmr: {
-                value: number;
-                category: string;
-                provisional: boolean;
-                results: number;
-            } | null;
-            rank: components["schemas"]["Rank"] | null;
-            heirRating: {
-                value: number;
-                provisional: boolean;
-                category: string;
-                gamemode: string | null;
-                computedAt: string | null;
-            } | null;
-            roster: {
-                /** Format: uuid */
-                id: string;
+            categories: string[];
+            gamemodes: {
+                key: string;
                 name: string;
-                tag: string | null;
-            } | null;
+            }[];
+            ranks: {
+                key: string;
+                name: string;
+                minMmr: number | null;
+                color: string;
+                secondaryColor: string | null;
+                /** @enum {string} */
+                iconKey: "wood" | "bronze" | "silver" | "gold" | "platinum" | "diamond" | "heir" | "jester";
+                iconUrl: string | null;
+            }[] | null;
+            leaderboardMetrics: string[];
+            batchMax: number;
         };
-        Rank: {
-            key: string;
-            name: string;
-            minMmr: number | null;
-            color: string;
-            secondaryColor: string | null;
-            /** @enum {string} */
-            iconKey: "wood" | "bronze" | "silver" | "gold" | "platinum" | "diamond" | "heir" | "jester";
-            iconUrl: string | null;
-        };
-        PlayerResponse: {
-            player: components["schemas"]["Player"] | null;
-        };
-        PlayerLookupRequest: {
+        EligibilityRequest: {
             credential: string;
             identifiers: string[];
-            /**
-             * @default overall
-             * @enum {string}
-             */
-            category?: "overall" | "competitive" | "casual";
-            gamemode?: string;
-        };
-        PlayerLookupResponse: {
-            players: {
-                identifier: string;
-                /** @enum {string} */
-                status: "found" | "unavailable";
-                player: components["schemas"]["Player"] | null;
-            }[];
-        };
-        PlayerStatsResponse: {
-            player: components["schemas"]["Player"] | null;
-            category: string;
-            record: {
-                wins: number;
-                losses: number;
-            } | null;
-            totals: {
-                [key: string]: number;
-            } | null;
-        };
-        PlayerMatchesResponse: {
-            category: string;
-            matches: {
-                sourceKey: string;
-                matchId: string | null;
-                playedAt: string;
-                mmrBefore: number;
-                mmrAfter: number;
-                mmrDelta: number;
-            }[];
-            page: number;
-            pageSize: number;
-            hasMore: boolean;
-            nextToken: string | null;
-        };
-        Roster: {
             /** Format: uuid */
-            id: string;
-            name: string;
-            tag: string | null;
-            logoUrl: string | null;
-            teamMmr: number | null;
-            provisional: boolean;
-            category: string;
-            captain: {
-                displayName: string;
-                profileUrl: string | null;
-            } | null;
+            fixtureId: string;
+            /** Format: uuid */
+            rosterId: string;
+            gamemode: string;
         };
-        RostersResponse: {
-            rosters: components["schemas"]["Roster"][];
+        EligibilityResponse: {
+            /** Format: uuid */
+            fixtureId: string;
+            /** Format: uuid */
+            rosterId: string;
+            checkedAt: string;
+            players: {
+                /** @description The identifier exactly as it was sent. */
+                identifier: string;
+                /** @description The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent. */
+                canonicalIdentifier: string;
+                eligible: boolean;
+                reasons: string[];
+            }[];
+        };
+        FixturesResponse: {
+            fixtures: {
+                /** Format: uuid */
+                id: string;
+                code: string | null;
+                rosterA: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                };
+                rosterB: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                };
+                scheduledAt: string | null;
+                status: string;
+                resultMatchId: string | null;
+                scoreA: number | null;
+                scoreB: number | null;
+                streamUrl: string | null;
+            }[];
             page: number;
             pageSize: number;
             hasMore: boolean;
             nextToken: string | null;
         };
-        RosterResponse: {
-            roster: components["schemas"]["Roster"];
-            members: {
-                displayName: string;
-                profileUrl: string | null;
-                isCaptain: boolean;
+        FixtureResponse: {
+            fixture: {
+                /** Format: uuid */
+                id: string;
+                code: string | null;
+                rosterA: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                };
+                rosterB: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                };
+                scheduledAt: string | null;
+                status: string;
+                resultMatchId: string | null;
+                scoreA: number | null;
+                scoreB: number | null;
+                streamUrl: string | null;
+            };
+        };
+        InventoryBatchResponse: {
+            /** @description One entry per identifier you sent, under the exact spelling you sent it in. */
+            players: {
+                [key: string]: {
+                    /** @description What the player holds right now, ordered by key. Empty when there is nothing to show. */
+                    items: {
+                        /** @description The item's stable key. Match on this: it never changes once a member has held the item. */
+                        key: string;
+                        /** @description The item's display name. It can change; do not match on it. */
+                        name: string;
+                        /** @description When the player stops holding it, in Unix milliseconds. Null for an item kept for good. */
+                        expiresAt: number | null;
+                        /** @description Set when the item came from a limited listing, such as #3 of 10. Null otherwise. */
+                        edition: {
+                            /** @description The player's place in the edition: 1 for the first buyer. */
+                            number: number;
+                            /** @description How many the edition has. Null if the League has since lifted the limit. */
+                            size: number | null;
+                        } | null;
+                        /** @description The item's cover image, or null when it has none. */
+                        imageUrl: string | null;
+                    }[];
+                };
+            };
+        };
+        InventoryResponse: {
+            /** @description What the player holds right now, ordered by key. Empty when there is nothing to show. */
+            items: {
+                /** @description The item's stable key. Match on this: it never changes once a member has held the item. */
+                key: string;
+                /** @description The item's display name. It can change; do not match on it. */
+                name: string;
+                /** @description When the player stops holding it, in Unix milliseconds. Null for an item kept for good. */
+                expiresAt: number | null;
+                /** @description Set when the item came from a limited listing, such as #3 of 10. Null otherwise. */
+                edition: {
+                    /** @description The player's place in the edition: 1 for the first buyer. */
+                    number: number;
+                    /** @description How many the edition has. Null if the League has since lifted the limit. */
+                    size: number | null;
+                } | null;
+                /** @description The item's cover image, or null when it has none. */
+                imageUrl: string | null;
+            }[];
+        };
+        LeagueItemsResponse: {
+            /** @description Every item that is not archived, ordered by key. */
+            items: {
+                /** @description The item's stable key. */
+                key: string;
+                name: string;
+                description: string;
+                /**
+                 * @description `permanent` for an item kept for good, `until-season-end` for one that lapses when the season ends.
+                 * @enum {string}
+                 */
+                lasts: "permanent" | "until-season-end";
+                /** @description The item's cover image, or null. */
+                imageUrl: string | null;
+            }[];
+            /** @description The kinds of game account this League's inventory calls accept. */
+            credentials: {
+                /** @description What to put in the `{credential}` part of an inventory call. */
+                key: string;
+                label: string;
+                /** @description What players call this ID, for example "PlayFab ID". */
+                idLabel: string;
+                /** @description Where a player finds it. */
+                hint: string;
             }[];
         };
         LeaderboardResponse: {
@@ -504,6 +551,243 @@ export interface components {
             snapshotAt: string;
             /** Format: date-time */
             snapshotExpiresAt: string;
+        };
+        MatchResponse: {
+            match: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                kind: "official" | "tracked" | "recording";
+                status: string;
+                playedAt: string | null;
+                officialMatchId: string | null;
+                result: {
+                    /** Format: uuid */
+                    winnerRosterId: string;
+                    /** Format: uuid */
+                    loserRosterId: string;
+                    winnerScore: number;
+                    loserScore: number;
+                } | null;
+                /** @enum {string} */
+                ratingStatus: "rated" | "not-rated";
+                /** @description The maps that count, in play order. An official result lists the maps of the approved tracked matches and recordings that settled it (each names this result as its `officialMatchId`), empty when none did or their stats are past the League's retention. */
+                games: {
+                    gamemode: string | null;
+                    players: {
+                        /** @description The Player's game account in its credential's canonical form, the form a player read returns as canonicalIdentifier. Null when the Player was recorded without one, or by a Members-only League, whose Players are never named by Discord ID. */
+                        identifier: string | null;
+                        /** @description A current Member of the League by their Heir name. Anyone else (an unlinked game account, or a Player who has left the League) by the name they played under, else their identifier, else `Player`. */
+                        displayName: string;
+                        /** @description The Player's stats. A built-in gamemode's are named by counter, as the stat tracking calls take them (`teamKills`, `damageDealt`), and the stats the League added to it by their stat key; the `counter` of each stat in the built-in gamemode catalog (`builtin-gamemodes.json`, published beside this reference) maps its stat key to its counter. A custom gamemode's are named by stat key. Bookkeeping such as the Player's side is not a stat. */
+                        stats: {
+                            [key: string]: number;
+                        };
+                    }[];
+                }[];
+            };
+        };
+        PlayerLookupRequest: {
+            credential: string;
+            identifiers: string[];
+            /**
+             * @default overall
+             * @enum {string}
+             */
+            category?: "overall" | "competitive" | "casual";
+            gamemode?: string;
+        };
+        PlayerLookupResponse: {
+            players: {
+                /** @description The identifier exactly as it was sent. */
+                identifier: string;
+                /** @description The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent. */
+                canonicalIdentifier: string;
+                /** @enum {string} */
+                status: "found" | "unavailable";
+                player: {
+                    /** @description The identifier exactly as it was sent. */
+                    identifier: string;
+                    /** @description The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent. */
+                    canonicalIdentifier: string;
+                    displayName: string;
+                    profileUrl: string | null;
+                    mmr: {
+                        /** @description MMR is always a whole number. */
+                        value: number;
+                        category: string;
+                        provisional: boolean;
+                        results: number;
+                    } | null;
+                    rank: {
+                        key: string;
+                        name: string;
+                        minMmr: number | null;
+                        color: string;
+                        secondaryColor: string | null;
+                        /** @enum {string} */
+                        iconKey: "wood" | "bronze" | "silver" | "gold" | "platinum" | "diamond" | "heir" | "jester";
+                        iconUrl: string | null;
+                    } | null;
+                    heirRating: {
+                        value: number;
+                        provisional: boolean;
+                        category: string;
+                        gamemode: string | null;
+                        computedAt: string | null;
+                    } | null;
+                    roster: {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        tag: string | null;
+                    } | null;
+                } | null;
+            }[];
+        };
+        PlayerResponse: {
+            player: {
+                /** @description The identifier exactly as it was sent. */
+                identifier: string;
+                /** @description The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent. */
+                canonicalIdentifier: string;
+                displayName: string;
+                profileUrl: string | null;
+                mmr: {
+                    /** @description MMR is always a whole number. */
+                    value: number;
+                    category: string;
+                    provisional: boolean;
+                    results: number;
+                } | null;
+                rank: {
+                    key: string;
+                    name: string;
+                    minMmr: number | null;
+                    color: string;
+                    secondaryColor: string | null;
+                    /** @enum {string} */
+                    iconKey: "wood" | "bronze" | "silver" | "gold" | "platinum" | "diamond" | "heir" | "jester";
+                    iconUrl: string | null;
+                } | null;
+                heirRating: {
+                    value: number;
+                    provisional: boolean;
+                    category: string;
+                    gamemode: string | null;
+                    computedAt: string | null;
+                } | null;
+                roster: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    tag: string | null;
+                } | null;
+            } | null;
+        };
+        PlayerMatchesResponse: {
+            category: string;
+            matches: {
+                sourceKey: string;
+                matchId: string | null;
+                playedAt: string;
+                mmrBefore: number;
+                mmrAfter: number;
+                mmrDelta: number;
+            }[];
+            page: number;
+            pageSize: number;
+            hasMore: boolean;
+            nextToken: string | null;
+        };
+        PlayerStatsResponse: {
+            player: {
+                /** @description The identifier exactly as it was sent. */
+                identifier: string;
+                /** @description The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent. */
+                canonicalIdentifier: string;
+                displayName: string;
+                profileUrl: string | null;
+                mmr: {
+                    /** @description MMR is always a whole number. */
+                    value: number;
+                    category: string;
+                    provisional: boolean;
+                    results: number;
+                } | null;
+                rank: {
+                    key: string;
+                    name: string;
+                    minMmr: number | null;
+                    color: string;
+                    secondaryColor: string | null;
+                    /** @enum {string} */
+                    iconKey: "wood" | "bronze" | "silver" | "gold" | "platinum" | "diamond" | "heir" | "jester";
+                    iconUrl: string | null;
+                } | null;
+                heirRating: {
+                    value: number;
+                    provisional: boolean;
+                    category: string;
+                    gamemode: string | null;
+                    computedAt: string | null;
+                } | null;
+                roster: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    tag: string | null;
+                } | null;
+            } | null;
+            category: string;
+            record: {
+                wins: number;
+                losses: number;
+            } | null;
+            totals: {
+                [key: string]: number;
+            } | null;
+        };
+        RostersResponse: {
+            rosters: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                tag: string | null;
+                logoUrl: string | null;
+                teamMmr: number | null;
+                provisional: boolean;
+                category: string;
+                captain: {
+                    displayName: string;
+                    profileUrl: string | null;
+                } | null;
+            }[];
+            page: number;
+            pageSize: number;
+            hasMore: boolean;
+            nextToken: string | null;
+        };
+        RosterResponse: {
+            roster: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                tag: string | null;
+                logoUrl: string | null;
+                teamMmr: number | null;
+                provisional: boolean;
+                category: string;
+                captain: {
+                    displayName: string;
+                    profileUrl: string | null;
+                } | null;
+            };
+            members: {
+                displayName: string;
+                profileUrl: string | null;
+                isCaptain: boolean;
+            }[];
         };
         StandingsResponse: {
             season: number | null;
@@ -527,110 +811,6 @@ export interface components {
             snapshotAt: string;
             /** Format: date-time */
             snapshotExpiresAt: string;
-        };
-        Fixture: {
-            /** Format: uuid */
-            id: string;
-            code: string | null;
-            rosterA: {
-                /** Format: uuid */
-                id: string;
-                name: string;
-            };
-            rosterB: {
-                /** Format: uuid */
-                id: string;
-                name: string;
-            };
-            scheduledAt: string | null;
-            status: string;
-            resultMatchId: string | null;
-            scoreA: number | null;
-            scoreB: number | null;
-            streamUrl: string | null;
-        };
-        FixturesResponse: {
-            fixtures: components["schemas"]["Fixture"][];
-            page: number;
-            pageSize: number;
-            hasMore: boolean;
-            nextToken: string | null;
-        };
-        FixtureResponse: {
-            fixture: components["schemas"]["Fixture"];
-        };
-        MatchResponse: {
-            match: {
-                /** Format: uuid */
-                id: string;
-                /** @enum {string} */
-                kind: "official" | "tracked" | "recording";
-                status: string;
-                playedAt: string | null;
-                officialMatchId: string | null;
-                result: {
-                    /** Format: uuid */
-                    winnerRosterId: string;
-                    /** Format: uuid */
-                    loserRosterId: string;
-                    winnerScore: number;
-                    loserScore: number;
-                } | null;
-                /** @enum {string} */
-                ratingStatus: "rated" | "not-rated";
-                games: {
-                    gamemode: string | null;
-                    players: {
-                        identifier: string | null;
-                        displayName: string;
-                        stats: {
-                            [key: string]: number;
-                        };
-                    }[];
-                }[];
-            };
-        };
-        LeagueConfigResponse: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            gameKey: string | null;
-            season: number | null;
-            credentials: {
-                key: string;
-                label: string;
-                idLabel: string;
-                pattern: string;
-            }[];
-            categories: string[];
-            gamemodes: {
-                key: string;
-                name: string;
-            }[];
-            ranks: components["schemas"]["Rank"][] | null;
-            leaderboardMetrics: string[];
-            batchMax: number;
-        };
-        EligibilityRequest: {
-            credential: string;
-            identifiers: string[];
-            /** Format: uuid */
-            fixtureId: string;
-            /** Format: uuid */
-            rosterId: string;
-            gamemode: string;
-        };
-        EligibilityResponse: {
-            /** Format: uuid */
-            fixtureId: string;
-            /** Format: uuid */
-            rosterId: string;
-            checkedAt: string;
-            players: {
-                identifier: string;
-                eligible: boolean;
-                reasons: string[];
-            }[];
         };
     };
     responses: never;
@@ -687,7 +867,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -696,7 +880,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -705,7 +893,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -714,7 +906,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -728,7 +924,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -737,7 +937,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -776,7 +980,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -785,7 +993,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -794,7 +1006,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -803,7 +1019,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -812,7 +1032,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -821,7 +1045,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -835,7 +1063,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -844,7 +1076,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -895,7 +1131,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -904,7 +1144,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -913,7 +1157,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -922,7 +1170,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -936,7 +1188,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -945,7 +1201,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -992,7 +1252,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1001,7 +1265,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1010,7 +1278,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1019,7 +1291,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1028,7 +1304,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1037,7 +1317,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1051,7 +1335,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1060,7 +1348,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -1101,7 +1393,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1110,7 +1406,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1119,7 +1419,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1128,7 +1432,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1137,7 +1445,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1146,7 +1458,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1160,7 +1476,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1169,7 +1489,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -1215,7 +1539,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1224,7 +1552,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1233,7 +1565,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1242,7 +1578,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1256,7 +1596,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1265,7 +1609,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -1307,7 +1655,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1316,7 +1668,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1325,7 +1681,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1334,7 +1694,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1343,7 +1707,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1352,7 +1720,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1366,7 +1738,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1375,7 +1751,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -1414,7 +1794,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1423,7 +1807,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1432,7 +1820,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1441,7 +1833,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1450,7 +1846,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1459,7 +1859,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1473,7 +1877,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1482,7 +1890,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -1522,7 +1934,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1531,7 +1947,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1540,7 +1960,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1549,7 +1973,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1558,7 +1986,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1567,7 +1999,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1581,7 +2017,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1590,7 +2030,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -1633,7 +2077,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1642,7 +2090,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1651,7 +2103,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1660,7 +2116,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1674,7 +2134,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1683,7 +2147,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -1726,7 +2194,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1735,7 +2207,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1744,7 +2220,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1753,7 +2233,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1767,7 +2251,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1776,7 +2264,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -1818,7 +2310,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1827,7 +2323,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1836,7 +2336,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1845,7 +2349,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1859,7 +2367,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1868,7 +2380,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };
@@ -1907,7 +2423,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1916,7 +2436,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1925,7 +2449,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1934,7 +2462,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1943,7 +2475,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1952,7 +2488,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1966,7 +2506,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
             /** @description A stable error code and explanatory message. Errors are never cached. */
@@ -1975,7 +2519,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueError"];
+                    "application/json": {
+                        /** @enum {string} */
+                        error: "league-not-found" | "not-found" | "unknown-credential" | "invalid-identifier" | "invalid-request" | "too-many-identifiers" | "unauthorized" | "forbidden" | "rate-limited" | "unavailable" | "invalid-next-token" | "next-token-expired" | "snapshot-too-large";
+                        message: string;
+                    };
                 };
             };
         };

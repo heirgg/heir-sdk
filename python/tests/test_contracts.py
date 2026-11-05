@@ -56,7 +56,7 @@ def handler(case: dict[str, Any]) -> Any:
         assert request.method == case["method"]
         assert str(request.url) == "https://api.heir.gg" + case["path"]
         assert request.headers["authorization"] == "Bearer test-key"
-        assert (json.loads(request.content) if request.content else None) == case.get("requestBody")
+        assert exact(json.loads(request.content) if request.content else None) == exact(case.get("requestBody"))
         if case["operationId"] in {"beginMatch", "appendUnits", "heartbeatMatch", "finalizeMatch", "uploadMatch"}:
             assert request.headers["idempotency-key"]
         return httpx.Response(200, json=case["responseBody"])
@@ -66,7 +66,12 @@ def handler(case: dict[str, Any]) -> Any:
 
 def assert_body(result: Any, case: dict[str, Any]) -> None:
     body = result.body if isinstance(result, (Page, AsyncPage)) else result
-    assert body.model_dump(mode="json", by_alias=True, exclude_unset=True) == case["responseBody"]
+    assert exact(body.model_dump(mode="json", by_alias=True, exclude_unset=True)) == exact(case["responseBody"])
+
+
+def exact(value: Any) -> str:
+    """The JSON text of `value`, so `10` and `10.0` differ, as they do on the wire."""
+    return json.dumps(value, sort_keys=True)
 
 
 def test_contract_fixtures_cover_the_openapi_operations() -> None:

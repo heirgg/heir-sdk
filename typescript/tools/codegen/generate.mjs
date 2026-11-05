@@ -1,5 +1,10 @@
 // Writes src/generated/*.ts from ../spec. `--check` fails instead of writing when the committed output is out of date,
 // so CI catches a spec change that was not regenerated. Nothing else in src/ is generated.
+//
+// Before generating, each request and response body named in ../spec/type-names.json (`<operationId> request`,
+// `<operationId> <status>`) becomes the component of that name, whether the document writes it inline or under another
+// component name, so every SDK calls a body the same thing. Shapes inside a body are left inline; src/types.ts names the
+// ones a caller reaches for.
 import {readFile, writeFile} from "node:fs/promises";
 import {resolve, dirname} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -15,9 +20,54 @@ const documents = [
   {file: "public-openapi.json", module: "public.ts"},
   {file: "stat-submission-openapi.json", module: "stats.ts"}
 ];
+const names = JSON.parse(await readFile(spec("type-names.json"), "utf8"));
+const fail = message => { console.error(message); process.exit(1); };
+
+// A body with no documented fields cannot become a type and is refused, so the gap is fixed in the backend document
+// rather than shipped as an empty type.
+function nameOperations(doc) {
+  const schemas = doc.components.schemas;
+  for (const path of Object.keys(doc.paths ?? {}).sort()) {
+    for (const [method, operation] of Object.entries(doc.paths[path]).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)) {
+      if (!operation?.operationId) continue;
+      const bodies = [["request", operation.requestBody], ...Object.entries(operation.responses ?? {})];
+      for (const [slot, body] of bodies) {
+        const key = `${operation.operationId} ${slot}`;
+        const media = body?.content?.["application/json"];
+        if (!(key in names) || !media) continue;
+        const name = names[key];
+        if (media.schema.$ref) { rename(doc, media.schema.$ref.split("/").pop(), name); continue; }
+        if (!media.schema.properties) fail(`${key} (${method.toUpperCase()} ${path}) documents no fields, so ${name} would be empty`);
+        const {description, example, examples, ...shape} = media.schema;
+        if (name in schemas && JSON.stringify(schemas[name]) !== JSON.stringify(shape)) fail(`two different shapes are both named ${name}: reshaping needs a second name`);
+        schemas[name] = shape;
+        media.schema = {$ref: `#/components/schemas/${name}`};
+      }
+    }
+  }
+}
+
+function rename(doc, old, name) {
+  if (old === name) return;
+  const schemas = doc.components.schemas;
+  if (name in schemas) fail(`cannot rename ${old}: a component is already named ${name}`);
+  schemas[name] = schemas[old];
+  delete schemas[old];
+  const target = `#/components/schemas/${old}`;
+  const visit = node => {
+    if (Array.isArray(node)) node.forEach(visit);
+    else if (node && typeof node === "object") {
+      if (node.$ref === target) node.$ref = `#/components/schemas/${name}`;
+      Object.values(node).forEach(visit);
+    }
+  };
+  visit(doc);
+}
+
 let stale = [];
 for (const document of documents) {
   const json = JSON.parse(await readFile(spec(document.file), "utf8"));
+  nameOperations(json);
   const ast = await openapiTS(json, {
     // An unspecified object is unknown, not `Record<string, never>`.
     emptyObjectsUnknown: true,

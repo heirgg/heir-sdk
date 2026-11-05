@@ -11,33 +11,11 @@ class InventoryBatchRequest(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    identifiers: list[str]
-    item: str | None = None
-
-
-class Rank(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
+    identifiers: list[str] = Field(
+        ...,
+        description="Game account IDs in the credential's format, for example PlayFab IDs.",
     )
-    key: str
-    name: str
-    min_mmr: int | None = Field(..., alias="minMmr")
-    color: str
-    secondary_color: str | None = Field(..., alias="secondaryColor")
-    icon_key: Literal[
-        "wood", "bronze", "silver", "gold", "platinum", "diamond", "heir", "jester"
-    ] = Field(..., alias="iconKey")
-    icon_url: str | None = Field(..., alias="iconUrl")
-
-
-class PlayerLookupRequest(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    credential: str
-    identifiers: list[str]
-    category: Literal["overall", "competitive", "casual"] | None = "overall"
-    gamemode: str | None = None
+    item: str | None = Field(None, description="Only answer about this item key.")
 
 
 class EligibilityRequest(HeirModel):
@@ -51,11 +29,26 @@ class EligibilityRequest(HeirModel):
     gamemode: str
 
 
+class PlayerLookupRequest(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    credential: str
+    identifiers: list[str]
+    category: Literal["overall", "competitive", "casual"] | None = "overall"
+    gamemode: str | None = None
+
+
 class EligibilityVerdict(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    identifier: str
+    identifier: str = Field(..., description="The identifier exactly as it was sent.")
+    canonical_identifier: str = Field(
+        ...,
+        alias="canonicalIdentifier",
+        description="The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent.",
+    )
     eligible: bool
     reasons: list[str]
 
@@ -72,8 +65,13 @@ class ItemEdition(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    number: int
-    size: int | None
+    number: int = Field(
+        ..., description="The player's place in the edition: 1 for the first buyer."
+    )
+    size: int | None = Field(
+        ...,
+        description="How many the edition has. Null if the League has since lifted the limit.",
+    )
 
 
 class LeaderboardEntry(HeirModel):
@@ -83,7 +81,7 @@ class LeaderboardEntry(HeirModel):
     position: int
     display_name: str = Field(..., alias="displayName")
     profile_url: str | None = Field(..., alias="profileUrl")
-    value: float
+    value: int | float
     provisional: bool
 
 
@@ -105,34 +103,70 @@ class LeagueGamemode(HeirModel):
     name: str
 
 
-class LeagueCredential(HeirModel):
+class Rank(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
     key: str
+    name: str
+    min_mmr: int | None = Field(..., alias="minMmr")
+    color: str
+    secondary_color: str | None = Field(..., alias="secondaryColor")
+    icon_key: Literal[
+        "wood", "bronze", "silver", "gold", "platinum", "diamond", "heir", "jester"
+    ] = Field(..., alias="iconKey")
+    icon_url: str | None = Field(..., alias="iconUrl")
+
+
+class LeagueCredential(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    key: str = Field(
+        ..., description="What to put in the `{credential}` part of an inventory call."
+    )
     label: str
-    id_label: str = Field(..., alias="idLabel")
-    hint: str
+    id_label: str = Field(
+        ...,
+        alias="idLabel",
+        description='What players call this ID, for example "PlayFab ID".',
+    )
+    hint: str = Field(..., description="Where a player finds it.")
 
 
 class LeagueItem(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    key: str
+    key: str = Field(..., description="The item's stable key.")
     name: str
     description: str
-    lasts: Literal["permanent", "until-season-end"]
-    image_url: str | None = Field(..., alias="imageUrl")
+    lasts: Literal["permanent", "until-season-end"] = Field(
+        ...,
+        description="`permanent` for an item kept for good, `until-season-end` for one that lapses when the season ends.",
+    )
+    image_url: str | None = Field(
+        ..., alias="imageUrl", description="The item's cover image, or null."
+    )
 
 
 class MatchGamePlayer(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    identifier: str | None
-    display_name: str = Field(..., alias="displayName")
-    stats: dict[str, float]
+    identifier: str | None = Field(
+        ...,
+        description="The Player's game account in its credential's canonical form, the form a player read returns as canonicalIdentifier. Null when the Player was recorded without one, or by a Members-only League, whose Players are never named by Discord ID.",
+    )
+    display_name: str = Field(
+        ...,
+        alias="displayName",
+        description="A current Member of the League by their Heir name. Anyone else (an unlinked game account, or a Player who has left the League) by the name they played under, else their identifier, else `Player`.",
+    )
+    stats: dict[str, int | float] = Field(
+        ...,
+        description="The Player's stats. A built-in gamemode's are named by counter, as the stat tracking calls take them (`teamKills`, `damageDealt`), and the stats the League added to it by their stat key; the `counter` of each stat in the built-in gamemode catalog (`builtin-gamemodes.json`, published beside this reference) maps its stat key to its counter. A custom gamemode's are named by stat key. Bookkeeping such as the Player's side is not a stat.",
+    )
 
 
 class MatchResult(HeirModel):
@@ -149,7 +183,7 @@ class PlayerHeirRating(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: float
+    value: int | float
     provisional: bool
     category: str
     gamemode: str | None
@@ -160,7 +194,7 @@ class PlayerMMR(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    value: float
+    value: int = Field(..., description="MMR is always a whole number.")
     category: str
     provisional: bool
     results: int
@@ -182,9 +216,9 @@ class PlayerMatch(HeirModel):
     source_key: str = Field(..., alias="sourceKey")
     match_id: str | None = Field(..., alias="matchId")
     played_at: str = Field(..., alias="playedAt")
-    mmr_before: float = Field(..., alias="mmrBefore")
-    mmr_after: float = Field(..., alias="mmrAfter")
-    mmr_delta: float = Field(..., alias="mmrDelta")
+    mmr_before: int = Field(..., alias="mmrBefore")
+    mmr_after: int = Field(..., alias="mmrAfter")
+    mmr_delta: int = Field(..., alias="mmrDelta")
 
 
 class PlayerRecord(HeirModel):
@@ -195,14 +229,6 @@ class PlayerRecord(HeirModel):
     losses: int
 
 
-class RosterCaptain(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    display_name: str = Field(..., alias="displayName")
-    profile_url: str | None = Field(..., alias="profileUrl")
-
-
 class RosterMember(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
@@ -210,6 +236,14 @@ class RosterMember(HeirModel):
     display_name: str = Field(..., alias="displayName")
     profile_url: str | None = Field(..., alias="profileUrl")
     is_captain: bool = Field(..., alias="isCaptain")
+
+
+class RosterCaptain(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    display_name: str = Field(..., alias="displayName")
+    profile_url: str | None = Field(..., alias="profileUrl")
 
 
 class Standing(HeirModel):
@@ -223,7 +257,7 @@ class Standing(HeirModel):
     losses: int
     rounds_won: int = Field(..., alias="roundsWon")
     rounds_lost: int = Field(..., alias="roundsLost")
-    team_mmr: float = Field(..., alias="teamMmr")
+    team_mmr: int = Field(..., alias="teamMmr")
     provisional: bool
 
 
@@ -231,101 +265,77 @@ class Item(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    key: str
+    key: str = Field(
+        ...,
+        description="The item's stable key. Match on this: it never changes once a member has held the item.",
+    )
+    name: str = Field(
+        ..., description="The item's display name. It can change; do not match on it."
+    )
+    expires_at: int | None = Field(
+        ...,
+        alias="expiresAt",
+        description="When the player stops holding it, in Unix milliseconds. Null for an item kept for good.",
+    )
+    edition: ItemEdition | None = Field(
+        ...,
+        description="Set when the item came from a limited listing, such as #3 of 10. Null otherwise.",
+    )
+    image_url: str | None = Field(
+        ...,
+        alias="imageUrl",
+        description="The item's cover image, or null when it has none.",
+    )
+
+
+class LeagueConfigResponse(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    id: str
     name: str
-    expires_at: int | None = Field(..., alias="expiresAt")
-    edition: ItemEdition | None
-    image_url: str | None = Field(..., alias="imageUrl")
+    recognition: Literal["verified", "official"] | None = None
+    game_key: str | None = Field(..., alias="gameKey")
+    season: int | None
+    credentials: list[LeagueConfigCredential]
+    categories: list[str]
+    gamemodes: list[LeagueGamemode]
+    ranks: list[Rank] | None
+    leaderboard_metrics: list[str] = Field(..., alias="leaderboardMetrics")
+    batch_max: int = Field(..., alias="batchMax")
+
+
+class EligibilityResponse(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    fixture_id: str = Field(..., alias="fixtureId")
+    roster_id: str = Field(..., alias="rosterId")
+    checked_at: str = Field(..., alias="checkedAt")
+    players: list[EligibilityVerdict]
 
 
 class InventoryResponse(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    items: list[Item]
+    items: list[Item] = Field(
+        ...,
+        description="What the player holds right now, ordered by key. Empty when there is nothing to show.",
+    )
 
 
 class LeagueItemsResponse(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    items: list[LeagueItem]
-    credentials: list[LeagueCredential]
-
-
-class Player(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
+    items: list[LeagueItem] = Field(
+        ..., description="Every item that is not archived, ordered by key."
     )
-    identifier: str
-    display_name: str = Field(..., alias="displayName")
-    profile_url: str | None = Field(..., alias="profileUrl")
-    mmr: PlayerMMR | None
-    rank: Rank | None
-    heir_rating: PlayerHeirRating | None = Field(..., alias="heirRating")
-    roster: PlayerRoster | None
-
-
-class PlayerResponse(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
+    credentials: list[LeagueCredential] = Field(
+        ...,
+        description="The kinds of game account this League's inventory calls accept.",
     )
-    player: Player | None
-
-
-class PlayerStatsResponse(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    player: Player | None
-    category: str
-    record: PlayerRecord | None
-    totals: dict[str, float] | None
-
-
-class PlayerMatchesResponse(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    category: str
-    matches: list[PlayerMatch]
-    page: int
-    page_size: int = Field(..., alias="pageSize")
-    has_more: bool = Field(..., alias="hasMore")
-    next_token: str | None = Field(..., alias="nextToken")
-
-
-class Roster(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    id: str
-    name: str
-    tag: str | None
-    logo_url: str | None = Field(..., alias="logoUrl")
-    team_mmr: float | None = Field(..., alias="teamMmr")
-    provisional: bool
-    category: str
-    captain: RosterCaptain | None
-
-
-class RostersResponse(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    rosters: list[Roster]
-    page: int
-    page_size: int = Field(..., alias="pageSize")
-    has_more: bool = Field(..., alias="hasMore")
-    next_token: str | None = Field(..., alias="nextToken")
-
-
-class RosterResponse(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    roster: Roster
-    members: list[RosterMember]
 
 
 class LeaderboardResponse(HeirModel):
@@ -341,6 +351,18 @@ class LeaderboardResponse(HeirModel):
     next_token: str | None = Field(..., alias="nextToken")
     snapshot_at: AwareDatetime = Field(..., alias="snapshotAt")
     snapshot_expires_at: AwareDatetime = Field(..., alias="snapshotExpiresAt")
+
+
+class PlayerMatchesResponse(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    category: str
+    matches: list[PlayerMatch]
+    page: int
+    page_size: int = Field(..., alias="pageSize")
+    has_more: bool = Field(..., alias="hasMore")
+    next_token: str | None = Field(..., alias="nextToken")
 
 
 class StandingsResponse(HeirModel):
@@ -373,6 +395,56 @@ class Fixture(HeirModel):
     stream_url: str | None = Field(..., alias="streamUrl")
 
 
+class InventoryEntry(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    items: list[Item] = Field(
+        ...,
+        description="What the player holds right now, ordered by key. Empty when there is nothing to show.",
+    )
+
+
+class MatchGame(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    gamemode: str | None
+    players: list[MatchGamePlayer]
+
+
+class Player(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    identifier: str = Field(..., description="The identifier exactly as it was sent.")
+    canonical_identifier: str = Field(
+        ...,
+        alias="canonicalIdentifier",
+        description="The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent.",
+    )
+    display_name: str = Field(..., alias="displayName")
+    profile_url: str | None = Field(..., alias="profileUrl")
+    mmr: PlayerMMR | None
+    rank: Rank | None
+    heir_rating: PlayerHeirRating | None = Field(..., alias="heirRating")
+    roster: PlayerRoster | None
+
+
+class Roster(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    id: str
+    name: str
+    tag: str | None
+    logo_url: str | None = Field(..., alias="logoUrl")
+    team_mmr: int | None = Field(..., alias="teamMmr")
+    provisional: bool
+    category: str
+    captain: RosterCaptain | None
+
+
 class FixturesResponse(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
@@ -391,68 +463,50 @@ class FixtureResponse(HeirModel):
     fixture: Fixture
 
 
-class LeagueConfigResponse(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    id: str
-    name: str
-    game_key: str | None = Field(..., alias="gameKey")
-    season: int | None
-    credentials: list[LeagueConfigCredential]
-    categories: list[str]
-    gamemodes: list[LeagueGamemode]
-    ranks: list[Rank] | None
-    leaderboard_metrics: list[str] = Field(..., alias="leaderboardMetrics")
-    batch_max: int = Field(..., alias="batchMax")
-
-
-class EligibilityResponse(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    fixture_id: str = Field(..., alias="fixtureId")
-    roster_id: str = Field(..., alias="rosterId")
-    checked_at: str = Field(..., alias="checkedAt")
-    players: list[EligibilityVerdict]
-
-
-class InventoryEntry(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    items: list[Item]
-
-
-class MatchGame(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    gamemode: str | None
-    players: list[MatchGamePlayer]
-
-
-class PlayerLookupResult(HeirModel):
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
-    identifier: str
-    status: Literal["found", "unavailable"]
-    player: Player | None
-
-
 class InventoryBatchResponse(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    players: dict[str, InventoryEntry]
+    players: dict[str, InventoryEntry] = Field(
+        ...,
+        description="One entry per identifier you sent, under the exact spelling you sent it in.",
+    )
 
 
-class PlayerLookupResponse(HeirModel):
+class PlayerResponse(HeirModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
-    players: list[PlayerLookupResult]
+    player: Player | None
+
+
+class PlayerStatsResponse(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    player: Player | None
+    category: str
+    record: PlayerRecord | None
+    totals: dict[str, int | float] | None
+
+
+class RostersResponse(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    rosters: list[Roster]
+    page: int
+    page_size: int = Field(..., alias="pageSize")
+    has_more: bool = Field(..., alias="hasMore")
+    next_token: str | None = Field(..., alias="nextToken")
+
+
+class RosterResponse(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    roster: Roster
+    members: list[RosterMember]
 
 
 class Match(HeirModel):
@@ -466,7 +520,24 @@ class Match(HeirModel):
     official_match_id: str | None = Field(..., alias="officialMatchId")
     result: MatchResult | None
     rating_status: Literal["rated", "not-rated"] = Field(..., alias="ratingStatus")
-    games: list[MatchGame]
+    games: list[MatchGame] = Field(
+        ...,
+        description="The maps that count, in play order. An official result lists the maps of the approved tracked matches and recordings that settled it (each names this result as its `officialMatchId`), empty when none did or their stats are past the League's retention.",
+    )
+
+
+class PlayerLookupResult(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    identifier: str = Field(..., description="The identifier exactly as it was sent.")
+    canonical_identifier: str = Field(
+        ...,
+        alias="canonicalIdentifier",
+        description="The identifier in the credential's canonical form, the form match detail names Players by. Join on this, not on the identifier as sent.",
+    )
+    status: Literal["found", "unavailable"]
+    player: Player | None
 
 
 class MatchResponse(HeirModel):
@@ -474,3 +545,10 @@ class MatchResponse(HeirModel):
         populate_by_name=True,
     )
     match: Match
+
+
+class PlayerLookupResponse(HeirModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+    players: list[PlayerLookupResult]

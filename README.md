@@ -39,7 +39,7 @@ Choose the submission flow that matches your integration:
 
 - **Finished match**: send a `heir-match-v1` document. Persist a stable `reference` and reuse it with identical contents when recovering from a lost connection.
 - **Live tracking**: begin a match, append units, send heartbeats, and finalize. Persist an idempotency key for each distinct request and reuse it for retries of that request.
-- **Validation**: tracking writes and complete tracked uploads accept `dryRun`. Complete-match document submission has no dry-run option.
+- **Validation**: every tracking write (begin, units, heartbeat, finalize) and complete tracked upload accepts `dryRun`: the API checks it in full, answers `dryRun: true` and stores nothing. Complete-match document submission has no dry-run option.
 
 Use catalog endpoints to discover allowed gamemodes, schemas, and stat names. See the language guides for runnable examples, error handling, timestamp formats, cancellation, and recovery.
 
