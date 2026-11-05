@@ -2,8 +2,10 @@
 //
 // Before generating, each document is reshaped so the Go types read well; nothing about the wire format changes, only
 // its Go spelling:
+//   - each request and response body named in `names` (`<operationId> request`, `<operationId> <status>`) becomes the
+//     component of that name, whether the document writes it inline or under another component name;
 //   - every inline object becomes a named component, so a caller can name the type (the names in `names`, otherwise
-//     <Parent><Field>);
+//     <Parent><Field>); a named type's own fields are listed under its name (`Player.mmr`), wherever the type appears;
 //   - a string enum listed in `names` becomes a named type, shared by every field that carries the same values;
 //   - a union of numeric literals (0 | 1) or of a string with a literal collapses to one primitive;
 //   - a boolean literal becomes a plain boolean.
@@ -30,8 +32,8 @@ import (
 type schema = map[string]any
 
 // names gives type names to inline shapes and shared enums, by their place in the document: `Parent.field`,
-// `Parent.field[]` for an array's items, `Parent.field{}` for a map's values. The same name on several places means
-// one type, and the places must agree. The table is ../../../spec/type-names.json, shared with the other SDKs'
+// `Parent.field[]` for an array's items, `Parent.field{}` for a map's values, and `operationId request` or
+// `operationId 200` for an operation's bodies. The same name on several places means one type, and the places must agree. The table is ../../../spec/type-names.json, shared with the other SDKs'
 // generators so every language calls a shape the same thing.
 var names map[string]string
 
@@ -98,6 +100,9 @@ func generate(path string, exclude []string) ([]byte, error) {
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		return nil, err
 	}
+	if err := nameOperations(doc); err != nil {
+		return nil, err
+	}
 	reshape(doc, exclude)
 	// Models only: the client is written by hand, so the operations are not needed.
 	delete(doc, "paths")
@@ -125,7 +130,9 @@ func generate(path string, exclude []string) ([]byte, error) {
 			// A missing slice or map is nil; a pointer to one helps nobody.
 			PreferSkipOptionalPointerOnContainerTypes: true,
 			TypeMapping: &codegen.TypeMapping{
-				// Whole numbers include millisecond timestamps, so 64 bits everywhere; fractions in float64; a UUID is a string.
+				// Whole numbers include millisecond timestamps, so 64 bits everywhere; a UUID is a string. A number, which may be a
+				// fraction, is a float64 rather than a json.Number: encoding/json writes a whole float64 as 10, not 10.0, so a stat
+				// read and sent again keeps its JSON form, and a caller does arithmetic without parsing.
 				Integer: codegen.FormatMapping{Default: codegen.SimpleTypeSpec{Type: "int64"}},
 				Number:  codegen.FormatMapping{Default: codegen.SimpleTypeSpec{Type: "float64"}},
 				String:  codegen.FormatMapping{Formats: map[string]codegen.SimpleTypeSpec{"uuid": {Type: "string"}}},
@@ -139,10 +146,109 @@ func generate(path string, exclude []string) ([]byte, error) {
 	return []byte(header + code), nil
 }
 
+// nameOperations makes each request and response body named in `names` the component of that name. The backend
+// writes most bodies inline, and some under names of its own; the SDKs name them the same way in every language. A body
+// with no documented fields cannot become a type and is refused, so the gap is fixed in the backend document rather than
+// shipped as an empty type.
+func nameOperations(doc schema) error {
+	schemas := doc["components"].(schema)["schemas"].(schema)
+	paths, _ := doc["paths"].(schema)
+	for _, path := range sortedKeys(paths) {
+		methods := paths[path].(schema)
+		for _, method := range sortedKeys(methods) {
+			operation, ok := methods[method].(schema)
+			if !ok || operation["operationId"] == nil {
+				continue
+			}
+			bodies := map[string]any{"request": operation["requestBody"]}
+			responses, _ := operation["responses"].(schema)
+			for status, response := range responses {
+				bodies[status] = response
+			}
+			for _, slot := range sortedKeys(bodies) {
+				key := fmt.Sprintf("%v %s", operation["operationId"], slot)
+				name, named := names[key]
+				body, _ := bodies[slot].(schema)
+				content, _ := body["content"].(schema)
+				media, _ := content["application/json"].(schema)
+				if !named || media == nil {
+					continue
+				}
+				found := media["schema"].(schema)
+				if ref, isRef := found["$ref"].(string); isRef {
+					if err := rename(doc, ref[strings.LastIndex(ref, "/")+1:], name); err != nil {
+						return err
+					}
+					continue
+				}
+				if found["properties"] == nil {
+					return fmt.Errorf("%s (%s %s) documents no fields, so %s would be empty", key, strings.ToUpper(method), path, name)
+				}
+				copied := deepCopy(found)
+				for _, key := range []string{"description", "example", "examples"} {
+					delete(copied, key)
+				}
+				if existing, ok := schemas[name]; ok && !reflect.DeepEqual(existing, copied) {
+					return fmt.Errorf("two different shapes are both named %s: reshaping needs a second name", name)
+				}
+				schemas[name] = copied
+				media["schema"] = schema{"$ref": "#/components/schemas/" + name}
+			}
+		}
+	}
+	return nil
+}
+
+// rename renames the component `old` to `name`, and every reference to it.
+func rename(doc schema, old, name string) error {
+	if old == name {
+		return nil
+	}
+	schemas := doc["components"].(schema)["schemas"].(schema)
+	if _, taken := schemas[name]; taken {
+		return fmt.Errorf("cannot rename %s: a component is already named %s", old, name)
+	}
+	schemas[name] = schemas[old]
+	delete(schemas, old)
+	target, replacement := "#/components/schemas/"+old, "#/components/schemas/"+name
+	var visit func(node any)
+	visit = func(node any) {
+		switch node := node.(type) {
+		case schema:
+			if node["$ref"] == target {
+				node["$ref"] = replacement
+			}
+			for _, value := range node {
+				visit(value)
+			}
+		case []any:
+			for _, value := range node {
+				visit(value)
+			}
+		}
+	}
+	visit(doc)
+	return nil
+}
+
+func sortedKeys(node schema) []string {
+	keys := make([]string, 0, len(node))
+	for key := range node {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// reshaped holds the components reshaped so far. A document's own component can be reached as a field's type before
+// its turn comes as a root; it is reshaped then, so it is compared with a newcomer in the same form.
+var reshaped = map[string]bool{}
+
 // reshape names every inline shape and shared enum in the document's components, in place. Excluded components
 // are left alone: nothing of theirs is generated.
 func reshape(doc schema, exclude []string) {
 	schemas := doc["components"].(schema)["schemas"].(schema)
+	reshaped = map[string]bool{}
 	roots := make([]string, 0, len(schemas))
 	for name := range schemas {
 		if !slices.Contains(exclude, name) {
@@ -151,7 +257,10 @@ func reshape(doc schema, exclude []string) {
 	}
 	sort.Strings(roots)
 	for _, name := range roots {
-		walk(schemas, name, name, schemas[name].(schema))
+		if !reshaped[name] {
+			reshaped[name] = true
+			walk(schemas, name, name, schemas[name].(schema))
+		}
 	}
 }
 
@@ -180,16 +289,24 @@ func place(schemas schema, path, autoName string, slot schema) {
 	switch {
 	case inner["properties"] != nil:
 		name := nameFor(path, autoName)
-		hoisted := hoist(schemas, name, inner)
+		// A named type's fields are listed under its name, so it is spelled the same wherever it appears.
+		within := path
+		if _, named := names[path]; named {
+			within = name
+		}
+		_, known := schemas[name]
+		hoisted := hoist(schemas, within, name, inner)
 		set(name)
-		walk(schemas, path, name, hoisted)
+		if !known {
+			walk(schemas, within, name, hoisted)
+		}
 	case inner["type"] == "array":
 		if items, ok := inner["items"].(schema); ok {
 			place(schemas, path+"[]", autoName+"Item", items)
 		}
 	case inner["type"] == "string" && inner["enum"] != nil:
 		if name, named := names[path]; named {
-			hoist(schemas, name, inner)
+			hoist(schemas, name, name, inner)
 			set(name)
 		}
 	}
@@ -205,16 +322,27 @@ func nameFor(path, autoName string) string {
 	return autoName
 }
 
-// hoist stores `node` as the component `name`, or checks that it agrees with the one already there, and returns the stored copy.
-func hoist(schemas schema, name string, node schema) schema {
+// hoist stores `node` as the component `name`, or checks that it agrees with the one already there, and returns the
+// stored copy. `path` is the place the type's own fields are listed under.
+func hoist(schemas schema, path, name string, node schema) schema {
 	copied := deepCopy(node)
 	delete(copied, "description") // the field's description stays on the field; the type gets none
 	if existing, ok := schemas[name]; ok {
-		if !reflect.DeepEqual(existing, copied) {
+		stored := existing.(schema)
+		if !reshaped[name] {
+			reshaped[name] = true
+			walk(schemas, name, name, stored)
+		}
+		// The stored one has been reshaped all the way down; reshape the newcomer the same way before comparing.
+		walk(schemas, path, name, copied)
+		comparable := deepCopy(stored)
+		delete(comparable, "description")
+		if !reflect.DeepEqual(comparable, copied) {
 			fail("two different shapes are both named %s: reshaping needs a second name", name)
 		}
-		return existing.(schema)
+		return stored
 	}
+	reshaped[name] = true
 	schemas[name] = copied
 	return copied
 }

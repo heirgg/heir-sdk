@@ -137,6 +137,20 @@ func TestSharedOperationContracts(t *testing.T) {
 	}
 }
 
+func TestWholeNumberStatsKeepTheirJSONForm(t *testing.T) {
+	var match MatchGamePlayer
+	if err := json.Unmarshal([]byte(`{"identifier":null,"displayName":"Ada","stats":{"accuracy":0.5,"score":10}}`), &match); err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := json.Marshal(match.Stats)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(encoded) != `{"accuracy":0.5,"score":10}` {
+		t.Errorf("stats=%s", encoded)
+	}
+}
+
 func contractBody[T any](t *testing.T, raw json.RawMessage) T {
 	t.Helper()
 	var body T

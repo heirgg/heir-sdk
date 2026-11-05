@@ -55,6 +55,38 @@ def test_nested_mutated_default_stats_are_sent_without_adding_unset_fields() -> 
     assert encode(HeirMatchPlayer(stats=None)) == {"stats": None}
 
 
+def test_whole_number_stats_stay_integers_when_read_and_sent_again() -> None:
+    match = {
+        "id": "m",
+        "kind": "recording",
+        "status": "approved",
+        "playedAt": None,
+        "officialMatchId": None,
+        "result": None,
+        "ratingStatus": "rated",
+        "games": [
+            {
+                "gamemode": "duel",
+                "players": [{"identifier": None, "displayName": "Ada", "stats": {"score": 10, "accuracy": 0.5}}],
+            }
+        ],
+    }
+    h = Harness(respond(200, {"match": match}))
+    stats = h.heir.league("nacl").match("m").match.games[0].players[0].stats
+    assert type(stats["score"]) is int and stats["score"] == 10
+    assert type(stats["accuracy"]) is float and stats["accuracy"] == 0.5
+    h = Harness(respond(200, RECEIPT))
+    h.heir.stats.submit_match(
+        HeirMatchFile(
+            format="heir-match-v1",
+            started_at="2026-10-30T12:00:00Z",
+            maps=[HeirMatchMap(players=[HeirMatchPlayer(identity="player", stats=dict(stats))])],
+        )
+    )
+    sent = h.api.body(0)["maps"][0]["players"][0]["stats"]
+    assert sent == {"score": 10, "accuracy": 0.5} and type(sent["score"]) is int
+
+
 def test_catalog_template_can_be_submitted_directly() -> None:
     template = MatchTemplate(
         format="heir-match-v1",
@@ -79,6 +111,38 @@ def test_serialization_uses_current_extra_fields_and_skips_deleted_fields() -> N
     player = HeirMatchPlayer(identity="player", name="Old name")
     del player.name
     assert encode(player) == {"identity": "player"}
+
+
+def test_league_recognition_and_canonical_identifiers_are_typed_fields() -> None:
+    config = {
+        "id": "l1",
+        "name": "NACL",
+        "recognition": "official",
+        "gameKey": "mordhau",
+        "season": 3,
+        "credentials": [],
+        "categories": [],
+        "gamemodes": [],
+        "ranks": None,
+        "leaderboardMetrics": [],
+        "batchMax": 100,
+    }
+    lookup = {
+        "players": [
+            {
+                "identifier": "a1b2c3d4e5f67890",
+                "canonicalIdentifier": "A1B2C3D4E5F67890",
+                "status": "found",
+                "player": PLAYER["player"],
+            }
+        ]
+    }
+    h = Harness(respond(200, config), respond(200, lookup))
+    league = h.heir.league("nacl")
+    # Unknown fields are dropped from a model, so these are only kept while the models declare them.
+    assert league.config().recognition == "official"
+    [result] = league.lookup_players("mordhau", ["a1b2c3d4e5f67890"]).players
+    assert result.canonical_identifier == "A1B2C3D4E5F67890"
 
 
 def test_invalid_request_is_an_sdk_input_error_before_http() -> None:
@@ -330,3 +394,31 @@ def test_sdk_owned_client_reports_its_configured_timeout(monkeypatch: pytest.Mon
         with pytest.raises(HeirTimeoutError) as caught:
             client.league("nacl").player("mordhau", "id")
         assert caught.value.timeout == 1.5
+
+
+def test_mmr_fields_are_whole_numbers() -> None:
+    from heir.models.public import PlayerMatch, PlayerMMR, Roster, Standing
+
+    assert PlayerMMR.model_fields["value"].annotation is int
+    assert all(PlayerMatch.model_fields[name].annotation is int for name in ["mmr_before", "mmr_after", "mmr_delta"])
+    assert Standing.model_fields["team_mmr"].annotation is int
+    assert Roster.model_fields["team_mmr"].annotation == int | None
+    history = PlayerMatch.model_validate(
+        {
+            "sourceKey": "official:x",
+            "matchId": None,
+            "playedAt": "2026-10-30T12:00:00.000Z",
+            "mmrBefore": 1500,
+            "mmrAfter": 1512,
+            "mmrDelta": 12,
+        }
+    )
+    assert isinstance(history.mmr_delta, int) and history.mmr_delta == 12
+
+
+def test_every_tracking_write_takes_dry_run_sync_and_async() -> None:
+    from heir._stats import AsyncStats, Stats
+
+    for stats in (Stats, AsyncStats):
+        for name in ["begin_match", "append_units", "heartbeat", "finalize", "upload"]:
+            assert "dry_run" in inspect.signature(getattr(stats, name)).parameters, f"{stats.__name__}.{name}"

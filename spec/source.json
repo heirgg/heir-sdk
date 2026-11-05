@@ -1,10 +1,10 @@
 {
   "description": "Backend contract snapshot; hashes identify the exact input. This does not assert deployment parity.",
-  "backendRevision": "746862f47ed41ad02635acdae0d4ced7c1bda77a",
+  "backendRevision": "017e977914e5985ca0aeb73133e9b64b99455436",
   "uncommittedSource": true,
   "sha256": {
-    "public-openapi.json": "2d2c0f1b69daba2841b300da014cef9d927fb33bd4f48e206c6e141df1ba5b9c",
-    "stat-submission-openapi.json": "d85c4fd575fce5f239a9faf200b373960401050fb45bb55f54cbd034703d94da",
+    "public-openapi.json": "5531859794b26ec8a692684975894640cb765726576f75130271abe62cdd15b5",
+    "stat-submission-openapi.json": "abc3db029fab71bfb55ccabec9c590dd90cccbeb000b0b12f376a770e1435042",
     "builtin-gamemodes.json": "58a4470b30db1a9ec2b0ae4b9ba1c08e5b3059d1419b9319613b3c061a299e1a",
     "stat-schemas.json": "eba64e78d8a22a358ad55774df757e6d56c1273c2664260bb19ebfbe6ff0e4b1"
   }

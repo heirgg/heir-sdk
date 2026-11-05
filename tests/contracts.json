@@ -17,6 +17,7 @@
         "players": [
           {
             "identifier": "A1B2C3D4E5F67890",
+            "canonicalIdentifier": "A1B2C3D4E5F67890",
             "status": "found",
             "player": null
           }
@@ -37,7 +38,10 @@
         "player": null,
         "category": "example",
         "record": null,
-        "totals": null
+        "totals": {
+          "kills": 12,
+          "accuracy": 0.5
+        }
       }
     },
     {
@@ -51,9 +55,9 @@
             "sourceKey": "example",
             "matchId": null,
             "playedAt": "example",
-            "mmrBefore": 0,
-            "mmrAfter": 0,
-            "mmrDelta": 0
+            "mmrBefore": 1500,
+            "mmrAfter": 1512,
+            "mmrDelta": 12
           }
         ],
         "page": 0,
@@ -73,7 +77,7 @@
             "name": "Example",
             "tag": null,
             "logoUrl": null,
-            "teamMmr": null,
+            "teamMmr": 1500,
             "provisional": false,
             "category": "example",
             "captain": null
@@ -148,7 +152,7 @@
             "losses": 0,
             "roundsWon": 0,
             "roundsLost": 0,
-            "teamMmr": 0,
+            "teamMmr": 1520,
             "provisional": false
           }
         ],
@@ -226,17 +230,26 @@
           "kind": "official",
           "status": "example",
           "playedAt": null,
-          "officialMatchId": null,
-          "result": null,
+          "officialMatchId": "9f6d2a70-0000-4000-8000-000000000000",
+          "result": {
+            "winnerRosterId": "9f6d2a70-0000-4000-8000-000000000000",
+            "loserRosterId": "9f6d2a70-0000-4000-8000-000000000001",
+            "winnerScore": 2,
+            "loserScore": 1
+          },
           "ratingStatus": "rated",
           "games": [
             {
-              "gamemode": null,
+              "gamemode": "SKM",
               "players": [
                 {
-                  "identifier": null,
+                  "identifier": "A1B2C3D4E5F67890",
                   "displayName": "Ada",
-                  "stats": {}
+                  "stats": {
+                    "kills": 7,
+                    "teamKills": 0,
+                    "accuracy": 0.25
+                  }
                 }
               ]
             }
@@ -251,6 +264,7 @@
       "responseBody": {
         "id": "9f6d2a70-0000-4000-8000-000000000000",
         "name": "Example",
+        "recognition": "verified",
         "gameKey": null,
         "season": null,
         "credentials": [
@@ -288,6 +302,7 @@
         "players": [
           {
             "identifier": "A1B2C3D4E5F67890",
+            "canonicalIdentifier": "A1B2C3D4E5F67890",
             "eligible": false,
             "reasons": [
               "example"
@@ -381,7 +396,8 @@
               {
                 "identity": "A1B2C3D4E5F67890",
                 "stats": {
-                  "kills": 2
+                  "kills": 2,
+                  "accuracy": 0.5
                 }
               }
             ]

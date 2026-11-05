@@ -22,6 +22,8 @@ with Heir() as client:
         print(roster.name, roster.team_mmr)
 ```
 
+`league.config().recognition` is `"verified"` or `"official"` when Heir has marked the League, and `None` otherwise. Player reads, lookups and eligibility verdicts carry `canonical_identifier`, the identifier in its credential's canonical form; join on it rather than on the identifier as you sent it.
+
 Models use snake_case fields (`display_name`) for the API's camelCase (`displayName`); either spelling constructs a model. Unknown response fields are ignored. Use `model_dump(mode="json", by_alias=True)` when exporting a model in the API's spelling.
 
 A list call returns a `Page`: `.items` contains the current page, `.body` contains the full response, and `.next()` fetches the following page. Iteration fetches subsequent pages with the same filters. Stop iteration when you have enough rows to avoid unnecessary requests. Leaderboard and standings bodies include snapshot timestamps.
@@ -90,7 +92,7 @@ with Heir(api_key=os.environ["HEIR_API_KEY"]) as client:
     print(receipt.status, receipt.problems)
 ```
 
-For live tracking, use `begin_match`, `append_units`, `heartbeat`, then `finalize`; `upload` submits a completed tracked match. Every tracking write receives one generated `Idempotency-Key` reused by internal retries. Pass `idempotency_key="your-stable-operation-id"` when your application may repeat the call later. `begin_match`, `append_units`, and `upload` accept `dry_run=True` to validate without storing. Heartbeats and finalization are writes and have no dry-run option.
+For live tracking, use `begin_match`, `append_units`, `heartbeat`, then `finalize`; `upload` submits a completed tracked match. Every tracking write receives one generated `Idempotency-Key` reused by internal retries. Pass `idempotency_key="your-stable-operation-id"` when your application may repeat the call later. Every tracking write (`begin_match`, `append_units`, `heartbeat`, `finalize`, and `upload`) accepts `dry_run=True` to validate without storing; the answer carries `dry_run=True`.
 
 Runnable examples with complete imports and command-line inputs:
 

@@ -165,68 +165,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Error: {
-            /** @enum {string} */
-            error: "not-available" | "unauthorized" | "forbidden" | "rate-limited" | "live-session-limit" | "invalid-request" | "rejected" | "conflict" | "not-found" | "too-large" | "unavailable";
-            message: string;
-            issues?: {
-                path: string;
-                message: string;
-            }[];
-        };
-        HeirMatchGamemode: {
-            /** Format: uuid */
-            id?: string;
-            key?: string;
-            name?: string;
-            version?: number;
-        };
-        HeirMatchMap: {
-            gamemode?: components["schemas"]["HeirMatchGamemode"];
-            map?: string | null;
-            /** Format: date-time */
-            startedAt?: string;
-            /** Format: date-time */
-            endedAt?: string;
-            winner?: (string | "draw") | null;
-            /** @enum {string} */
-            attacker?: "a" | "b";
-            /** @constant */
-            tiebreak?: true;
-            score?: {
-                a: number;
-                b: number;
-            } & {
-                [key: string]: number;
-            };
-            placements?: {
-                identity?: string;
-                member?: string;
-                side?: string;
-                place: number | null;
-            }[];
-            players: components["schemas"]["HeirMatchPlayer"][];
-            rounds?: components["schemas"]["HeirMatchRound"][];
-        };
-        HeirMatchPlayer: {
-            identity?: string;
-            member?: string;
-            name?: string;
-            side?: string;
-            /** @default {} */
-            stats?: {
-                [key: string]: number | null;
-            };
-        };
-        HeirMatchRound: {
-            index: number;
-            winner?: string | null;
-            players: components["schemas"]["HeirMatchPlayer"][];
-        };
         HeirMatchFile: {
             /** @constant */
             format: "heir-match-v1";
-            gamemode?: components["schemas"]["HeirMatchGamemode"];
+            gamemode?: {
+                /** Format: uuid */
+                id?: string;
+                key?: string;
+                name?: string;
+                version?: number;
+            };
             /**
              * @default pug
              * @enum {string}
@@ -250,7 +198,64 @@ export interface components {
             startedAt: string;
             /** Format: date-time */
             endedAt?: string;
-            maps: components["schemas"]["HeirMatchMap"][];
+            maps: {
+                gamemode?: {
+                    /** Format: uuid */
+                    id?: string;
+                    key?: string;
+                    name?: string;
+                    version?: number;
+                };
+                map?: string | null;
+                /** Format: date-time */
+                startedAt?: string;
+                /** Format: date-time */
+                endedAt?: string;
+                winner?: (string | "draw") | null;
+                /** @enum {string} */
+                attacker?: "a" | "b";
+                /** @constant */
+                tiebreak?: true;
+                score?: {
+                    a: number;
+                    b: number;
+                } & {
+                    [key: string]: number;
+                };
+                placements?: {
+                    identity?: string;
+                    member?: string;
+                    /** @description A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two. */
+                    side?: string;
+                    place: number | null;
+                }[];
+                players: {
+                    identity?: string;
+                    member?: string;
+                    name?: string;
+                    /** @description A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two. */
+                    side?: string;
+                    /** @default {} */
+                    stats?: {
+                        [key: string]: number | null;
+                    };
+                }[];
+                rounds?: {
+                    index: number;
+                    winner?: string | null;
+                    players: {
+                        identity?: string;
+                        member?: string;
+                        name?: string;
+                        /** @description A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two. */
+                        side?: string;
+                        /** @default {} */
+                        stats?: {
+                            [key: string]: number | null;
+                        };
+                    }[];
+                }[];
+            }[];
             note?: string;
         };
         MatchEntryReceipt: {
@@ -265,6 +270,137 @@ export interface components {
             replayed: boolean;
             /** @default [] */
             problems: string[];
+        };
+        StatSchemaCatalog: {
+            /** @description The League's game. */
+            game: string;
+            /** @description How many tracked matches the League's plan allows open at once. */
+            liveSessions: number;
+            /** @description How many requests this key may make a minute. */
+            requestsPerMinute: number;
+            /** @description The gamemode schemas this key may track a match under. */
+            schemas: {
+                /** @description Send this as a game's `schemaRef`. */
+                schemaRef: string;
+                id: string;
+                /** @description The gamemode's key. */
+                key: string;
+                label: string;
+                /** @constant */
+                record: "match";
+                /**
+                 * @description What one unit is: a round, or the whole game once it has ended.
+                 * @enum {string}
+                 */
+                unit: "round" | "game";
+                /** @description Every counter a Player line may carry. */
+                counters: {
+                    name: string;
+                    required: boolean;
+                    /**
+                     * @description Present when the counter may be below 0.
+                     * @constant
+                     */
+                    signed?: true;
+                    /**
+                     * @description Present when the counter takes whole numbers only.
+                     * @constant
+                     */
+                    whole?: true;
+                }[];
+                /** @description The kinds of event a round may carry, such as `kill`. */
+                events: string[];
+                /** @description The score that takes a map, or null when there is none. */
+                scoreCeiling: number | null;
+            }[];
+        };
+        BeginMatchResponse: {
+            /** @description Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'. */
+            matchId: string;
+            /** @description False when the match was already begun; beginning it again takes no second live session. */
+            created: boolean;
+            /**
+             * @description Whether the match will count when it is finalized (`automatic`) or wait for an Organizer (`manual`).
+             * @enum {string}
+             */
+            approval: "automatic" | "manual";
+            /** @description True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run. */
+            replayed?: boolean;
+            /**
+             * @description Present on a dry run: this is what would have happened, and nothing was stored.
+             * @constant
+             */
+            dryRun?: true;
+        };
+        AppendUnitsResponse: {
+            /** @description Units stored by this request. */
+            accepted: number;
+            /** @description Units already accepted with the same data, which changed nothing. */
+            duplicates: number;
+            /** @description True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run. */
+            replayed?: boolean;
+            /**
+             * @description Present on a dry run: this is what would have happened, and nothing was stored.
+             * @constant
+             */
+            dryRun?: true;
+        };
+        HeartbeatMatchResponse: {
+            /** @description When the match closes if nothing more is heard, in milliseconds since the Unix epoch. */
+            deadline: number;
+            /** @description True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run. */
+            replayed?: boolean;
+            /**
+             * @description Present on a dry run: this is what would have happened, and nothing was stored.
+             * @constant
+             */
+            dryRun?: true;
+        };
+        FinalizeMatchResponse: {
+            /** @description False when the match was already closed. */
+            closed: boolean;
+            /** @description The match's state: `approved` (it counts), `pending` (it waits for an Organizer) or `voided`. */
+            status: string;
+            /** @description True when this request held the match for an Organizer's review. */
+            heldForReview: boolean;
+            /** @description True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run. */
+            replayed?: boolean;
+            /**
+             * @description Present on a dry run: this is what would have happened, and nothing was stored.
+             * @constant
+             */
+            dryRun?: true;
+        };
+        UploadMatchResponse: {
+            /** @description Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'. */
+            matchId: string;
+            /** @description False when this same upload was already stored. */
+            created: boolean;
+            /** @description The match's state: `approved` (it counts), `pending` (it waits for an Organizer) or `voided`. */
+            status: string;
+            /** @description True when this upload held the match for an Organizer's review. */
+            heldForReview: boolean;
+            /** @description True when this answer repeats the first answer to the same `Idempotency-Key`. Left out on a dry run. */
+            replayed?: boolean;
+            /**
+             * @description Present on a dry run: this is what would have happened, and nothing was stored.
+             * @constant
+             */
+            dryRun?: true;
+        };
+        Error: {
+            /**
+             * @description A stable code to branch on.
+             * @enum {string}
+             */
+            error: "not-available" | "unauthorized" | "forbidden" | "rate-limited" | "live-session-limit" | "invalid-request" | "rejected" | "conflict" | "not-found" | "too-large" | "unavailable";
+            /** @description A sentence for a person. Its wording can change. */
+            message: string;
+            /** @description For a complete match that cannot be read (`invalid-request`) or does not add up (`rejected`): each field that is wrong, when Heir can name it. */
+            issues?: {
+                path: string;
+                message: string;
+            }[];
         };
         GamemodeCatalog: {
             gameKey: string;
@@ -304,7 +440,13 @@ export interface components {
             template: {
                 /** @constant */
                 format: "heir-match-v1";
-                gamemode?: components["schemas"]["HeirMatchGamemode"];
+                gamemode?: {
+                    /** Format: uuid */
+                    id?: string;
+                    key?: string;
+                    name?: string;
+                    version?: number;
+                };
                 /**
                  * @default pug
                  * @enum {string}
@@ -328,121 +470,166 @@ export interface components {
                 startedAt: string;
                 /** Format: date-time */
                 endedAt?: string;
-                maps: components["schemas"]["HeirMatchMap"][];
+                maps: {
+                    gamemode?: {
+                        /** Format: uuid */
+                        id?: string;
+                        key?: string;
+                        name?: string;
+                        version?: number;
+                    };
+                    map?: string | null;
+                    /** Format: date-time */
+                    startedAt?: string;
+                    /** Format: date-time */
+                    endedAt?: string;
+                    winner?: (string | "draw") | null;
+                    /** @enum {string} */
+                    attacker?: "a" | "b";
+                    /** @constant */
+                    tiebreak?: true;
+                    score?: {
+                        a: number;
+                        b: number;
+                    } & {
+                        [key: string]: number;
+                    };
+                    placements?: {
+                        identity?: string;
+                        member?: string;
+                        /** @description A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two. */
+                        side?: string;
+                        place: number | null;
+                    }[];
+                    players: {
+                        identity?: string;
+                        member?: string;
+                        name?: string;
+                        /** @description A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two. */
+                        side?: string;
+                        /** @default {} */
+                        stats?: {
+                            [key: string]: number | null;
+                        };
+                    }[];
+                    rounds?: {
+                        index: number;
+                        winner?: string | null;
+                        players: {
+                            identity?: string;
+                            member?: string;
+                            name?: string;
+                            /** @description A side: a and b first, then c to z, aa, ab and on. Only a Casual match of a custom Teams gamemode has more than two. */
+                            side?: string;
+                            /** @default {} */
+                            stats?: {
+                                [key: string]: number | null;
+                            };
+                        }[];
+                    }[];
+                }[];
                 note?: string;
             };
         };
-        StatSchema: {
-            schemaRef: string;
-            id: string;
-            key: string;
-            label: string;
-            /** @constant */
-            record: "match";
-            /** @enum {string} */
-            unit: "round" | "game";
-            counters: {
-                name: string;
-                required: boolean;
-                /** @constant */
-                signed?: true;
-                /** @constant */
-                whole?: true;
-            }[];
-            events: string[];
-            scoreCeiling: number | null;
-        };
-        StatSchemaCatalog: {
-            game: string;
-            liveSessions: number;
-            requestsPerMinute: number;
-            schemas: components["schemas"]["StatSchema"][];
-        };
         BeginMatchRequest: {
+            /** @description Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'. */
             matchId: string;
+            /** @description When the match started, in milliseconds since the Unix epoch. */
             startedAt: number;
-        };
-        GameSubmission: {
-            schemaRef: string;
-            gameId: string;
-            map?: string | null;
-            startedAt?: number | null;
-            rounds?: components["schemas"]["RoundUnit"][];
-            result?: components["schemas"]["GameResult"];
-        };
-        RoundUnit: {
-            index: number;
-            winnerSide?: (0 | 1) | null;
-            players: {
-                [key: string]: unknown;
-            }[];
-            kills?: {
-                [key: string]: unknown;
-            }[];
-        };
-        GameResult: {
-            winnerSide: (0 | 1) | null;
-            finalScore?: {
-                side0: number;
-                side1: number;
-            } | null;
-            endedAt?: number | null;
-            attackingSide?: (0 | 1) | null;
-            players?: {
-                [key: string]: unknown;
-            }[];
-            segments?: {
-                side: 0 | 1;
-                seconds: number;
-                points: number;
-            }[];
         };
         AppendUnitsRequest: {
-            games: components["schemas"]["GameSubmission"][];
+            games: {
+                /** @description The gamemode schema this game follows, as `<schema id>@<version>`, for example `mordhau.skirmish@1`. */
+                schemaRef: string;
+                /** @description Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'. */
+                gameId: string;
+                map?: string | null;
+                /** @description When the game started, in milliseconds since the Unix epoch. */
+                startedAt?: number | null;
+                /** @description Round units, for a gamemode submitted round by round. */
+                rounds?: {
+                    /** @description The round's number within its game, from 0. Rounds may be sent in any order. */
+                    index: number;
+                    /** @description The side that won the round; null if nobody did. */
+                    winnerSide?: (0 | 1) | null;
+                    players: {
+                        [key: string]: unknown;
+                    }[];
+                    /** @description Kill events, when the gamemode takes them. Heir derives clutches and Round Impact from these. */
+                    kills?: {
+                        [key: string]: unknown;
+                    }[];
+                }[];
+                /** @description Ends the game. For a gamemode submitted as a whole game, this is the unit. */
+                result?: {
+                    winnerSide: (0 | 1) | null;
+                    finalScore?: {
+                        side0: number;
+                        side1: number;
+                    } | null;
+                    /** @description When the game ended, in milliseconds since the Unix epoch. */
+                    endedAt?: number | null;
+                    attackingSide?: (0 | 1) | null;
+                    /** @description Player lines, for a gamemode submitted as a whole game. */
+                    players?: {
+                        [key: string]: unknown;
+                    }[];
+                    segments?: {
+                        side: 0 | 1;
+                        seconds: number;
+                        points: number;
+                    }[];
+                };
+            }[];
         };
         UploadMatchRequest: {
+            /** @description Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'. */
             matchId: string;
+            /** @description When the match started, in milliseconds since the Unix epoch. */
             startedAt: number;
-            games: components["schemas"]["GameSubmission"][];
-        };
-        BeginMatchResponse: {
-            matchId: string;
-            created: boolean;
-            /** @enum {string} */
-            approval: "automatic" | "manual";
-            replayed?: boolean;
-            /** @constant */
-            dryRun?: true;
-        };
-        AppendUnitsResponse: {
-            accepted: number;
-            duplicates: number;
-            replayed?: boolean;
-            /** @constant */
-            dryRun?: true;
-        };
-        HeartbeatMatchResponse: {
-            deadline: number;
-            replayed?: boolean;
-            /** @constant */
-            dryRun?: true;
-        };
-        FinalizeMatchResponse: {
-            closed: boolean;
-            status: string;
-            heldForReview: boolean;
-            replayed?: boolean;
-            /** @constant */
-            dryRun?: true;
-        };
-        UploadMatchResponse: {
-            matchId: string;
-            created: boolean;
-            status: string;
-            heldForReview: boolean;
-            replayed?: boolean;
-            /** @constant */
-            dryRun?: true;
+            games: {
+                /** @description The gamemode schema this game follows, as `<schema id>@<version>`, for example `mordhau.skirmish@1`. */
+                schemaRef: string;
+                /** @description Your own id for this, stable across requests. 1-120 letters, digits, '.', '_', ':' or '-'. */
+                gameId: string;
+                map?: string | null;
+                /** @description When the game started, in milliseconds since the Unix epoch. */
+                startedAt?: number | null;
+                /** @description Round units, for a gamemode submitted round by round. */
+                rounds?: {
+                    /** @description The round's number within its game, from 0. Rounds may be sent in any order. */
+                    index: number;
+                    /** @description The side that won the round; null if nobody did. */
+                    winnerSide?: (0 | 1) | null;
+                    players: {
+                        [key: string]: unknown;
+                    }[];
+                    /** @description Kill events, when the gamemode takes them. Heir derives clutches and Round Impact from these. */
+                    kills?: {
+                        [key: string]: unknown;
+                    }[];
+                }[];
+                /** @description Ends the game. For a gamemode submitted as a whole game, this is the unit. */
+                result?: {
+                    winnerSide: (0 | 1) | null;
+                    finalScore?: {
+                        side0: number;
+                        side1: number;
+                    } | null;
+                    /** @description When the game ended, in milliseconds since the Unix epoch. */
+                    endedAt?: number | null;
+                    attackingSide?: (0 | 1) | null;
+                    /** @description Player lines, for a gamemode submitted as a whole game. */
+                    players?: {
+                        [key: string]: unknown;
+                    }[];
+                    segments?: {
+                        side: 0 | 1;
+                        seconds: number;
+                        points: number;
+                    }[];
+                };
+            }[];
         };
     };
     responses: never;
@@ -830,7 +1017,10 @@ export interface operations {
     };
     beginMatch: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Check the request without storing anything: the answer says what would have happened, and no live session is taken. */
+                dryRun?: "true";
+            };
             header: {
                 /**
                  * @description Any value that is unique to this request. Sending the same request again with the same key returns the first answer and writes nothing twice; reusing a key for a different request is refused.
@@ -1202,7 +1392,10 @@ export interface operations {
     };
     heartbeatMatch: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Check the request without storing anything: the answer says what would have happened, and no live session is taken. */
+                dryRun?: "true";
+            };
             header: {
                 /**
                  * @description Any value that is unique to this request. Sending the same request again with the same key returns the first answer and writes nothing twice; reusing a key for a different request is refused.
@@ -1360,7 +1553,10 @@ export interface operations {
     };
     finalizeMatch: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Check the request without storing anything: the answer says what would have happened, and no live session is taken. */
+                dryRun?: "true";
+            };
             header: {
                 /**
                  * @description Any value that is unique to this request. Sending the same request again with the same key returns the first answer and writes nothing twice; reusing a key for a different request is refused.

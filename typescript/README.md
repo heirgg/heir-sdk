@@ -26,6 +26,8 @@ const {items} = await nacl.inventory("mordhau", "A1B2C3D4E5F67890");
 const config = await nacl.config();
 ```
 
+`config.recognition` is `"verified"` or `"official"` when Heir has marked the League, and absent or null otherwise. Player reads, lookups and eligibility verdicts carry `canonicalIdentifier`, the identifier in its credential's canonical form; join on it rather than on the identifier as you sent it.
+
 Answers the API marks cacheable are kept for its `max-age`, reduced by `Age` and the response's apparent age, then revalidated with `ETag`. `no-cache` forces revalidation and `no-store` prevents storage. The SDK conservatively bypasses caching for responses with any `Vary` value and calls with custom headers. A cached result is decoded separately for each caller, so changing a returned object never changes future results. Pass `cache: false` to the client, or to one call, to always ask.
 
 ## Use a developer key

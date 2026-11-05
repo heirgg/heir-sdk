@@ -1,6 +1,6 @@
 import {afterEach, describe, expect, it, vi} from "vitest";
 import {readFileSync} from "node:fs";
-import {Heir, HeirApiError, HeirConnectionError, HeirTimeoutError, VERSION, type PlayerQuery} from "../src/index.js";
+import {Heir, HeirApiError, HeirConnectionError, HeirTimeoutError, VERSION, type LeagueRecognition, type PlayerQuery} from "../src/index.js";
 
 type Handler = (request: Request) => Response | Promise<Response>;
 
@@ -20,7 +20,7 @@ const json = (body: unknown, init: {status?: number; headers?: Record<string, st
   new Response(JSON.stringify(body), {status: init.status ?? 200, headers: {"content-type": "application/json", ...init.headers}});
 const error = (status: number, code: string, message = "No.", headers: Record<string, string> = {}) => json({error: code, message}, {status, headers});
 
-const PLAYER = {player: {identifier: "A1B2C3D4E5F67890", displayName: "Ada", profileUrl: null, mmr: null, rank: null, heirRating: null, roster: null}};
+const PLAYER = {player: {identifier: "A1B2C3D4E5F67890", canonicalIdentifier: "A1B2C3D4E5F67890", displayName: "Ada", profileUrl: null, mmr: null, rank: null, heirRating: null, roster: null}};
 
 afterEach(() => {
   vi.useRealTimers();
@@ -253,6 +253,14 @@ describe("stat submission", () => {
     expect(finalize!.headers.get("content-type")).toBe("application/json");
   });
 
+  it("sends dryRun on a heartbeat and a finalize like every other tracking write", async () => {
+    const api = fakeApi(() => json({deadline: 1790001800000, dryRun: true}), () => json({closed: true, status: "pending", heldForReview: true, dryRun: true}));
+    const heir = new Heir({apiKey: "k", fetch: api.fetch});
+    expect((await heir.stats.heartbeat("m1", {dryRun: true})).dryRun).toBe(true);
+    expect((await heir.stats.finalize("m1", {dryRun: true})).dryRun).toBe(true);
+    expect(api.requests.map(request => request.url)).toEqual(["https://api.heir.gg/public/v1/stats/matches/m1/heartbeat?dryRun=true", "https://api.heir.gg/public/v1/stats/matches/m1/finalize?dryRun=true"]);
+  });
+
   it("retries a tracking write after a connection failure with the same key, so nothing is written twice", async () => {
     const api = fakeApi(() => { throw new TypeError("reset"); }, () => json({deadline: 1, replayed: false}));
     const heir = new Heir({apiKey: "k", fetch: api.fetch});
@@ -278,5 +286,22 @@ describe("package", () => {
   it("reports the version package.json carries", () => {
     const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {version: string};
     expect(VERSION).toBe(manifest.version);
+  });
+});
+
+describe("League identity fields", () => {
+  it("types a League's recognition mark and a looked-up Player's canonical identifier", async () => {
+    const api = fakeApi(
+      () => json({id: "l1", name: "NACL", recognition: "official", gameKey: "mordhau", season: 3, credentials: [], categories: [], gamemodes: [], ranks: null, leaderboardMetrics: [], batchMax: 100}),
+      () => json({players: [{identifier: "a1b2c3d4e5f67890", canonicalIdentifier: "A1B2C3D4E5F67890", status: "not-found", player: null}]})
+    );
+    const league = new Heir({fetch: api.fetch}).league("nacl");
+    const config = await league.config();
+    // Both assignments fail to compile if the generated types lose the fields.
+    const mark: LeagueRecognition | null | undefined = config.recognition;
+    expect(mark).toBe("official");
+    const {players: [result]} = await league.lookupPlayers({credential: "mordhau", identifiers: ["a1b2c3d4e5f67890"]});
+    const canonical: string | undefined = result?.canonicalIdentifier;
+    expect(canonical).toBe("A1B2C3D4E5F67890");
   });
 });

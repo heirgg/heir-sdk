@@ -87,7 +87,7 @@ Regenerate from each package directory:
 | `python/` | `python scripts/generate.py` |
 | `go/` | `go generate ./...` |
 
-Update `spec/type-names.json` when a new inline schema needs a stable shared name. Update `tests/contracts.json` and every language's operation mapping when adding an endpoint. Generated models do not update handwritten endpoint wrappers automatically. Commit the source documents, provenance, generated files, wrapper changes, and fixtures together.
+Update `spec/type-names.json` when a new inline schema needs a stable shared name. The backend writes most request and response bodies inline, so the table names each body by operation: `"getLeagueConfig 200": "LeagueConfigResponse"` or `"beginMatch request": "BeginMatchRequest"`. That also renames a body the backend files under a different component name. A named type's own fields are listed under its name (`"Player.mmr"`), wherever the type appears. Every generator refuses a named body that documents no fields; fix that in the backend document rather than shipping an empty type. Update `tests/contracts.json` and every language's operation mapping when adding an endpoint. Generated models do not update handwritten endpoint wrappers automatically. Commit the source documents, provenance, generated files, wrapper changes, and fixtures together.
 
 ## Submit a change
 

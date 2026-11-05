@@ -76,7 +76,7 @@ func newHarness(steps []step, options ...Option) *harness {
 	return h
 }
 
-const player = `{"player":{"identifier":"A1B2C3D4E5F67890","displayName":"Ada","profileUrl":null,"mmr":null,"rank":null,"heirRating":null,"roster":null}}`
+const player = `{"player":{"identifier":"A1B2C3D4E5F67890","canonicalIdentifier":"A1B2C3D4E5F67890","displayName":"Ada","profileUrl":null,"mmr":null,"rank":null,"heirRating":null,"roster":null}}`
 
 func TestRequestBuildsURLAndHeaders(t *testing.T) {
 	h := newHarness([]step{respond(200, player)}, WithAPIKey("key-1"), WithUserAgent("my-server/2.0"))
@@ -423,6 +423,42 @@ func TestTrackingWritesCarryIdempotencyKeysAndDryRun(t *testing.T) {
 	}
 	if finalize.URL.Path != "/public/v1/stats/matches/m1/finalize" || h.api.bodies[2] != "{}" || finalize.Header.Get("Content-Type") != "application/json" {
 		t.Errorf("finalize: url=%s body=%q", finalize.URL, h.api.bodies[2])
+	}
+}
+
+func TestHeartbeatAndFinalizeTakeDryRun(t *testing.T) {
+	h := newHarness([]step{
+		respond(200, `{"deadline":1790001800000,"dryRun":true}`),
+		respond(200, `{"closed":true,"status":"pending","heldForReview":true,"dryRun":true}`),
+	}, WithAPIKey("k"))
+	ctx := context.Background()
+	beat, err := h.Stats.Heartbeat(ctx, "m1", DryRun())
+	if err != nil || beat.DryRun == nil || !*beat.DryRun {
+		t.Fatalf("beat=%+v err=%v", beat, err)
+	}
+	closed, err := h.Stats.Finalize(ctx, "m1", DryRun())
+	if err != nil || closed.DryRun == nil || !*closed.DryRun {
+		t.Fatalf("closed=%+v err=%v", closed, err)
+	}
+	for i, want := range []string{"https://api.heir.gg/public/v1/stats/matches/m1/heartbeat?dryRun=true", "https://api.heir.gg/public/v1/stats/matches/m1/finalize?dryRun=true"} {
+		if got := h.api.requests[i].URL.String(); got != want {
+			t.Errorf("request %d url = %s, want %s", i, got, want)
+		}
+	}
+}
+
+func TestMMRFieldsAreWholeNumbers(t *testing.T) {
+	var history PlayerMatch
+	if err := json.Unmarshal([]byte(`{"sourceKey":"official:x","matchId":null,"playedAt":"2026-10-30T12:00:00.000Z","mmrBefore":1500,"mmrAfter":1512,"mmrDelta":12}`), &history); err != nil {
+		t.Fatal(err)
+	}
+	// Each assignment compiles only while the field is an integer.
+	var delta, before, after int64 = history.MMRDelta, history.MMRBefore, history.MMRAfter
+	var standing int64 = Standing{}.TeamMMR
+	var mmr int64 = PlayerMMR{}.Value
+	var roster *int64 = Roster{}.TeamMMR
+	if delta != 12 || before != 1500 || after != 1512 || standing != 0 || mmr != 0 || roster != nil {
+		t.Errorf("history=%+v", history)
 	}
 }
 
