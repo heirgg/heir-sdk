@@ -2,7 +2,7 @@
 #    uvx --from uv==0.13.6 uv pip compile pyproject.toml --extra dev --universal --python-version 3.10 --upgrade --output-file requirements-dev.txt
 annotated-types==0.8.0
     # via pydantic
-anyio==4.15.1
+anyio==4.16.0
     # via
     #   heir-sdk (pyproject.toml)
     #   httpx
@@ -39,7 +39,7 @@ colorama==0.4.6 ; os_name == 'nt' or sys_platform == 'win32'
     #   pytest
 cyclonedx-python-lib==11.12.0 ; python_full_version >= '3.11'
     # via pip-audit
-datamodel-code-generator==0.87.0
+datamodel-code-generator==0.88.0
     # via heir-sdk (pyproject.toml)
 defusedxml==0.7.1 ; python_full_version >= '3.11'
     # via py-serializable
@@ -121,7 +121,7 @@ pathspec==1.1.1
     #   black
     #   hatchling
     #   mypy
-pip==26.2.2 ; python_full_version >= '3.11'
+pip==26.3 ; python_full_version >= '3.11'
     # via pip-api
 pip-api==0.0.35 ; python_full_version >= '3.11'
     # via pip-audit
@@ -192,7 +192,7 @@ tomli-w==1.2.0 ; python_full_version >= '3.11'
     # via pip-audit
 tomlkit==0.15.2
     # via hatchling
-trio==0.34.0
+trio==0.35.0
     # via heir-sdk (pyproject.toml)
 trove-classifiers==2026.9.21.13
     # via hatchling
