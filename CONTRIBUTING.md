@@ -6,6 +6,8 @@ Maintainers configure [contributor and release protections](docs/contributor-sec
 
 See [dependency maintenance](docs/dependency-updates.md) for the current toolchains and the upstream compatibility limits that require coordinated updates.
 
+SDK documentation is part of every public change. Follow [the documentation workflow](docs/documentation.md) to regenerate references and update the corresponding language guides in the docs site. External contributors can include proposed guide edits in their PR; a maintainer applies and verifies the private docs-site change before merging.
+
 ## Set up your checkout
 
 Clone the repository or your fork. You need Python 3.10+ for root tooling, current Node 24 or 26 for TypeScript development, and Go 1.23+ for the Go runtime. The published JavaScript SDK still supports Node 20; its build and test tools need a newer Node version. Go's generator may require a newer toolchain; use current stable Go when regenerating models.

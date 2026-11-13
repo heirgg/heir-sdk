@@ -1,0 +1,3259 @@
+---
+title: "Go source reference"
+description: "Every exported Go SDK declaration, model field, enum constant, and method, generated from the SDK source."
+sdkSourceHash: "feb73f47be9ceccd2cd2c101beb695d6319ba1eb0004b562158cda20b40de554"
+---
+
+This reference is generated from the SDK's root Go package and includes every exported declaration. It omits implementation bodies and private fields. For installation and complete workflows, start with [Go SDK](/sdk/go).
+
+Package: `heir` · Import: `github.com/heirgg/heir-sdk/go`
+
+Package heir is the official Go client for the Heir public API: League players, ratings, Rosters, schedules, results and shop inventory, fixture eligibility checks, and stat submission.
+
+```go
+client := heir.NewClient(heir.WithAPIKey(os.Getenv("HEIR_API_KEY")))
+nacl := client.League("nacl")
+answer, err := nacl.Player(ctx, "mordhau", "A1B2C3D4E5F67890", nil)
+```
+
+Reads work without a key. Eligibility checks and stat submission need the League's developer key. The types in types\_\*.gen.go are generated from the API's OpenAPI documents in ../spec by `go generate`.
+
+
+## Contents
+
+**Types and methods:** [APIError](#apierror), [APIIssue](#apiissue), [AppendUnitsRequest](#appendunitsrequest), [AppendUnitsResponse](#appendunitsresponse), [Approval](#approval), [BeginMatchRequest](#beginmatchrequest), [BeginMatchResponse](#beginmatchresponse), [Category](#category), [Client](#client), [ConfigError](#configerror), [ConnectionError](#connectionerror), [DecidedBy](#decidedby), [EligibilityRequest](#eligibilityrequest), [EligibilityResponse](#eligibilityresponse), [EligibilityVerdict](#eligibilityverdict), [FinalScore](#finalscore), [FinalizeMatchResponse](#finalizematchresponse), [Fixture](#fixture), [FixtureResponse](#fixtureresponse), [FixtureRoster](#fixtureroster), [FixtureStatus](#fixturestatus), [FixturesQuery](#fixturesquery), [FixturesResponse](#fixturesresponse), [GameResult](#gameresult), [GameSegment](#gamesegment), [GameSubmission](#gamesubmission), [Gamemode](#gamemode), [GamemodeCatalog](#gamemodecatalog), [GamemodeIdentity](#gamemodeidentity), [GamemodeStat](#gamemodestat), [HeartbeatMatchResponse](#heartbeatmatchresponse), [HeirMatchFile](#heirmatchfile), [HeirMatchFormat](#heirmatchformat), [HeirMatchGamemode](#heirmatchgamemode), [HeirMatchMap](#heirmatchmap), [HeirMatchPlacement](#heirmatchplacement), [HeirMatchPlayer](#heirmatchplayer), [HeirMatchRoster](#heirmatchroster), [HeirMatchRosters](#heirmatchrosters), [HeirMatchRound](#heirmatchround), [HeirMatchScore](#heirmatchscore), [InventoryBatchRequest](#inventorybatchrequest), [InventoryBatchResponse](#inventorybatchresponse), [InventoryEntry](#inventoryentry), [InventoryQuery](#inventoryquery), [InventoryResponse](#inventoryresponse), [Item](#item), [ItemEdition](#itemedition), [ItemLasts](#itemlasts), [LeaderboardEntry](#leaderboardentry), [LeaderboardQuery](#leaderboardquery), [LeaderboardResponse](#leaderboardresponse), [League](#league), [LeagueConfigCredential](#leagueconfigcredential), [LeagueConfigResponse](#leagueconfigresponse), [LeagueCredential](#leaguecredential), [LeagueGamemode](#leaguegamemode), [LeagueItem](#leagueitem), [LeagueItemsResponse](#leagueitemsresponse), [LookupStatus](#lookupstatus), [Match](#match), [MatchEntryReceipt](#matchentryreceipt), [MatchGame](#matchgame), [MatchGamePlayer](#matchgameplayer), [MatchKind](#matchkind), [MatchResponse](#matchresponse), [MatchResult](#matchresult), [MatchTemplate](#matchtemplate), [MatchTemplateRoster](#matchtemplateroster), [MatchTemplateRosters](#matchtemplaterosters), [MatchType](#matchtype), [Metric](#metric), [Option](#option), [Page](#page), [PlayedBy](#playedby), [Player](#player), [PlayerHeirRating](#playerheirrating), [PlayerLookupRequest](#playerlookuprequest), [PlayerLookupResponse](#playerlookupresponse), [PlayerLookupResult](#playerlookupresult), [PlayerMMR](#playermmr), [PlayerMatch](#playermatch), [PlayerMatchesQuery](#playermatchesquery), [PlayerMatchesResponse](#playermatchesresponse), [PlayerQuery](#playerquery), [PlayerRecord](#playerrecord), [PlayerResponse](#playerresponse), [PlayerRoster](#playerroster), [PlayerStatsResponse](#playerstatsresponse), [Rank](#rank), [RankIcon](#rankicon), [RatingStatus](#ratingstatus), [ReceiptKind](#receiptkind), [ReceiptStatus](#receiptstatus), [RequestOption](#requestoption), [Roster](#roster), [RosterCaptain](#rostercaptain), [RosterMember](#rostermember), [RosterQuery](#rosterquery), [RosterResponse](#rosterresponse), [RostersQuery](#rostersquery), [RostersResponse](#rostersresponse), [RoundUnit](#roundunit), [Side](#side), [Standing](#standing), [StandingsQuery](#standingsquery), [StandingsResponse](#standingsresponse), [StatCounter](#statcounter), [StatDirection](#statdirection), [StatFormat](#statformat), [StatRecord](#statrecord), [StatSchema](#statschema), [StatSchemaCatalog](#statschemacatalog), [StatScope](#statscope), [StatUnit](#statunit), [Stats](#stats), [UploadMatchRequest](#uploadmatchrequest), [UploadMatchResponse](#uploadmatchresponse).
+
+**Functions:** [DryRun](#dryrun), [NewClient](#newclient), [NewIdempotencyKey](#newidempotencykey), [NoCache](#nocache), [WithAPIKey](#withapikey), [WithBaseURL](#withbaseurl), [WithHTTPClient](#withhttpclient), [WithHeader](#withheader), [WithIdempotencyKey](#withidempotencykey), [WithMaxRetries](#withmaxretries), [WithMaxRetryDelay](#withmaxretrydelay), [WithTimeout](#withtimeout), [WithUserAgent](#withuseragent), [WithoutCache](#withoutcache).
+
+**Constants:** [ApprovalAutomatic](#approvalautomatic), [ApprovalManual](#approvalmanual), [CategoryCasual](#categorycasual), [CategoryCompetitive](#categorycompetitive), [CategoryOverall](#categoryoverall), [DecidedByNone](#decidedbynone), [DecidedByPlacement](#decidedbyplacement), [DecidedByWinner](#decidedbywinner), [DefaultBaseURL](#defaultbaseurl), [FixtureCancelled](#fixturecancelled), [FixturePlayed](#fixtureplayed), [FixtureScheduled](#fixturescheduled), [HeirMatchFormatHeirMatchV1](#heirmatchformatheirmatchv1), [ItemLastsPermanent](#itemlastspermanent), [ItemLastsUntilSeasonEnd](#itemlastsuntilseasonend), [LookupStatusFound](#lookupstatusfound), [LookupStatusUnavailable](#lookupstatusunavailable), [MatchKindOfficial](#matchkindofficial), [MatchKindRecording](#matchkindrecording), [MatchKindTracked](#matchkindtracked), [MatchTypeCompetitive](#matchtypecompetitive), [MatchTypePug](#matchtypepug), [MatchTypeScrim](#matchtypescrim), [MetricHeirRating](#metricheirrating), [MetricLosses](#metriclosses), [MetricMMR](#metricmmr), [MetricWins](#metricwins), [PlayedByIndividual](#playedbyindividual), [PlayedByTeam](#playedbyteam), [RankIconBronze](#rankiconbronze), [RankIconDiamond](#rankicondiamond), [RankIconGold](#rankicongold), [RankIconHeir](#rankiconheir), [RankIconJester](#rankiconjester), [RankIconPlatinum](#rankiconplatinum), [RankIconSilver](#rankiconsilver), [RankIconWood](#rankiconwood), [RatingStatusNotRated](#ratingstatusnotrated), [RatingStatusRated](#ratingstatusrated), [ReceiptKindMatch](#receiptkindmatch), [ReceiptKindRecording](#receiptkindrecording), [ReceiptKindSession](#receiptkindsession), [ReceiptStatusApproved](#receiptstatusapproved), [ReceiptStatusPending](#receiptstatuspending), [ReceiptStatusRejected](#receiptstatusrejected), [SideA](#sidea), [SideB](#sideb), [StatDirectionHigher](#statdirectionhigher), [StatDirectionLower](#statdirectionlower), [StatDirectionNone](#statdirectionnone), [StatFormatDecimal](#statformatdecimal), [StatFormatInteger](#statformatinteger), [StatRecordMatch](#statrecordmatch), [StatScopePlayer](#statscopeplayer), [StatScopeTeam](#statscopeteam), [StatUnitGame](#statunitgame), [StatUnitRound](#statunitround), [Version](#version).
+
+## Functions
+
+### DryRun
+
+DryRun checks a stat tracking write without storing anything: the answer says what would have happened.
+
+
+```go
+func DryRun() RequestOption
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L169).
+
+### NewClient
+
+NewClient makes a client. Reads need no option at all. Invalid configuration is returned by Validate and by every request before any network activity, preserving the constructor's single return value.
+
+
+```go
+func NewClient(options ...Option) *Client
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L80).
+
+### NewIdempotencyKey
+
+NewIdempotencyKey makes a fresh idempotency key: a version 4 UUID.
+
+
+```go
+func NewIdempotencyKey() string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/stats.go#L98).
+
+### NoCache
+
+NoCache asks the API even when a fresh cached answer exists.
+
+
+```go
+func NoCache() RequestOption
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L172).
+
+### WithAPIKey
+
+WithAPIKey sets a League developer key, from Manage League, Developer, API keys. Without one, League reads work at 120 requests a minute per address. Call from your server: never put a key in a game client or browser.
+
+
+```go
+func WithAPIKey(key string) Option
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L47).
+
+### WithBaseURL
+
+WithBaseURL points the client somewhere other than the production API.
+
+
+```go
+func WithBaseURL(baseURL string) Option
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L50).
+
+### WithHTTPClient
+
+WithHTTPClient sets the http.Client to send with: a proxy, a transport, or a fake for tests.
+
+
+```go
+func WithHTTPClient(client *http.Client) Option
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L55).
+
+### WithHeader
+
+WithHeader adds a header to one call. Calls with custom headers bypass the cache so credentials and other response-varying values cannot reuse another request's answer.
+
+
+```go
+func WithHeader(name, value string) RequestOption
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L176).
+
+### WithIdempotencyKey
+
+WithIdempotencyKey sets a stat tracking write's Idempotency-Key: your own value unique to this request. The client generates one per call, so its own retries never write twice; set it yourself when your code may send the same request again later, so the API answers as it did the first time.
+
+
+```go
+func WithIdempotencyKey(key string) RequestOption
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L164).
+
+### WithMaxRetries
+
+WithMaxRetries sets how many times a request is sent again after a 429, a 503, or (for a read or a write carrying an Idempotency-Key) a connection failure or gateway error, waiting as Retry-After says or with increasing backoff. The default is 2.
+
+
+```go
+func WithMaxRetries(n int) Option
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L60).
+
+### WithMaxRetryDelay
+
+WithMaxRetryDelay sets the longest the client waits before one retry. A Retry-After beyond it is not waited for: the error is returned with RetryAfter set. The default is 30 seconds.
+
+
+```go
+func WithMaxRetryDelay(d time.Duration) Option
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L64).
+
+### WithTimeout
+
+WithTimeout sets how long one attempt may take before it fails with a ConnectionError whose Timeout is true. The default is 30 seconds; zero disables it, leaving the context in charge.
+
+
+```go
+func WithTimeout(d time.Duration) Option
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L68).
+
+### WithUserAgent
+
+WithUserAgent adds to the User-Agent, to say which integration is calling.
+
+
+```go
+func WithUserAgent(agent string) Option
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L76).
+
+### WithoutCache
+
+WithoutCache stops the client keeping League reads as the API's Cache-Control allows. With the cache (the default), a server asking on every event spends one request a minute per question and revalidates with ETag after that. Paginated and stat answers are never cached: the API marks them no-store.
+
+
+```go
+func WithoutCache() Option
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L73).
+
+## Constants
+
+### ApprovalAutomatic
+
+Defines values for Approval.
+
+
+```go
+const ApprovalAutomatic Approval = "automatic"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L15).
+
+### ApprovalManual
+
+Defines values for Approval.
+
+
+```go
+const ApprovalManual Approval = "manual"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L15).
+
+### CategoryCasual
+
+Defines values for Category.
+
+
+```go
+const CategoryCasual Category = "casual"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L13).
+
+### CategoryCompetitive
+
+Defines values for Category.
+
+
+```go
+const CategoryCompetitive Category = "competitive"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L13).
+
+### CategoryOverall
+
+Defines values for Category.
+
+
+```go
+const CategoryOverall Category = "overall"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L13).
+
+### DecidedByNone
+
+Defines values for DecidedBy.
+
+
+```go
+const DecidedByNone DecidedBy = "none"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L33).
+
+### DecidedByPlacement
+
+Defines values for DecidedBy.
+
+
+```go
+const DecidedByPlacement DecidedBy = "placement"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L33).
+
+### DecidedByWinner
+
+Defines values for DecidedBy.
+
+
+```go
+const DecidedByWinner DecidedBy = "winner"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L33).
+
+### DefaultBaseURL
+
+DefaultBaseURL is the production API.
+
+
+```go
+const DefaultBaseURL = "https://api.heir.gg"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L18).
+
+### FixtureCancelled
+
+```go
+const FixtureCancelled FixtureStatus = "cancelled"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L22).
+
+### FixturePlayed
+
+```go
+const FixturePlayed FixtureStatus = "played"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L22).
+
+### FixtureScheduled
+
+```go
+const FixtureScheduled FixtureStatus = "scheduled"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L22).
+
+### HeirMatchFormatHeirMatchV1
+
+Defines values for HeirMatchFormat.
+
+
+```go
+const HeirMatchFormatHeirMatchV1 HeirMatchFormat = "heir-match-v1"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L54).
+
+### ItemLastsPermanent
+
+Defines values for ItemLasts.
+
+
+```go
+const ItemLastsPermanent ItemLasts = "permanent"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L34).
+
+### ItemLastsUntilSeasonEnd
+
+Defines values for ItemLasts.
+
+
+```go
+const ItemLastsUntilSeasonEnd ItemLasts = "until-season-end"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L34).
+
+### LookupStatusFound
+
+Defines values for LookupStatus.
+
+
+```go
+const LookupStatusFound LookupStatus = "found"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L52).
+
+### LookupStatusUnavailable
+
+Defines values for LookupStatus.
+
+
+```go
+const LookupStatusUnavailable LookupStatus = "unavailable"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L52).
+
+### MatchKindOfficial
+
+Defines values for MatchKind.
+
+
+```go
+const MatchKindOfficial MatchKind = "official"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L70).
+
+### MatchKindRecording
+
+Defines values for MatchKind.
+
+
+```go
+const MatchKindRecording MatchKind = "recording"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L70).
+
+### MatchKindTracked
+
+Defines values for MatchKind.
+
+
+```go
+const MatchKindTracked MatchKind = "tracked"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L70).
+
+### MatchTypeCompetitive
+
+Defines values for MatchType.
+
+
+```go
+const MatchTypeCompetitive MatchType = "competitive"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L69).
+
+### MatchTypePug
+
+Defines values for MatchType.
+
+
+```go
+const MatchTypePug MatchType = "pug"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L69).
+
+### MatchTypeScrim
+
+Defines values for MatchType.
+
+
+```go
+const MatchTypeScrim MatchType = "scrim"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L69).
+
+### MetricHeirRating
+
+```go
+const MetricHeirRating Metric = "heirRating"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L12).
+
+### MetricLosses
+
+```go
+const MetricLosses Metric = "losses"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L12).
+
+### MetricMMR
+
+```go
+const MetricMMR Metric = "mmr"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L12).
+
+### MetricWins
+
+```go
+const MetricWins Metric = "wins"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L12).
+
+### PlayedByIndividual
+
+Defines values for PlayedBy.
+
+
+```go
+const PlayedByIndividual PlayedBy = "individual"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L90).
+
+### PlayedByTeam
+
+Defines values for PlayedBy.
+
+
+```go
+const PlayedByTeam PlayedBy = "team"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L90).
+
+### RankIconBronze
+
+Defines values for RankIcon.
+
+
+```go
+const RankIconBronze RankIcon = "bronze"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L91).
+
+### RankIconDiamond
+
+Defines values for RankIcon.
+
+
+```go
+const RankIconDiamond RankIcon = "diamond"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L91).
+
+### RankIconGold
+
+Defines values for RankIcon.
+
+
+```go
+const RankIconGold RankIcon = "gold"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L91).
+
+### RankIconHeir
+
+Defines values for RankIcon.
+
+
+```go
+const RankIconHeir RankIcon = "heir"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L91).
+
+### RankIconJester
+
+Defines values for RankIcon.
+
+
+```go
+const RankIconJester RankIcon = "jester"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L91).
+
+### RankIconPlatinum
+
+Defines values for RankIcon.
+
+
+```go
+const RankIconPlatinum RankIcon = "platinum"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L91).
+
+### RankIconSilver
+
+Defines values for RankIcon.
+
+
+```go
+const RankIconSilver RankIcon = "silver"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L91).
+
+### RankIconWood
+
+Defines values for RankIcon.
+
+
+```go
+const RankIconWood RankIcon = "wood"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L91).
+
+### RatingStatusNotRated
+
+Defines values for RatingStatus.
+
+
+```go
+const RatingStatusNotRated RatingStatus = "not-rated"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L127).
+
+### RatingStatusRated
+
+Defines values for RatingStatus.
+
+
+```go
+const RatingStatusRated RatingStatus = "rated"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L127).
+
+### ReceiptKindMatch
+
+Defines values for ReceiptKind.
+
+
+```go
+const ReceiptKindMatch ReceiptKind = "match"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L108).
+
+### ReceiptKindRecording
+
+Defines values for ReceiptKind.
+
+
+```go
+const ReceiptKindRecording ReceiptKind = "recording"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L108).
+
+### ReceiptKindSession
+
+Defines values for ReceiptKind.
+
+
+```go
+const ReceiptKindSession ReceiptKind = "session"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L108).
+
+### ReceiptStatusApproved
+
+Defines values for ReceiptStatus.
+
+
+```go
+const ReceiptStatusApproved ReceiptStatus = "approved"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L129).
+
+### ReceiptStatusPending
+
+Defines values for ReceiptStatus.
+
+
+```go
+const ReceiptStatusPending ReceiptStatus = "pending"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L129).
+
+### ReceiptStatusRejected
+
+Defines values for ReceiptStatus.
+
+
+```go
+const ReceiptStatusRejected ReceiptStatus = "rejected"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L129).
+
+### SideA
+
+Defines values for Side.
+
+
+```go
+const SideA Side = "a"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L150).
+
+### SideB
+
+Defines values for Side.
+
+
+```go
+const SideB Side = "b"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L150).
+
+### StatDirectionHigher
+
+Defines values for StatDirection.
+
+
+```go
+const StatDirectionHigher StatDirection = "higher"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L168).
+
+### StatDirectionLower
+
+Defines values for StatDirection.
+
+
+```go
+const StatDirectionLower StatDirection = "lower"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L168).
+
+### StatDirectionNone
+
+Defines values for StatDirection.
+
+
+```go
+const StatDirectionNone StatDirection = "none"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L168).
+
+### StatFormatDecimal
+
+Defines values for StatFormat.
+
+
+```go
+const StatFormatDecimal StatFormat = "decimal"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L189).
+
+### StatFormatInteger
+
+Defines values for StatFormat.
+
+
+```go
+const StatFormatInteger StatFormat = "integer"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L189).
+
+### StatRecordMatch
+
+Defines values for StatRecord.
+
+
+```go
+const StatRecordMatch StatRecord = "match"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L207).
+
+### StatScopePlayer
+
+Defines values for StatScope.
+
+
+```go
+const StatScopePlayer StatScope = "player"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L222).
+
+### StatScopeTeam
+
+Defines values for StatScope.
+
+
+```go
+const StatScopeTeam StatScope = "team"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L222).
+
+### StatUnitGame
+
+Defines values for StatUnit.
+
+
+```go
+const StatUnitGame StatUnit = "game"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L240).
+
+### StatUnitRound
+
+Defines values for StatUnit.
+
+
+```go
+const StatUnitRound StatUnit = "round"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L240).
+
+### Version
+
+Version is the SDK's version, sent in the User-Agent.
+
+
+```go
+const Version = "0.1.0"
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/version.go#L4).
+
+## Types and methods
+
+### APIError
+
+APIError is an answer from the API that was an error. Code is the stable code to branch on (`rate-limited`, `league-not-found`, `rejected`, ...), Message a sentence for a person whose wording can change. StatusCode is the HTTP status and RetryAfter, on a 429, how long the API asked you to wait (zero when it did not say).
+
+```go
+var apiErr *heir.APIError
+if errors.As(err, &apiErr) && apiErr.Code == "league-not-found" { ... }
+```
+
+
+```go
+type APIError struct {
+	StatusCode int
+	Code       string
+	Message    string
+	Issues     []APIIssue
+	RetryAfter time.Duration
+	Header     http.Header
+	// Body is the answer as it arrived, for an error that is not the API's envelope (a gateway page, say).
+	Body []byte
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/errors.go#L33).
+
+#### APIError.Error
+
+```go
+func (e *APIError) Error() string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/errors.go#L45).
+
+#### APIError.IsRateLimited
+
+IsRateLimited reports a 429: too many requests this minute, or as many live sessions open as the plan allows.
+
+
+```go
+func (e *APIError) IsRateLimited() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/errors.go#L50).
+
+### APIIssue
+
+APIIssue is one field the API could not accept, named when it can be.
+
+
+```go
+type APIIssue struct {
+	Path    string `json:"path"`
+	Message string `json:"message"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/errors.go#L22).
+
+### AppendUnitsRequest
+
+AppendUnitsRequest defines model for AppendUnitsRequest.
+
+
+```go
+type AppendUnitsRequest struct {
+	Games []GameSubmission `json:"games"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L258).
+
+### AppendUnitsResponse
+
+AppendUnitsResponse defines model for AppendUnitsResponse.
+
+
+```go
+type AppendUnitsResponse struct {
+	Accepted   int64 `json:"accepted"`
+	DryRun     *bool `json:"dryRun,omitempty"`
+	Duplicates int64 `json:"duplicates"`
+	Replayed   *bool `json:"replayed,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L263).
+
+### Approval
+
+Approval defines model for Approval.
+
+
+```go
+type Approval string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L271).
+
+#### Approval.Valid
+
+Valid indicates whether the value is a known member of the Approval enum.
+
+
+```go
+func (e Approval) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L21).
+
+### BeginMatchRequest
+
+BeginMatchRequest defines model for BeginMatchRequest.
+
+
+```go
+type BeginMatchRequest struct {
+	MatchID   string `json:"matchId"`
+	StartedAt int64  `json:"startedAt"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L274).
+
+### BeginMatchResponse
+
+BeginMatchResponse defines model for BeginMatchResponse.
+
+
+```go
+type BeginMatchResponse struct {
+	Approval Approval `json:"approval"`
+	Created  bool     `json:"created"`
+	DryRun   *bool    `json:"dryRun,omitempty"`
+	MatchID  string   `json:"matchId"`
+	Replayed *bool    `json:"replayed,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L280).
+
+### Category
+
+Category defines model for Category.
+
+
+```go
+type Category string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L145).
+
+#### Category.Valid
+
+Valid indicates whether the value is a known member of the Category enum.
+
+
+```go
+func (e Category) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L20).
+
+### Client
+
+Client talks to the Heir API. Make one with NewClient and share it: it is safe for concurrent use and keeps a small cache of League reads.
+
+
+```go
+type Client struct {
+	// Stats is stat submission for the key's League.
+	Stats *Stats
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L22).
+
+#### Client.Authenticated
+
+Authenticated reports whether calls carry a developer key.
+
+
+```go
+func (c *Client) Authenticated() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L146).
+
+#### Client.ClearCache
+
+ClearCache forgets every cached League read.
+
+
+```go
+func (c *Client) ClearCache()
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L149).
+
+#### Client.League
+
+League gives one League's public reads, by vanity name (`heir.gg/nacl`) or Discord server ID.
+
+
+```go
+func (c *Client) League(ref string) *League
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L141).
+
+#### Client.Validate
+
+Validate reports invalid client configuration. Call it at startup to fail before the first API request.
+
+
+```go
+func (c *Client) Validate() error
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L115).
+
+### ConfigError
+
+ConfigError describes invalid client or request configuration. It never includes a secret's value.
+
+
+```go
+type ConfigError struct {
+	Field   string
+	Message string
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/errors.go#L14).
+
+#### ConfigError.Error
+
+```go
+func (e *ConfigError) Error() string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/errors.go#L19).
+
+### ConnectionError
+
+ConnectionError means the API could not be reached, or no answer arrived: Err is the underlying failure, and Timeout is true when the attempt ran out of time rather than failing outright.
+
+
+```go
+type ConnectionError struct {
+	URL     string
+	Err     error
+	Timeout bool
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/errors.go#L56).
+
+#### ConnectionError.Error
+
+```go
+func (e *ConnectionError) Error() string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/errors.go#L62).
+
+#### ConnectionError.Unwrap
+
+```go
+func (e *ConnectionError) Unwrap() error
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/errors.go#L69).
+
+### DecidedBy
+
+DecidedBy defines model for DecidedBy.
+
+
+```go
+type DecidedBy string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L289).
+
+#### DecidedBy.Valid
+
+Valid indicates whether the value is a known member of the DecidedBy enum.
+
+
+```go
+func (e DecidedBy) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L40).
+
+### EligibilityRequest
+
+EligibilityRequest defines model for EligibilityRequest.
+
+
+```go
+type EligibilityRequest struct {
+	Credential  string   `json:"credential"`
+	FixtureID   string   `json:"fixtureId"`
+	Gamemode    string   `json:"gamemode"`
+	Identifiers []string `json:"identifiers"`
+	RosterID    string   `json:"rosterId"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L148).
+
+### EligibilityResponse
+
+EligibilityResponse defines model for EligibilityResponse.
+
+
+```go
+type EligibilityResponse struct {
+	CheckedAt string               `json:"checkedAt"`
+	FixtureID string               `json:"fixtureId"`
+	Players   []EligibilityVerdict `json:"players"`
+	RosterID  string               `json:"rosterId"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L157).
+
+### EligibilityVerdict
+
+EligibilityVerdict defines model for EligibilityVerdict.
+
+
+```go
+type EligibilityVerdict struct {
+	Eligible   bool     `json:"eligible"`
+	Identifier string   `json:"identifier"`
+	Reasons    []string `json:"reasons"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L165).
+
+### FinalScore
+
+FinalScore defines model for FinalScore.
+
+
+```go
+type FinalScore struct {
+	Side0 float64 `json:"side0"`
+	Side1 float64 `json:"side1"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L292).
+
+### FinalizeMatchResponse
+
+FinalizeMatchResponse defines model for FinalizeMatchResponse.
+
+
+```go
+type FinalizeMatchResponse struct {
+	Closed        bool   `json:"closed"`
+	DryRun        *bool  `json:"dryRun,omitempty"`
+	HeldForReview bool   `json:"heldForReview"`
+	Replayed      *bool  `json:"replayed,omitempty"`
+	Status        string `json:"status"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L298).
+
+### Fixture
+
+Fixture defines model for Fixture.
+
+
+```go
+type Fixture struct {
+	Code          *string       `json:"code"`
+	ID            string        `json:"id"`
+	ResultMatchID *string       `json:"resultMatchId"`
+	RosterA       FixtureRoster `json:"rosterA"`
+	RosterB       FixtureRoster `json:"rosterB"`
+	ScheduledAt   *string       `json:"scheduledAt"`
+	ScoreA        *int64        `json:"scoreA"`
+	ScoreB        *int64        `json:"scoreB"`
+	Status        string        `json:"status"`
+	StreamURL     *string       `json:"streamUrl"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L172).
+
+### FixtureResponse
+
+FixtureResponse defines model for FixtureResponse.
+
+
+```go
+type FixtureResponse struct {
+	Fixture Fixture `json:"fixture"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L186).
+
+### FixtureRoster
+
+FixtureRoster defines model for FixtureRoster.
+
+
+```go
+type FixtureRoster struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L191).
+
+### FixtureStatus
+
+FixtureStatus filters a League's fixtures.
+
+
+```go
+type FixtureStatus string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L20).
+
+### FixturesQuery
+
+FixturesQuery filters and pages a League's fixtures. The zero Status means scheduled.
+
+
+```go
+type FixturesQuery struct {
+	Status    FixtureStatus
+	Page      int
+	PageSize  int
+	NextToken string
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L67).
+
+### FixturesResponse
+
+FixturesResponse defines model for FixturesResponse.
+
+
+```go
+type FixturesResponse struct {
+	Fixtures  []Fixture `json:"fixtures"`
+	HasMore   bool      `json:"hasMore"`
+	NextToken *string   `json:"nextToken"`
+	Page      int64     `json:"page"`
+	PageSize  int64     `json:"pageSize"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L197).
+
+### GameResult
+
+GameResult defines model for GameResult.
+
+
+```go
+type GameResult struct {
+	AttackingSide *int64                   `json:"attackingSide,omitempty"`
+	EndedAt       *int64                   `json:"endedAt,omitempty"`
+	FinalScore    *FinalScore              `json:"finalScore,omitempty"`
+	Players       []map[string]interface{} `json:"players,omitempty"`
+	Segments      []GameSegment            `json:"segments,omitempty"`
+	WinnerSide    *int64                   `json:"winnerSide"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L307).
+
+### GameSegment
+
+GameSegment defines model for GameSegment.
+
+
+```go
+type GameSegment struct {
+	Points  float64 `json:"points"`
+	Seconds float64 `json:"seconds"`
+	Side    int64   `json:"side"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L317).
+
+### GameSubmission
+
+GameSubmission defines model for GameSubmission.
+
+
+```go
+type GameSubmission struct {
+	GameID    string      `json:"gameId"`
+	Map       *string     `json:"map,omitempty"`
+	Result    *GameResult `json:"result,omitempty"`
+	Rounds    []RoundUnit `json:"rounds,omitempty"`
+	SchemaRef string      `json:"schemaRef"`
+	StartedAt *int64      `json:"startedAt,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L324).
+
+### Gamemode
+
+Gamemode defines model for Gamemode.
+
+
+```go
+type Gamemode struct {
+	Builtin   bool           `json:"builtin"`
+	DecidedBy DecidedBy      `json:"decidedBy"`
+	ID        string         `json:"id"`
+	Key       string         `json:"key"`
+	Name      string         `json:"name"`
+	PlayedBy  PlayedBy       `json:"playedBy"`
+	Rounds    bool           `json:"rounds"`
+	Stats     []GamemodeStat `json:"stats"`
+	Version   int64          `json:"version"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L334).
+
+### GamemodeCatalog
+
+GamemodeCatalog defines model for GamemodeCatalog.
+
+
+```go
+type GamemodeCatalog struct {
+	GameKey   string            `json:"gameKey"`
+	Gamemodes []Gamemode        `json:"gamemodes"`
+	Identity  *GamemodeIdentity `json:"identity"`
+	Template  MatchTemplate     `json:"template"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L347).
+
+### GamemodeIdentity
+
+GamemodeIdentity defines model for GamemodeIdentity.
+
+
+```go
+type GamemodeIdentity struct {
+	Credential string `json:"credential"`
+	Label      string `json:"label"`
+	Pattern    string `json:"pattern"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L355).
+
+### GamemodeStat
+
+GamemodeStat defines model for GamemodeStat.
+
+
+```go
+type GamemodeStat struct {
+	Added     *bool         `json:"added,omitempty"`
+	Direction StatDirection `json:"direction"`
+	Format    StatFormat    `json:"format"`
+	Gauge     bool          `json:"gauge"`
+	Hidden    bool          `json:"hidden"`
+	Key       string        `json:"key"`
+	Max       *float64      `json:"max,omitempty"`
+	Min       *float64      `json:"min,omitempty"`
+	Name      string        `json:"name"`
+	Scope     StatScope     `json:"scope"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L362).
+
+### HeartbeatMatchResponse
+
+HeartbeatMatchResponse defines model for HeartbeatMatchResponse.
+
+
+```go
+type HeartbeatMatchResponse struct {
+	Deadline int64 `json:"deadline"`
+	DryRun   *bool `json:"dryRun,omitempty"`
+	Replayed *bool `json:"replayed,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L376).
+
+### HeirMatchFile
+
+HeirMatchFile defines model for HeirMatchFile.
+
+
+```go
+type HeirMatchFile struct {
+	EndedAt   *time.Time         `json:"endedAt,omitempty"`
+	FixtureID *string            `json:"fixtureId,omitempty"`
+	Format    HeirMatchFormat    `json:"format"`
+	Gamemode  *HeirMatchGamemode `json:"gamemode,omitempty"`
+	Maps      []HeirMatchMap     `json:"maps"`
+	Note      *string            `json:"note,omitempty"`
+	Reference *string            `json:"reference,omitempty"`
+	Rosters   *HeirMatchRosters  `json:"rosters,omitempty"`
+	StartedAt time.Time          `json:"startedAt"`
+	Type      *MatchType         `json:"type,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L383).
+
+### HeirMatchFormat
+
+HeirMatchFormat defines model for HeirMatchFormat.
+
+
+```go
+type HeirMatchFormat string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L397).
+
+#### HeirMatchFormat.Valid
+
+Valid indicates whether the value is a known member of the HeirMatchFormat enum.
+
+
+```go
+func (e HeirMatchFormat) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L59).
+
+### HeirMatchGamemode
+
+HeirMatchGamemode defines model for HeirMatchGamemode.
+
+
+```go
+type HeirMatchGamemode struct {
+	ID      *string `json:"id,omitempty"`
+	Key     *string `json:"key,omitempty"`
+	Name    *string `json:"name,omitempty"`
+	Version *int64  `json:"version,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L400).
+
+### HeirMatchMap
+
+HeirMatchMap defines model for HeirMatchMap.
+
+
+```go
+type HeirMatchMap struct {
+	Attacker   *Side                `json:"attacker,omitempty"`
+	EndedAt    *time.Time           `json:"endedAt,omitempty"`
+	Gamemode   *HeirMatchGamemode   `json:"gamemode,omitempty"`
+	Map        *string              `json:"map,omitempty"`
+	Placements []HeirMatchPlacement `json:"placements,omitempty"`
+	Players    []HeirMatchPlayer    `json:"players"`
+	Rounds     []HeirMatchRound     `json:"rounds,omitempty"`
+	Score      *HeirMatchScore      `json:"score,omitempty"`
+	StartedAt  *time.Time           `json:"startedAt,omitempty"`
+	Tiebreak   *bool                `json:"tiebreak,omitempty"`
+	Winner     *string              `json:"winner,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L408).
+
+### HeirMatchPlacement
+
+HeirMatchPlacement defines model for HeirMatchPlacement.
+
+
+```go
+type HeirMatchPlacement struct {
+	Identity *string `json:"identity,omitempty"`
+	Member   *string `json:"member,omitempty"`
+	Place    *int64  `json:"place"`
+	Side     *string `json:"side,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L423).
+
+### HeirMatchPlayer
+
+HeirMatchPlayer defines model for HeirMatchPlayer.
+
+
+```go
+type HeirMatchPlayer struct {
+	Identity *string             `json:"identity,omitempty"`
+	Member   *string             `json:"member,omitempty"`
+	Name     *string             `json:"name,omitempty"`
+	Side     *string             `json:"side,omitempty"`
+	Stats    map[string]*float64 `json:"stats,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L431).
+
+### HeirMatchRoster
+
+HeirMatchRoster defines model for HeirMatchRoster.
+
+
+```go
+type HeirMatchRoster struct {
+	ID   *string `json:"id,omitempty"`
+	Name *string `json:"name,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L440).
+
+### HeirMatchRosters
+
+HeirMatchRosters defines model for HeirMatchRosters.
+
+
+```go
+type HeirMatchRosters struct {
+	A HeirMatchRoster `json:"a"`
+	B HeirMatchRoster `json:"b"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L446).
+
+### HeirMatchRound
+
+HeirMatchRound defines model for HeirMatchRound.
+
+
+```go
+type HeirMatchRound struct {
+	Index   int64             `json:"index"`
+	Players []HeirMatchPlayer `json:"players"`
+	Winner  *string           `json:"winner,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L452).
+
+### HeirMatchScore
+
+HeirMatchScore defines model for HeirMatchScore.
+
+
+```go
+type HeirMatchScore struct {
+	A                    int64            `json:"a"`
+	B                    int64            `json:"b"`
+	AdditionalProperties map[string]int64 `json:"-"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L459).
+
+#### HeirMatchScore.Get
+
+Getter for additional properties for HeirMatchScore. Returns the specified element and whether it was found
+
+
+```go
+func (a HeirMatchScore) Get(fieldName string) (value int64, found bool)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L587).
+
+#### HeirMatchScore.MarshalJSON
+
+Override default JSON handling for HeirMatchScore to handle AdditionalProperties
+
+
+```go
+func (a HeirMatchScore) MarshalJSON() ([]byte, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L641).
+
+#### HeirMatchScore.Set
+
+Setter for additional properties for HeirMatchScore
+
+
+```go
+func (a *HeirMatchScore) Set(fieldName string, value int64)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L595).
+
+#### HeirMatchScore.UnmarshalJSON
+
+Override default JSON handling for HeirMatchScore to handle AdditionalProperties
+
+
+```go
+func (a *HeirMatchScore) UnmarshalJSON(b []byte) error
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L603).
+
+### InventoryBatchRequest
+
+InventoryBatchRequest defines model for InventoryBatchRequest.
+
+
+```go
+type InventoryBatchRequest struct {
+	Identifiers []string `json:"identifiers"`
+	Item        *string  `json:"item,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L206).
+
+### InventoryBatchResponse
+
+InventoryBatchResponse defines model for InventoryBatchResponse.
+
+
+```go
+type InventoryBatchResponse struct {
+	Players map[string]InventoryEntry `json:"players"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L212).
+
+### InventoryEntry
+
+InventoryEntry defines model for InventoryEntry.
+
+
+```go
+type InventoryEntry struct {
+	Items []Item `json:"items"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L217).
+
+### InventoryQuery
+
+InventoryQuery narrows an inventory read to one item key.
+
+
+```go
+type InventoryQuery struct {
+	Item string
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L75).
+
+### InventoryResponse
+
+InventoryResponse defines model for InventoryResponse.
+
+
+```go
+type InventoryResponse struct {
+	Items []Item `json:"items"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L222).
+
+### Item
+
+Item defines model for Item.
+
+
+```go
+type Item struct {
+	Edition   *ItemEdition `json:"edition"`
+	ExpiresAt *int64       `json:"expiresAt"`
+	ImageURL  *string      `json:"imageUrl"`
+	Key       string       `json:"key"`
+	Name      string       `json:"name"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L227).
+
+### ItemEdition
+
+ItemEdition defines model for ItemEdition.
+
+
+```go
+type ItemEdition struct {
+	Number int64  `json:"number"`
+	Size   *int64 `json:"size"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L236).
+
+### ItemLasts
+
+ItemLasts defines model for ItemLasts.
+
+
+```go
+type ItemLasts string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L242).
+
+#### ItemLasts.Valid
+
+Valid indicates whether the value is a known member of the ItemLasts enum.
+
+
+```go
+func (e ItemLasts) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L40).
+
+### LeaderboardEntry
+
+LeaderboardEntry defines model for LeaderboardEntry.
+
+
+```go
+type LeaderboardEntry struct {
+	DisplayName string  `json:"displayName"`
+	Position    int64   `json:"position"`
+	ProfileURL  *string `json:"profileUrl"`
+	Provisional bool    `json:"provisional"`
+	Value       float64 `json:"value"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L245).
+
+### LeaderboardQuery
+
+LeaderboardQuery picks a leaderboard's metric and scope, and pages it.
+
+
+```go
+type LeaderboardQuery struct {
+	Metric    Metric
+	Category  Category
+	Gamemode  string
+	Page      int
+	PageSize  int
+	NextToken string
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L50).
+
+### LeaderboardResponse
+
+LeaderboardResponse defines model for LeaderboardResponse.
+
+
+```go
+type LeaderboardResponse struct {
+	Category          string             `json:"category"`
+	Entries           []LeaderboardEntry `json:"entries"`
+	HasMore           bool               `json:"hasMore"`
+	Metric            string             `json:"metric"`
+	NextToken         *string            `json:"nextToken"`
+	Page              int64              `json:"page"`
+	PageSize          int64              `json:"pageSize"`
+	SnapshotAt        time.Time          `json:"snapshotAt"`
+	SnapshotExpiresAt time.Time          `json:"snapshotExpiresAt"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L254).
+
+### League
+
+League is one League's public reads: players, ratings, Rosters, schedules, results and shop inventory. Reads need no key and are cached for a minute as the API asks; with the League's own developer key they draw on the plan's allowance instead of the per-address limit. Get one from Client.League.
+
+
+```go
+type League struct {
+	// Ref is the League as it was named: its vanity name or Discord server ID.
+	Ref string
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L82).
+
+#### League.CheckEligibility
+
+CheckEligibility checks up to 100 game accounts against a fixture and one of its Rosters. It requires the League's developer key with the gamemode granted, and is advisory: it reserves no seats. Call it from your server.
+
+
+```go
+func (l *League) CheckEligibility(ctx context.Context, request EligibilityRequest, options ...RequestOption) (*EligibilityResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L197).
+
+#### League.Config
+
+Config reads the League's game credentials, active gamemodes, rating categories, rank definitions and batch limits.
+
+
+```go
+func (l *League) Config(ctx context.Context, options ...RequestOption) (*LeagueConfigResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L191).
+
+#### League.Fixture
+
+Fixture reads one fixture: its Rosters, time, status, stream link and recorded result.
+
+
+```go
+func (l *League) Fixture(ctx context.Context, id string, options ...RequestOption) (*FixtureResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L181).
+
+#### League.Fixtures
+
+Fixtures reads fixtures in scheduled-time order: scheduled by default, or played or cancelled by Status.
+
+
+```go
+func (l *League) Fixtures(ctx context.Context, query *FixturesQuery, options ...RequestOption) (*Page[Fixture, *FixturesResponse], error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L165).
+
+#### League.Inventories
+
+Inventories reads the same for up to 100 game accounts at once, such as everyone on a server. It is not cached.
+
+
+```go
+func (l *League) Inventories(ctx context.Context, credential string, request InventoryBatchRequest, options ...RequestOption) (*InventoryBatchResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L211).
+
+#### League.Inventory
+
+Inventory reads the items one game account's owner holds in the League's shop right now. An empty list is a normal answer.
+
+
+```go
+func (l *League) Inventory(ctx context.Context, credential, identifier string, query *InventoryQuery, options ...RequestOption) (*InventoryResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L202).
+
+#### League.Items
+
+Items reads every item the League's shop knows, and the kinds of game account its inventory calls accept.
+
+
+```go
+func (l *League) Items(ctx context.Context, options ...RequestOption) (*LeagueItemsResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L216).
+
+#### League.Leaderboard
+
+Leaderboard reads current Members ordered by MMR, Heir Rating, wins or losses. It is a five-minute snapshot; the Body's SnapshotAt says which.
+
+
+```go
+func (l *League) Leaderboard(ctx context.Context, query *LeaderboardQuery, options ...RequestOption) (*Page[LeaderboardEntry, *LeaderboardResponse], error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L137).
+
+#### League.LookupPlayers
+
+LookupPlayers reads up to 100 game accounts at once, each answered in order, including duplicates and unavailable identities.
+
+
+```go
+func (l *League) LookupPlayers(ctx context.Context, request PlayerLookupRequest, options ...RequestOption) (*PlayerLookupResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L97).
+
+#### League.Match
+
+Match reads an official result or approved recording by UUID.
+
+
+```go
+func (l *League) Match(ctx context.Context, id string, options ...RequestOption) (*MatchResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L186).
+
+#### League.Player
+
+Player reads one current Member by linked game account, for nameplates and player cards. The answer's Player is nil for an unknown, unlinked, transferred or departed identity.
+
+
+```go
+func (l *League) Player(ctx context.Context, credential, identifier string, query *PlayerQuery, options ...RequestOption) (*PlayerResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L92).
+
+#### League.PlayerMatches
+
+PlayerMatches reads the Player's rated results and MMR changes, newest first.
+
+
+```go
+func (l *League) PlayerMatches(ctx context.Context, credential, identifier string, query *PlayerMatchesQuery, options ...RequestOption) (*Page[PlayerMatch, *PlayerMatchesResponse], error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L107).
+
+#### League.PlayerStats
+
+PlayerStats reads the Player's League win/loss record and stored performance totals for the scope.
+
+
+```go
+func (l *League) PlayerStats(ctx context.Context, credential, identifier string, query *PlayerQuery, options ...RequestOption) (*PlayerStatsResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L102).
+
+#### League.Roster
+
+Roster reads one active Roster and its seated Members.
+
+
+```go
+func (l *League) Roster(ctx context.Context, id string, query *RosterQuery, options ...RequestOption) (*RosterResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L131).
+
+#### League.Rosters
+
+Rosters reads the active Rosters with their Team tags, logos, captain and Team MMR.
+
+
+```go
+func (l *League) Rosters(ctx context.Context, query *RostersQuery, options ...RequestOption) (*Page[Roster, *RostersResponse], error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L119).
+
+#### League.Standings
+
+Standings reads the current-season Roster standings in competition order.
+
+
+```go
+func (l *League) Standings(ctx context.Context, query *StandingsQuery, options ...RequestOption) (*Page[Standing, *StandingsResponse], error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L153).
+
+### LeagueConfigCredential
+
+LeagueConfigCredential defines model for LeagueConfigCredential.
+
+
+```go
+type LeagueConfigCredential struct {
+	IDLabel string `json:"idLabel"`
+	Key     string `json:"key"`
+	Label   string `json:"label"`
+	Pattern string `json:"pattern"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L267).
+
+### LeagueConfigResponse
+
+LeagueConfigResponse defines model for LeagueConfigResponse.
+
+
+```go
+type LeagueConfigResponse struct {
+	BatchMax           int64                    `json:"batchMax"`
+	Categories         []string                 `json:"categories"`
+	Credentials        []LeagueConfigCredential `json:"credentials"`
+	GameKey            *string                  `json:"gameKey"`
+	Gamemodes          []LeagueGamemode         `json:"gamemodes"`
+	ID                 string                   `json:"id"`
+	LeaderboardMetrics []string                 `json:"leaderboardMetrics"`
+	Name               string                   `json:"name"`
+	Ranks              []Rank                   `json:"ranks"`
+	Season             *int64                   `json:"season"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L275).
+
+### LeagueCredential
+
+LeagueCredential defines model for LeagueCredential.
+
+
+```go
+type LeagueCredential struct {
+	Hint    string `json:"hint"`
+	IDLabel string `json:"idLabel"`
+	Key     string `json:"key"`
+	Label   string `json:"label"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L289).
+
+### LeagueGamemode
+
+LeagueGamemode defines model for LeagueGamemode.
+
+
+```go
+type LeagueGamemode struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L297).
+
+### LeagueItem
+
+LeagueItem defines model for LeagueItem.
+
+
+```go
+type LeagueItem struct {
+	Description string    `json:"description"`
+	ImageURL    *string   `json:"imageUrl"`
+	Key         string    `json:"key"`
+	Lasts       ItemLasts `json:"lasts"`
+	Name        string    `json:"name"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L303).
+
+### LeagueItemsResponse
+
+LeagueItemsResponse defines model for LeagueItemsResponse.
+
+
+```go
+type LeagueItemsResponse struct {
+	Credentials []LeagueCredential `json:"credentials"`
+	Items       []LeagueItem       `json:"items"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L312).
+
+### LookupStatus
+
+LookupStatus defines model for LookupStatus.
+
+
+```go
+type LookupStatus string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L318).
+
+#### LookupStatus.Valid
+
+Valid indicates whether the value is a known member of the LookupStatus enum.
+
+
+```go
+func (e LookupStatus) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L58).
+
+### Match
+
+Match defines model for Match.
+
+
+```go
+type Match struct {
+	Games           []MatchGame  `json:"games"`
+	ID              string       `json:"id"`
+	Kind            MatchKind    `json:"kind"`
+	OfficialMatchID *string      `json:"officialMatchId"`
+	PlayedAt        *string      `json:"playedAt"`
+	RatingStatus    RatingStatus `json:"ratingStatus"`
+	Result          *MatchResult `json:"result"`
+	Status          string       `json:"status"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L321).
+
+### MatchEntryReceipt
+
+MatchEntryReceipt defines model for MatchEntryReceipt.
+
+
+```go
+type MatchEntryReceipt struct {
+	Created  bool          `json:"created"`
+	ID       string        `json:"id"`
+	Kind     ReceiptKind   `json:"kind"`
+	Problems []string      `json:"problems"`
+	Replayed bool          `json:"replayed"`
+	Status   ReceiptStatus `json:"status"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L466).
+
+### MatchGame
+
+MatchGame defines model for MatchGame.
+
+
+```go
+type MatchGame struct {
+	Gamemode *string           `json:"gamemode"`
+	Players  []MatchGamePlayer `json:"players"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L333).
+
+### MatchGamePlayer
+
+MatchGamePlayer defines model for MatchGamePlayer.
+
+
+```go
+type MatchGamePlayer struct {
+	DisplayName string             `json:"displayName"`
+	Identifier  *string            `json:"identifier"`
+	Stats       map[string]float64 `json:"stats"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L339).
+
+### MatchKind
+
+MatchKind defines model for MatchKind.
+
+
+```go
+type MatchKind string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L346).
+
+#### MatchKind.Valid
+
+Valid indicates whether the value is a known member of the MatchKind enum.
+
+
+```go
+func (e MatchKind) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L77).
+
+### MatchResponse
+
+MatchResponse defines model for MatchResponse.
+
+
+```go
+type MatchResponse struct {
+	Match Match `json:"match"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L349).
+
+### MatchResult
+
+MatchResult defines model for MatchResult.
+
+
+```go
+type MatchResult struct {
+	LoserRosterID  string `json:"loserRosterId"`
+	LoserScore     int64  `json:"loserScore"`
+	WinnerRosterID string `json:"winnerRosterId"`
+	WinnerScore    int64  `json:"winnerScore"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L354).
+
+### MatchTemplate
+
+MatchTemplate defines model for MatchTemplate.
+
+
+```go
+type MatchTemplate struct {
+	EndedAt   *time.Time            `json:"endedAt,omitempty"`
+	FixtureID *string               `json:"fixtureId,omitempty"`
+	Format    HeirMatchFormat       `json:"format"`
+	Gamemode  *HeirMatchGamemode    `json:"gamemode,omitempty"`
+	Maps      []HeirMatchMap        `json:"maps"`
+	Note      *string               `json:"note,omitempty"`
+	Reference *string               `json:"reference,omitempty"`
+	Rosters   *MatchTemplateRosters `json:"rosters,omitempty"`
+	StartedAt time.Time             `json:"startedAt"`
+	Type      *MatchType            `json:"type,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L476).
+
+#### MatchTemplate.ToMatchFile
+
+ToMatchFile converts a catalog template into the type accepted by Stats.SubmitMatch. Fill in the timestamps, players and results before submitting. Like a Go struct assignment, slices, maps and pointers are shared.
+
+
+```go
+func (t MatchTemplate) ToMatchFile() HeirMatchFile
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/template.go#L5).
+
+### MatchTemplateRoster
+
+MatchTemplateRoster defines model for MatchTemplateRoster.
+
+
+```go
+type MatchTemplateRoster struct {
+	ID   *string `json:"id,omitempty"`
+	Name *string `json:"name,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L490).
+
+### MatchTemplateRosters
+
+MatchTemplateRosters defines model for MatchTemplateRosters.
+
+
+```go
+type MatchTemplateRosters struct {
+	A MatchTemplateRoster `json:"a"`
+	B MatchTemplateRoster `json:"b"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L496).
+
+### MatchType
+
+MatchType defines model for MatchType.
+
+
+```go
+type MatchType string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L502).
+
+#### MatchType.Valid
+
+Valid indicates whether the value is a known member of the MatchType enum.
+
+
+```go
+func (e MatchType) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L76).
+
+### Metric
+
+Metric orders a leaderboard.
+
+
+```go
+type Metric string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L10).
+
+### Option
+
+Option configures a Client.
+
+
+```go
+type Option func(*Client)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L43).
+
+### Page
+
+Page is one page of a list: its rows in Items and the whole answer in Body. Next fetches the following page with the same League, filters and page size, and All walks this page's rows and every page after it:
+
+```go
+page, err := league.Rosters(ctx, nil)
+for roster, err := range page.All(ctx) {
+	if err != nil { return err }
+	fmt.Println(roster.Name)
+}
+```
+
+
+```go
+type Page[Item any, Body any] struct {
+	Items []Item
+	Body  Body
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/page.go#L16).
+
+#### Page.All
+
+All yields this page's rows and then every page after it, stopping at the first error.
+
+
+```go
+func (p *Page[Item, Body]) All(ctx context.Context) iter.Seq2[Item, error]
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/page.go#L40).
+
+#### Page.HasMore
+
+HasMore reports whether a page follows this one.
+
+
+```go
+func (p *Page[Item, Body]) HasMore() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/page.go#L26).
+
+#### Page.Next
+
+Next returns the page after this one, or nil at the end of the list.
+
+
+```go
+func (p *Page[Item, Body]) Next(ctx context.Context) (*Page[Item, Body], error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/page.go#L32).
+
+#### Page.NextToken
+
+NextToken continues the list in a later process; it is empty at the end.
+
+
+```go
+func (p *Page[Item, Body]) NextToken() string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/page.go#L29).
+
+### PlayedBy
+
+PlayedBy defines model for PlayedBy.
+
+
+```go
+type PlayedBy string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L505).
+
+#### PlayedBy.Valid
+
+Valid indicates whether the value is a known member of the PlayedBy enum.
+
+
+```go
+func (e PlayedBy) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L96).
+
+### Player
+
+Player defines model for Player.
+
+
+```go
+type Player struct {
+	DisplayName string            `json:"displayName"`
+	HeirRating  *PlayerHeirRating `json:"heirRating"`
+	Identifier  string            `json:"identifier"`
+	MMR         *PlayerMMR        `json:"mmr"`
+	ProfileURL  *string           `json:"profileUrl"`
+	Rank        *Rank             `json:"rank"`
+	Roster      *PlayerRoster     `json:"roster"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L362).
+
+### PlayerHeirRating
+
+PlayerHeirRating defines model for PlayerHeirRating.
+
+
+```go
+type PlayerHeirRating struct {
+	Category    string  `json:"category"`
+	ComputedAt  *string `json:"computedAt"`
+	Gamemode    *string `json:"gamemode"`
+	Provisional bool    `json:"provisional"`
+	Value       float64 `json:"value"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L373).
+
+### PlayerLookupRequest
+
+PlayerLookupRequest defines model for PlayerLookupRequest.
+
+
+```go
+type PlayerLookupRequest struct {
+	Category    *Category `json:"category,omitempty"`
+	Credential  string    `json:"credential"`
+	Gamemode    *string   `json:"gamemode,omitempty"`
+	Identifiers []string  `json:"identifiers"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L382).
+
+### PlayerLookupResponse
+
+PlayerLookupResponse defines model for PlayerLookupResponse.
+
+
+```go
+type PlayerLookupResponse struct {
+	Players []PlayerLookupResult `json:"players"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L390).
+
+### PlayerLookupResult
+
+PlayerLookupResult defines model for PlayerLookupResult.
+
+
+```go
+type PlayerLookupResult struct {
+	Identifier string       `json:"identifier"`
+	Player     *Player      `json:"player"`
+	Status     LookupStatus `json:"status"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L395).
+
+### PlayerMMR
+
+PlayerMMR defines model for PlayerMMR.
+
+
+```go
+type PlayerMMR struct {
+	Category    string  `json:"category"`
+	Provisional bool    `json:"provisional"`
+	Results     int64   `json:"results"`
+	Value       float64 `json:"value"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L402).
+
+### PlayerMatch
+
+PlayerMatch defines model for PlayerMatch.
+
+
+```go
+type PlayerMatch struct {
+	MatchID   *string `json:"matchId"`
+	MMRAfter  float64 `json:"mmrAfter"`
+	MMRBefore float64 `json:"mmrBefore"`
+	MMRDelta  float64 `json:"mmrDelta"`
+	PlayedAt  string  `json:"playedAt"`
+	SourceKey string  `json:"sourceKey"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L410).
+
+### PlayerMatchesQuery
+
+PlayerMatchesQuery scopes and pages a Player's rated match history.
+
+
+```go
+type PlayerMatchesQuery struct {
+	Category  Category
+	Gamemode  string
+	Page      int
+	PageSize  int
+	NextToken string
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L38).
+
+### PlayerMatchesResponse
+
+PlayerMatchesResponse defines model for PlayerMatchesResponse.
+
+
+```go
+type PlayerMatchesResponse struct {
+	Category  string        `json:"category"`
+	HasMore   bool          `json:"hasMore"`
+	Matches   []PlayerMatch `json:"matches"`
+	NextToken *string       `json:"nextToken"`
+	Page      int64         `json:"page"`
+	PageSize  int64         `json:"pageSize"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L420).
+
+### PlayerQuery
+
+PlayerQuery scopes a player read. The zero value is the League's overall rating.
+
+
+```go
+type PlayerQuery struct {
+	Category Category
+	Gamemode string
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L29).
+
+### PlayerRecord
+
+PlayerRecord defines model for PlayerRecord.
+
+
+```go
+type PlayerRecord struct {
+	Losses int64 `json:"losses"`
+	Wins   int64 `json:"wins"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L430).
+
+### PlayerResponse
+
+PlayerResponse defines model for PlayerResponse.
+
+
+```go
+type PlayerResponse struct {
+	Player *Player `json:"player"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L436).
+
+### PlayerRoster
+
+PlayerRoster defines model for PlayerRoster.
+
+
+```go
+type PlayerRoster struct {
+	ID   string  `json:"id"`
+	Name string  `json:"name"`
+	Tag  *string `json:"tag"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L441).
+
+### PlayerStatsResponse
+
+PlayerStatsResponse defines model for PlayerStatsResponse.
+
+
+```go
+type PlayerStatsResponse struct {
+	Category string             `json:"category"`
+	Player   *Player            `json:"player"`
+	Record   *PlayerRecord      `json:"record"`
+	Totals   map[string]float64 `json:"totals"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L448).
+
+### Rank
+
+Rank defines model for Rank.
+
+
+```go
+type Rank struct {
+	Color          string   `json:"color"`
+	IconKey        RankIcon `json:"iconKey"`
+	IconURL        *string  `json:"iconUrl"`
+	Key            string   `json:"key"`
+	MinMMR         *int64   `json:"minMmr"`
+	Name           string   `json:"name"`
+	SecondaryColor *string  `json:"secondaryColor"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L456).
+
+### RankIcon
+
+RankIcon defines model for RankIcon.
+
+
+```go
+type RankIcon string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L467).
+
+#### RankIcon.Valid
+
+Valid indicates whether the value is a known member of the RankIcon enum.
+
+
+```go
+func (e RankIcon) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L103).
+
+### RatingStatus
+
+RatingStatus defines model for RatingStatus.
+
+
+```go
+type RatingStatus string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L470).
+
+#### RatingStatus.Valid
+
+Valid indicates whether the value is a known member of the RatingStatus enum.
+
+
+```go
+func (e RatingStatus) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L133).
+
+### ReceiptKind
+
+ReceiptKind defines model for ReceiptKind.
+
+
+```go
+type ReceiptKind string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L508).
+
+#### ReceiptKind.Valid
+
+Valid indicates whether the value is a known member of the ReceiptKind enum.
+
+
+```go
+func (e ReceiptKind) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L115).
+
+### ReceiptStatus
+
+ReceiptStatus defines model for ReceiptStatus.
+
+
+```go
+type ReceiptStatus string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L511).
+
+#### ReceiptStatus.Valid
+
+Valid indicates whether the value is a known member of the ReceiptStatus enum.
+
+
+```go
+func (e ReceiptStatus) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L136).
+
+### RequestOption
+
+RequestOption adjusts one call.
+
+
+```go
+type RequestOption func(*requestOptions)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/client.go#L152).
+
+### Roster
+
+Roster defines model for Roster.
+
+
+```go
+type Roster struct {
+	Captain     *RosterCaptain `json:"captain"`
+	Category    string         `json:"category"`
+	ID          string         `json:"id"`
+	LogoURL     *string        `json:"logoUrl"`
+	Name        string         `json:"name"`
+	Provisional bool           `json:"provisional"`
+	Tag         *string        `json:"tag"`
+	TeamMMR     *float64       `json:"teamMmr"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L473).
+
+### RosterCaptain
+
+RosterCaptain defines model for RosterCaptain.
+
+
+```go
+type RosterCaptain struct {
+	DisplayName string  `json:"displayName"`
+	ProfileURL  *string `json:"profileUrl"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L485).
+
+### RosterMember
+
+RosterMember defines model for RosterMember.
+
+
+```go
+type RosterMember struct {
+	DisplayName string  `json:"displayName"`
+	IsCaptain   bool    `json:"isCaptain"`
+	ProfileURL  *string `json:"profileUrl"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L491).
+
+### RosterQuery
+
+RosterQuery scopes a Roster read.
+
+
+```go
+type RosterQuery = PlayerQuery
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L35).
+
+### RosterResponse
+
+RosterResponse defines model for RosterResponse.
+
+
+```go
+type RosterResponse struct {
+	Members []RosterMember `json:"members"`
+	Roster  Roster         `json:"roster"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L498).
+
+### RostersQuery
+
+RostersQuery scopes and pages a League's Rosters.
+
+
+```go
+type RostersQuery = PlayerMatchesQuery
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L47).
+
+### RostersResponse
+
+RostersResponse defines model for RostersResponse.
+
+
+```go
+type RostersResponse struct {
+	HasMore   bool     `json:"hasMore"`
+	NextToken *string  `json:"nextToken"`
+	Page      int64    `json:"page"`
+	PageSize  int64    `json:"pageSize"`
+	Rosters   []Roster `json:"rosters"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L504).
+
+### RoundUnit
+
+RoundUnit defines model for RoundUnit.
+
+
+```go
+type RoundUnit struct {
+	Index      int64                    `json:"index"`
+	Kills      []map[string]interface{} `json:"kills,omitempty"`
+	Players    []map[string]interface{} `json:"players"`
+	WinnerSide *int64                   `json:"winnerSide,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L514).
+
+### Side
+
+Side defines model for Side.
+
+
+```go
+type Side string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L522).
+
+#### Side.Valid
+
+Valid indicates whether the value is a known member of the Side enum.
+
+
+```go
+func (e Side) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L156).
+
+### Standing
+
+Standing defines model for Standing.
+
+
+```go
+type Standing struct {
+	Losses      int64   `json:"losses"`
+	Name        string  `json:"name"`
+	Position    int64   `json:"position"`
+	Provisional bool    `json:"provisional"`
+	RosterID    string  `json:"rosterId"`
+	RoundsLost  int64   `json:"roundsLost"`
+	RoundsWon   int64   `json:"roundsWon"`
+	TeamMMR     float64 `json:"teamMmr"`
+	Wins        int64   `json:"wins"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L513).
+
+### StandingsQuery
+
+StandingsQuery pages the season standings.
+
+
+```go
+type StandingsQuery struct {
+	Page      int
+	PageSize  int
+	NextToken string
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/league.go#L60).
+
+### StandingsResponse
+
+StandingsResponse defines model for StandingsResponse.
+
+
+```go
+type StandingsResponse struct {
+	HasMore           bool       `json:"hasMore"`
+	NextToken         *string    `json:"nextToken"`
+	Page              int64      `json:"page"`
+	PageSize          int64      `json:"pageSize"`
+	Season            *int64     `json:"season"`
+	SnapshotAt        time.Time  `json:"snapshotAt"`
+	SnapshotExpiresAt time.Time  `json:"snapshotExpiresAt"`
+	Standings         []Standing `json:"standings"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_public.gen.go#L526).
+
+### StatCounter
+
+StatCounter defines model for StatCounter.
+
+
+```go
+type StatCounter struct {
+	Name     string `json:"name"`
+	Required bool   `json:"required"`
+	Signed   *bool  `json:"signed,omitempty"`
+	Whole    *bool  `json:"whole,omitempty"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L525).
+
+### StatDirection
+
+StatDirection defines model for StatDirection.
+
+
+```go
+type StatDirection string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L533).
+
+#### StatDirection.Valid
+
+Valid indicates whether the value is a known member of the StatDirection enum.
+
+
+```go
+func (e StatDirection) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L175).
+
+### StatFormat
+
+StatFormat defines model for StatFormat.
+
+
+```go
+type StatFormat string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L536).
+
+#### StatFormat.Valid
+
+Valid indicates whether the value is a known member of the StatFormat enum.
+
+
+```go
+func (e StatFormat) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L195).
+
+### StatRecord
+
+StatRecord defines model for StatRecord.
+
+
+```go
+type StatRecord string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L539).
+
+#### StatRecord.Valid
+
+Valid indicates whether the value is a known member of the StatRecord enum.
+
+
+```go
+func (e StatRecord) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L212).
+
+### StatSchema
+
+StatSchema defines model for StatSchema.
+
+
+```go
+type StatSchema struct {
+	Counters     []StatCounter `json:"counters"`
+	Events       []string      `json:"events"`
+	ID           string        `json:"id"`
+	Key          string        `json:"key"`
+	Label        string        `json:"label"`
+	Record       StatRecord    `json:"record"`
+	SchemaRef    string        `json:"schemaRef"`
+	ScoreCeiling *float64      `json:"scoreCeiling"`
+	Unit         StatUnit      `json:"unit"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L542).
+
+### StatSchemaCatalog
+
+StatSchemaCatalog defines model for StatSchemaCatalog.
+
+
+```go
+type StatSchemaCatalog struct {
+	Game              string       `json:"game"`
+	LiveSessions      int64        `json:"liveSessions"`
+	RequestsPerMinute int64        `json:"requestsPerMinute"`
+	Schemas           []StatSchema `json:"schemas"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L555).
+
+### StatScope
+
+StatScope defines model for StatScope.
+
+
+```go
+type StatScope string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L563).
+
+#### StatScope.Valid
+
+Valid indicates whether the value is a known member of the StatScope enum.
+
+
+```go
+func (e StatScope) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L228).
+
+### StatUnit
+
+StatUnit defines model for StatUnit.
+
+
+```go
+type StatUnit string
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L566).
+
+#### StatUnit.Valid
+
+Valid indicates whether the value is a known member of the StatUnit enum.
+
+
+```go
+func (e StatUnit) Valid() bool
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L246).
+
+### Stats
+
+Stats is stat submission: send your game's stats to a League, for any gamemode it plays. Every call needs an API key with the gamemode granted. It is available while the League's stat submission API is switched on; otherwise the API answers 503 `not-available`.
+
+
+```go
+type Stats struct {
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/stats.go#L15).
+
+#### Stats.AppendUnits
+
+AppendUnits adds rounds (or a whole game, for a gamemode without rounds) to an open match. The request is accepted or refused whole.
+
+
+```go
+func (s *Stats) AppendUnits(ctx context.Context, matchID string, request AppendUnitsRequest, options ...RequestOption) (*AppendUnitsResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/stats.go#L58).
+
+#### Stats.BeginMatch
+
+BeginMatch opens a live match. It takes one of the League's live sessions until finalized or silent for 30 minutes. Beginning it again returns it and takes nothing more.
+
+
+```go
+func (s *Stats) BeginMatch(ctx context.Context, request BeginMatchRequest, options ...RequestOption) (*BeginMatchResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/stats.go#L52).
+
+#### Stats.Finalize
+
+Finalize closes the match and frees its live session. A game without its result, or a missing round, holds it for an Organizer's review.
+
+
+```go
+func (s *Stats) Finalize(ctx context.Context, matchID string, options ...RequestOption) (*FinalizeMatchResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/stats.go#L68).
+
+#### Stats.Gamemodes
+
+Gamemodes lists the gamemodes this key may submit, built-in and custom, each with the stat keys a Player line may carry and an empty heir-match-v1 document to fill in.
+
+
+```go
+func (s *Stats) Gamemodes(ctx context.Context, options ...RequestOption) (*GamemodeCatalog, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/stats.go#L21).
+
+#### Stats.Heartbeat
+
+Heartbeat says the match is still being played when no unit is ready; a match silent for 30 minutes is closed and held for review.
+
+
+```go
+func (s *Stats) Heartbeat(ctx context.Context, matchID string, options ...RequestOption) (*HeartbeatMatchResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/stats.go#L63).
+
+#### Stats.Schemas
+
+Schemas lists the gamemode schemas this key may track a match under, with every counter and what one unit is, and the key's allowances.
+
+
+```go
+func (s *Stats) Schemas(ctx context.Context, options ...RequestOption) (*StatSchemaCatalog, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/stats.go#L30).
+
+#### Stats.SubmitMatch
+
+SubmitMatch sends one finished match as a heir-match-v1 document, for any gamemode. Set Reference to your own id for the match: a repeat with the same contents is a no-op, and the client may then safely send it again after a connection failure. Timestamps may carry at most millisecond precision; truncate a time.Now() before sending it.
+
+
+```go
+func (s *Stats) SubmitMatch(ctx context.Context, file HeirMatchFile, options ...RequestOption) (*MatchEntryReceipt, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/stats.go#L41).
+
+#### Stats.Upload
+
+Upload sends a complete tracked match in one request. It never holds a live session; the same upload again changes nothing.
+
+
+```go
+func (s *Stats) Upload(ctx context.Context, request UploadMatchRequest, options ...RequestOption) (*UploadMatchResponse, error)
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/stats.go#L73).
+
+### UploadMatchRequest
+
+UploadMatchRequest defines model for UploadMatchRequest.
+
+
+```go
+type UploadMatchRequest struct {
+	Games     []GameSubmission `json:"games"`
+	MatchID   string           `json:"matchId"`
+	StartedAt int64            `json:"startedAt"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L569).
+
+### UploadMatchResponse
+
+UploadMatchResponse defines model for UploadMatchResponse.
+
+
+```go
+type UploadMatchResponse struct {
+	Created       bool   `json:"created"`
+	DryRun        *bool  `json:"dryRun,omitempty"`
+	HeldForReview bool   `json:"heldForReview"`
+	MatchID       string `json:"matchId"`
+	Replayed      *bool  `json:"replayed,omitempty"`
+	Status        string `json:"status"`
+}
+```
+
+[Source](https://github.com/heirgg/heir-sdk/blob/main/go/types_stats.gen.go#L576).
+

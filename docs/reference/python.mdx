@@ -1,0 +1,2600 @@
+---
+title: Python SDK reference
+description: Complete source-generated exports, signatures, attributes, and model fields.
+sdkSourceHash: "4e801c7cc34714af7cf404f8cfa5d3e60c80a26fef555af3f7e41c0da4a8ca0c"
+---
+
+This reference is generated from Python source without importing Pydantic or the SDK. It describes the current source checkout. See [installation](/sdk/python) for package availability.
+
+Package version declared in `pyproject.toml`: `0.1.0`.
+
+Regenerate with `python python/scripts/generate_docs.py` from the SDK repository. `--check` performs no writes. The source hash covers every Python implementation file, `py.typed`, `pyproject.toml`, and `spec/*.json`, including transport and protocol behavior.
+
+## Public exports
+
+All names below are exported by `heir`. Generated model classes are also exported by `heir.models`.
+
+```python
+from heir import (
+    DEFAULT_BASE_URL,
+    APIIssue,
+    AsyncHeir,
+    AsyncLeague,
+    AsyncPage,
+    AsyncStats,
+    Category,
+    FixtureStatus,
+    Heir,
+    HeirAPIError,
+    HeirConnectionError,
+    HeirError,
+    HeirInputError,
+    HeirProtocolError,
+    HeirTimeoutError,
+    League,
+    Metric,
+    Page,
+    RequestOptions,
+    Stats,
+    __version__,
+    models,
+    new_idempotency_key,
+    AppendUnitsRequest,
+    AppendUnitsResponse,
+    BeginMatchRequest,
+    BeginMatchResponse,
+    EligibilityRequest,
+    EligibilityResponse,
+    EligibilityVerdict,
+    FinalScore,
+    FinalizeMatchResponse,
+    Fixture,
+    FixtureResponse,
+    FixtureRoster,
+    FixturesResponse,
+    GameResult,
+    GameSegment,
+    GameSubmission,
+    Gamemode,
+    GamemodeCatalog,
+    GamemodeIdentity,
+    GamemodeStat,
+    HeartbeatMatchResponse,
+    HeirMatchFile,
+    HeirMatchGamemode,
+    HeirMatchMap,
+    HeirMatchPlacement,
+    HeirMatchPlayer,
+    HeirMatchRoster,
+    HeirMatchRosters,
+    HeirMatchRound,
+    HeirMatchScore,
+    InventoryBatchRequest,
+    InventoryBatchResponse,
+    InventoryEntry,
+    InventoryResponse,
+    Item,
+    ItemEdition,
+    LeaderboardEntry,
+    LeaderboardResponse,
+    LeagueConfigCredential,
+    LeagueConfigResponse,
+    LeagueCredential,
+    LeagueGamemode,
+    LeagueItem,
+    LeagueItemsResponse,
+    Match,
+    MatchEntryReceipt,
+    MatchGame,
+    MatchGamePlayer,
+    MatchResponse,
+    MatchResult,
+    MatchTemplate,
+    MatchTemplateRoster,
+    MatchTemplateRosters,
+    Player,
+    PlayerHeirRating,
+    PlayerLookupRequest,
+    PlayerLookupResponse,
+    PlayerLookupResult,
+    PlayerMMR,
+    PlayerMatch,
+    PlayerMatchesResponse,
+    PlayerRecord,
+    PlayerResponse,
+    PlayerRoster,
+    PlayerStatsResponse,
+    Rank,
+    Roster,
+    RosterCaptain,
+    RosterMember,
+    RosterResponse,
+    RostersResponse,
+    RoundUnit,
+    Standing,
+    StandingsResponse,
+    StatCounter,
+    StatSchema,
+    StatSchemaCatalog,
+    UploadMatchRequest,
+    UploadMatchResponse,
+)
+```
+
+## Clients, resources, pages, options, and errors
+
+Signatures omit bound `self` and `cls`. Keyword-only parameters follow `*`. `ItemT` is a page's row type; `BodyT` is its complete response model. A returned page is not a plain list. An `async def` result is obtained by awaiting the call.
+
+### APIIssue
+
+One field the API could not accept, named when it can be.
+
+```text
+APIIssue(path: str, message: str)
+```
+
+Frozen dataclass: fields cannot be reassigned.
+
+| Public attribute | Type |
+| --- | --- |
+| `message` | `str` |
+| `path` | `str` |
+
+### AsyncHeir
+
+The Heir API client for asyncio or any anyio backend. Calls are awaited; lists are walked with ``async for``.
+
+```text
+AsyncHeir(*, api_key: str | None = None, base_url: str = DEFAULT_BASE_URL, http_client: httpx.AsyncClient | None = None, max_retries: int = 2, max_retry_delay: float = 30.0, timeout: float | None = 30.0, cache: bool = True, user_agent: str | None = None)
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `api_key` | `str \| None` | `None` | keyword only |
+| `base_url` | `str` | `DEFAULT_BASE_URL` | keyword only |
+| `http_client` | `httpx.AsyncClient \| None` | `None` | keyword only |
+| `max_retries` | `int` | `2` | keyword only |
+| `max_retry_delay` | `float` | `30.0` | keyword only |
+| `timeout` | `float \| None` | `30.0` | keyword only |
+| `cache` | `bool` | `True` | keyword only |
+| `user_agent` | `str \| None` | `None` | keyword only |
+
+| Public attribute | Type |
+| --- | --- |
+| `stats` | `AsyncStats` |
+
+#### AsyncHeir league
+
+```text
+def AsyncHeir.league(ref: str) -> AsyncLeague
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `ref` | `str` | `required` | positional or keyword |
+
+Returns: `AsyncLeague`.
+
+A League's public reads, by vanity name (``heir.gg/nacl``) or Discord server ID.
+
+#### AsyncHeir authenticated
+
+Read-only property: `authenticated: bool`.
+
+Whether this client sends a developer key.
+
+#### AsyncHeir clear_cache
+
+```text
+def AsyncHeir.clear_cache() -> None
+```
+
+No arguments.
+
+Returns: `None`.
+
+Forget every cached League read.
+
+#### AsyncHeir aclose
+
+```text
+async def AsyncHeir.aclose() -> None
+```
+
+No arguments.
+
+Returns: `None`.
+
+Close the HTTP client this client made. One passed in stays yours.
+
+#### AsyncHeir __aenter__
+
+```text
+async def AsyncHeir.__aenter__() -> AsyncHeir
+```
+
+No arguments.
+
+Returns: `AsyncHeir`.
+
+#### AsyncHeir __aexit__
+
+```text
+async def AsyncHeir.__aexit__(exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None) -> None
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `exc_type` | `type[BaseException] \| None` | `required` | positional or keyword |
+| `exc` | `BaseException \| None` | `required` | positional or keyword |
+| `tb` | `TracebackType \| None` | `required` | positional or keyword |
+
+Returns: `None`.
+
+### AsyncLeague
+
+One League's public reads, from an ``AsyncHeir``. See ``League`` for what each read answers.
+
+```text
+AsyncLeague(client: AsyncHeir, ref: str)
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `client` | `AsyncHeir` | `required` | positional or keyword |
+| `ref` | `str` | `required` | positional or keyword |
+
+| Public attribute | Type |
+| --- | --- |
+| `ref` | `str` |
+
+#### AsyncLeague player
+
+```text
+async def AsyncLeague.player(credential: str, identifier: str, *, category: Category | None = None, gamemode: str | None = None, options: RequestOptions | None = None) -> PlayerResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifier` | `str` | `required` | positional or keyword |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `PlayerResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague lookup_players
+
+```text
+async def AsyncLeague.lookup_players(credential: str, identifiers: list[str], *, category: Category | None = None, gamemode: str | None = None, options: RequestOptions | None = None) -> PlayerLookupResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifiers` | `list[str]` | `required` | positional or keyword |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `PlayerLookupResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague player_stats
+
+```text
+async def AsyncLeague.player_stats(credential: str, identifier: str, *, category: Category | None = None, gamemode: str | None = None, options: RequestOptions | None = None) -> PlayerStatsResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifier` | `str` | `required` | positional or keyword |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `PlayerStatsResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague player_matches
+
+```text
+async def AsyncLeague.player_matches(credential: str, identifier: str, *, category: Category | None = None, gamemode: str | None = None, page: int | None = None, page_size: int | None = None, next_token: str | None = None, options: RequestOptions | None = None) -> AsyncPage[PlayerMatch, PlayerMatchesResponse]
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifier` | `str` | `required` | positional or keyword |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `page` | `int \| None` | `None` | keyword only |
+| `page_size` | `int \| None` | `None` | keyword only |
+| `next_token` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `AsyncPage[PlayerMatch, PlayerMatchesResponse]`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague rosters
+
+```text
+async def AsyncLeague.rosters(*, category: Category | None = None, gamemode: str | None = None, page: int | None = None, page_size: int | None = None, next_token: str | None = None, options: RequestOptions | None = None) -> AsyncPage[Roster, RostersResponse]
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `page` | `int \| None` | `None` | keyword only |
+| `page_size` | `int \| None` | `None` | keyword only |
+| `next_token` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `AsyncPage[Roster, RostersResponse]`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague roster
+
+```text
+async def AsyncLeague.roster(id: str, *, category: Category | None = None, gamemode: str | None = None, options: RequestOptions | None = None) -> RosterResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `id` | `str` | `required` | positional or keyword |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `RosterResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague leaderboard
+
+```text
+async def AsyncLeague.leaderboard(*, metric: Metric | None = None, category: Category | None = None, gamemode: str | None = None, page: int | None = None, page_size: int | None = None, next_token: str | None = None, options: RequestOptions | None = None) -> AsyncPage[LeaderboardEntry, LeaderboardResponse]
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `metric` | `Metric \| None` | `None` | keyword only |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `page` | `int \| None` | `None` | keyword only |
+| `page_size` | `int \| None` | `None` | keyword only |
+| `next_token` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `AsyncPage[LeaderboardEntry, LeaderboardResponse]`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague standings
+
+```text
+async def AsyncLeague.standings(*, page: int | None = None, page_size: int | None = None, next_token: str | None = None, options: RequestOptions | None = None) -> AsyncPage[Standing, StandingsResponse]
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `page` | `int \| None` | `None` | keyword only |
+| `page_size` | `int \| None` | `None` | keyword only |
+| `next_token` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `AsyncPage[Standing, StandingsResponse]`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague fixtures
+
+```text
+async def AsyncLeague.fixtures(*, status: FixtureStatus | None = None, page: int | None = None, page_size: int | None = None, next_token: str | None = None, options: RequestOptions | None = None) -> AsyncPage[Fixture, FixturesResponse]
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `status` | `FixtureStatus \| None` | `None` | keyword only |
+| `page` | `int \| None` | `None` | keyword only |
+| `page_size` | `int \| None` | `None` | keyword only |
+| `next_token` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `AsyncPage[Fixture, FixturesResponse]`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague fixture
+
+```text
+async def AsyncLeague.fixture(id: str, *, options: RequestOptions | None = None) -> FixtureResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `id` | `str` | `required` | positional or keyword |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `FixtureResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague match
+
+```text
+async def AsyncLeague.match(id: str, *, options: RequestOptions | None = None) -> MatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `id` | `str` | `required` | positional or keyword |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `MatchResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague config
+
+```text
+async def AsyncLeague.config(*, options: RequestOptions | None = None) -> LeagueConfigResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `LeagueConfigResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague check_eligibility
+
+```text
+async def AsyncLeague.check_eligibility(credential: str, identifiers: list[str], *, fixture_id: str, roster_id: str, gamemode: str, options: RequestOptions | None = None) -> EligibilityResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifiers` | `list[str]` | `required` | positional or keyword |
+| `fixture_id` | `str` | `required` | keyword only |
+| `roster_id` | `str` | `required` | keyword only |
+| `gamemode` | `str` | `required` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `EligibilityResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague inventory
+
+```text
+async def AsyncLeague.inventory(credential: str, identifier: str, *, item: str | None = None, options: RequestOptions | None = None) -> InventoryResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifier` | `str` | `required` | positional or keyword |
+| `item` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `InventoryResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague inventories
+
+```text
+async def AsyncLeague.inventories(credential: str, identifiers: list[str], *, item: str | None = None, options: RequestOptions | None = None) -> InventoryBatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifiers` | `list[str]` | `required` | positional or keyword |
+| `item` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `InventoryBatchResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### AsyncLeague items
+
+```text
+async def AsyncLeague.items(*, options: RequestOptions | None = None) -> LeagueItemsResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `LeagueItemsResponse`.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+### AsyncPage
+
+Public bases: `Generic[ItemT, BodyT]`.
+
+One page of a list, from an async client. `await page.next()` fetches the following page, and `async for` walks this page's rows and every page after it.
+
+```text
+AsyncPage(body: BodyT, items: list[ItemT], has_more: bool, next_token: str | None, fetch_next: Callable[[str], Awaitable[AsyncPage[ItemT, BodyT]]])
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `body` | `BodyT` | `required` | positional or keyword |
+| `items` | `list[ItemT]` | `required` | positional or keyword |
+| `has_more` | `bool` | `required` | positional or keyword |
+| `next_token` | `str \| None` | `required` | positional or keyword |
+| `fetch_next` | `Callable[[str], Awaitable[AsyncPage[ItemT, BodyT]]]` | `required` | positional or keyword |
+
+| Public attribute | Type |
+| --- | --- |
+| `body` | `BodyT` |
+| `items` | `list[ItemT]` |
+| `next_token` | `str \| None` |
+
+#### AsyncPage has_more
+
+Read-only property: `has_more: bool`.
+
+#### AsyncPage next
+
+```text
+async def AsyncPage.next() -> AsyncPage[ItemT, BodyT] | None
+```
+
+No arguments.
+
+Returns: `AsyncPage[ItemT, BodyT] | None`.
+
+The page after this one, or None at the end of the list.
+
+#### AsyncPage __aiter__
+
+```text
+async def AsyncPage.__aiter__() -> AsyncIterator[ItemT]
+```
+
+No arguments.
+
+Returns: `AsyncIterator[ItemT]`.
+
+#### AsyncPage __repr__
+
+```text
+def AsyncPage.__repr__() -> str
+```
+
+No arguments.
+
+Returns: `str`.
+
+### AsyncStats
+
+Stat submission from an ``AsyncHeir``. See ``Stats`` for what each call does.
+
+```text
+AsyncStats(client: AsyncHeir)
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `client` | `AsyncHeir` | `required` | positional or keyword |
+
+#### AsyncStats gamemodes
+
+```text
+async def AsyncStats.gamemodes(*, options: RequestOptions | None = None) -> GamemodeCatalog
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `GamemodeCatalog`.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### AsyncStats schemas
+
+```text
+async def AsyncStats.schemas(*, options: RequestOptions | None = None) -> StatSchemaCatalog
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `StatSchemaCatalog`.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### AsyncStats submit_match
+
+```text
+async def AsyncStats.submit_match(file: HeirMatchFile | MatchTemplate | Mapping[str, Any], *, options: RequestOptions | None = None) -> MatchEntryReceipt
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `file` | `HeirMatchFile \| MatchTemplate \| Mapping[str, Any]` | `required` | positional or keyword |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `MatchEntryReceipt`.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### AsyncStats begin_match
+
+```text
+async def AsyncStats.begin_match(request: BeginMatchRequest | Mapping[str, Any], *, idempotency_key: str | None = None, dry_run: bool = False, options: RequestOptions | None = None) -> BeginMatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `request` | `BeginMatchRequest \| Mapping[str, Any]` | `required` | positional or keyword |
+| `idempotency_key` | `str \| None` | `None` | keyword only |
+| `dry_run` | `bool` | `False` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `BeginMatchResponse`.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### AsyncStats append_units
+
+```text
+async def AsyncStats.append_units(match_id: str, request: AppendUnitsRequest | Mapping[str, Any], *, idempotency_key: str | None = None, dry_run: bool = False, options: RequestOptions | None = None) -> AppendUnitsResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `match_id` | `str` | `required` | positional or keyword |
+| `request` | `AppendUnitsRequest \| Mapping[str, Any]` | `required` | positional or keyword |
+| `idempotency_key` | `str \| None` | `None` | keyword only |
+| `dry_run` | `bool` | `False` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `AppendUnitsResponse`.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### AsyncStats heartbeat
+
+```text
+async def AsyncStats.heartbeat(match_id: str, *, idempotency_key: str | None = None, options: RequestOptions | None = None) -> HeartbeatMatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `match_id` | `str` | `required` | positional or keyword |
+| `idempotency_key` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `HeartbeatMatchResponse`.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### AsyncStats finalize
+
+```text
+async def AsyncStats.finalize(match_id: str, *, idempotency_key: str | None = None, options: RequestOptions | None = None) -> FinalizeMatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `match_id` | `str` | `required` | positional or keyword |
+| `idempotency_key` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `FinalizeMatchResponse`.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### AsyncStats upload
+
+```text
+async def AsyncStats.upload(request: UploadMatchRequest | Mapping[str, Any], *, idempotency_key: str | None = None, dry_run: bool = False, options: RequestOptions | None = None) -> UploadMatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `request` | `UploadMatchRequest \| Mapping[str, Any]` | `required` | positional or keyword |
+| `idempotency_key` | `str \| None` | `None` | keyword only |
+| `dry_run` | `bool` | `False` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `UploadMatchResponse`.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+### Heir
+
+The Heir API client.
+
+```text
+Heir(*, api_key: str | None = None, base_url: str = DEFAULT_BASE_URL, http_client: httpx.Client | None = None, max_retries: int = 2, max_retry_delay: float = 30.0, timeout: float | None = 30.0, cache: bool = True, user_agent: str | None = None)
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `api_key` | `str \| None` | `None` | keyword only |
+| `base_url` | `str` | `DEFAULT_BASE_URL` | keyword only |
+| `http_client` | `httpx.Client \| None` | `None` | keyword only |
+| `max_retries` | `int` | `2` | keyword only |
+| `max_retry_delay` | `float` | `30.0` | keyword only |
+| `timeout` | `float \| None` | `30.0` | keyword only |
+| `cache` | `bool` | `True` | keyword only |
+| `user_agent` | `str \| None` | `None` | keyword only |
+
+| Public attribute | Type |
+| --- | --- |
+| `stats` | `Stats` |
+
+#### Heir league
+
+```text
+def Heir.league(ref: str) -> League
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `ref` | `str` | `required` | positional or keyword |
+
+Returns: `League`.
+
+A League's public reads, by vanity name (``heir.gg/nacl``) or Discord server ID.
+
+#### Heir authenticated
+
+Read-only property: `authenticated: bool`.
+
+Whether this client sends a developer key.
+
+#### Heir clear_cache
+
+```text
+def Heir.clear_cache() -> None
+```
+
+No arguments.
+
+Returns: `None`.
+
+Forget every cached League read.
+
+#### Heir close
+
+```text
+def Heir.close() -> None
+```
+
+No arguments.
+
+Returns: `None`.
+
+Close the HTTP client this client made. One passed in stays yours.
+
+#### Heir __enter__
+
+```text
+def Heir.__enter__() -> Heir
+```
+
+No arguments.
+
+Returns: `Heir`.
+
+#### Heir __exit__
+
+```text
+def Heir.__exit__(exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None) -> None
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `exc_type` | `type[BaseException] \| None` | `required` | positional or keyword |
+| `exc` | `BaseException \| None` | `required` | positional or keyword |
+| `tb` | `TracebackType \| None` | `required` | positional or keyword |
+
+Returns: `None`.
+
+### HeirAPIError
+
+Public bases: `HeirError`.
+
+The API answered with an error.
+
+```text
+HeirAPIError(*, status_code: int, code: str, message: str, issues: list[APIIssue] | None = None, retry_after: float | None = None, headers: httpx.Headers | None = None, body: Any = None)
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `status_code` | `int` | `required` | keyword only |
+| `code` | `str` | `required` | keyword only |
+| `message` | `str` | `required` | keyword only |
+| `issues` | `list[APIIssue] \| None` | `None` | keyword only |
+| `retry_after` | `float \| None` | `None` | keyword only |
+| `headers` | `httpx.Headers \| None` | `None` | keyword only |
+| `body` | `Any` | `None` | keyword only |
+
+| Public attribute | Type |
+| --- | --- |
+| `body` | `Any` |
+| `code` | `str` |
+| `headers` | `httpx.Headers` |
+| `issues` | `list[APIIssue]` |
+| `message` | `str` |
+| `retry_after` | `float \| None` |
+| `status_code` | `int` |
+
+#### HeirAPIError is_rate_limited
+
+Read-only property: `is_rate_limited: bool`.
+
+Too many requests this minute, or as many live sessions open as the League's plan allows.
+
+#### HeirAPIError __str__
+
+```text
+def HeirAPIError.__str__() -> str
+```
+
+No arguments.
+
+Returns: `str`.
+
+#### HeirAPIError from_response
+
+```text
+def HeirAPIError.from_response(response: httpx.Response) -> HeirAPIError
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `response` | `httpx.Response` | `required` | positional or keyword |
+
+Returns: `HeirAPIError`.
+
+Read the API's `{error, message, issues?}` envelope; an answer that is not one still becomes an error you can inspect.
+
+### HeirConnectionError
+
+Public bases: `HeirError`.
+
+The API could not be reached, or the connection failed before an answer arrived. `__cause__` is the underlying error.
+
+### HeirError
+
+Public bases: `Exception`.
+
+The base of SDK input, protocol, API and transport errors.
+
+### HeirInputError
+
+Public bases: `HeirError, ValueError`.
+
+Client configuration or a request could not be encoded. ``__cause__`` preserves validation details.
+
+### HeirProtocolError
+
+Public bases: `HeirError`.
+
+A successful HTTP response was not a valid API answer.
+
+```text
+HeirProtocolError(message: str, body: bytes)
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `message` | `str` | `required` | positional or keyword |
+| `body` | `bytes` | `required` | positional or keyword |
+
+| Public attribute | Type |
+| --- | --- |
+| `body` | `bytes` |
+
+### HeirTimeoutError
+
+Public bases: `HeirConnectionError`.
+
+No answer arrived within the request's timeout.
+
+```text
+HeirTimeoutError(url: str, timeout: float | None)
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `url` | `str` | `required` | positional or keyword |
+| `timeout` | `float \| None` | `required` | positional or keyword |
+
+| Public attribute | Type |
+| --- | --- |
+| `timeout` | `float \| None` |
+
+### League
+
+One League's public reads: players, ratings, Rosters, schedules, results and shop inventory.
+
+```text
+League(client: Heir, ref: str)
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `client` | `Heir` | `required` | positional or keyword |
+| `ref` | `str` | `required` | positional or keyword |
+
+| Public attribute | Type |
+| --- | --- |
+| `ref` | `str` |
+
+#### League player
+
+```text
+def League.player(credential: str, identifier: str, *, category: Category | None = None, gamemode: str | None = None, options: RequestOptions | None = None) -> PlayerResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifier` | `str` | `required` | positional or keyword |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `PlayerResponse`.
+
+One current Member by linked game account, for nameplates and player cards. ``player`` is None for an unknown or departed identity.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League lookup_players
+
+```text
+def League.lookup_players(credential: str, identifiers: list[str], *, category: Category | None = None, gamemode: str | None = None, options: RequestOptions | None = None) -> PlayerLookupResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifiers` | `list[str]` | `required` | positional or keyword |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `PlayerLookupResponse`.
+
+Up to 100 game accounts at once, each answered in order, including duplicates and unavailable identities.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League player_stats
+
+```text
+def League.player_stats(credential: str, identifier: str, *, category: Category | None = None, gamemode: str | None = None, options: RequestOptions | None = None) -> PlayerStatsResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifier` | `str` | `required` | positional or keyword |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `PlayerStatsResponse`.
+
+The Player's League win/loss record and stored performance totals for the scope.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League player_matches
+
+```text
+def League.player_matches(credential: str, identifier: str, *, category: Category | None = None, gamemode: str | None = None, page: int | None = None, page_size: int | None = None, next_token: str | None = None, options: RequestOptions | None = None) -> Page[PlayerMatch, PlayerMatchesResponse]
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifier` | `str` | `required` | positional or keyword |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `page` | `int \| None` | `None` | keyword only |
+| `page_size` | `int \| None` | `None` | keyword only |
+| `next_token` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `Page[PlayerMatch, PlayerMatchesResponse]`.
+
+The Player's rated results and MMR changes, newest first.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League rosters
+
+```text
+def League.rosters(*, category: Category | None = None, gamemode: str | None = None, page: int | None = None, page_size: int | None = None, next_token: str | None = None, options: RequestOptions | None = None) -> Page[Roster, RostersResponse]
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `page` | `int \| None` | `None` | keyword only |
+| `page_size` | `int \| None` | `None` | keyword only |
+| `next_token` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `Page[Roster, RostersResponse]`.
+
+Active Rosters with their Team tags, logos, captain and Team MMR.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League roster
+
+```text
+def League.roster(id: str, *, category: Category | None = None, gamemode: str | None = None, options: RequestOptions | None = None) -> RosterResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `id` | `str` | `required` | positional or keyword |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `RosterResponse`.
+
+One active Roster and its seated Members.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League leaderboard
+
+```text
+def League.leaderboard(*, metric: Metric | None = None, category: Category | None = None, gamemode: str | None = None, page: int | None = None, page_size: int | None = None, next_token: str | None = None, options: RequestOptions | None = None) -> Page[LeaderboardEntry, LeaderboardResponse]
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `metric` | `Metric \| None` | `None` | keyword only |
+| `category` | `Category \| None` | `None` | keyword only |
+| `gamemode` | `str \| None` | `None` | keyword only |
+| `page` | `int \| None` | `None` | keyword only |
+| `page_size` | `int \| None` | `None` | keyword only |
+| `next_token` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `Page[LeaderboardEntry, LeaderboardResponse]`.
+
+Current Members ordered by MMR, Heir Rating, wins or losses.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League standings
+
+```text
+def League.standings(*, page: int | None = None, page_size: int | None = None, next_token: str | None = None, options: RequestOptions | None = None) -> Page[Standing, StandingsResponse]
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `page` | `int \| None` | `None` | keyword only |
+| `page_size` | `int \| None` | `None` | keyword only |
+| `next_token` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `Page[Standing, StandingsResponse]`.
+
+Current-season Roster standings in competition order.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League fixtures
+
+```text
+def League.fixtures(*, status: FixtureStatus | None = None, page: int | None = None, page_size: int | None = None, next_token: str | None = None, options: RequestOptions | None = None) -> Page[Fixture, FixturesResponse]
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `status` | `FixtureStatus \| None` | `None` | keyword only |
+| `page` | `int \| None` | `None` | keyword only |
+| `page_size` | `int \| None` | `None` | keyword only |
+| `next_token` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `Page[Fixture, FixturesResponse]`.
+
+Fixtures in scheduled-time order: scheduled by default, or played or cancelled with ``status``.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League fixture
+
+```text
+def League.fixture(id: str, *, options: RequestOptions | None = None) -> FixtureResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `id` | `str` | `required` | positional or keyword |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `FixtureResponse`.
+
+One fixture: its Rosters, time, status, stream link and recorded result.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League match
+
+```text
+def League.match(id: str, *, options: RequestOptions | None = None) -> MatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `id` | `str` | `required` | positional or keyword |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `MatchResponse`.
+
+An official result or approved recording by UUID.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League config
+
+```text
+def League.config(*, options: RequestOptions | None = None) -> LeagueConfigResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `LeagueConfigResponse`.
+
+Game credentials, active gamemodes, rating categories, rank definitions and batch limits.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League check_eligibility
+
+```text
+def League.check_eligibility(credential: str, identifiers: list[str], *, fixture_id: str, roster_id: str, gamemode: str, options: RequestOptions | None = None) -> EligibilityResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifiers` | `list[str]` | `required` | positional or keyword |
+| `fixture_id` | `str` | `required` | keyword only |
+| `roster_id` | `str` | `required` | keyword only |
+| `gamemode` | `str` | `required` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `EligibilityResponse`.
+
+Check up to 100 game accounts against a fixture and one of its Rosters.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League inventory
+
+```text
+def League.inventory(credential: str, identifier: str, *, item: str | None = None, options: RequestOptions | None = None) -> InventoryResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifier` | `str` | `required` | positional or keyword |
+| `item` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `InventoryResponse`.
+
+The items one game account's owner holds in the League's shop right now. An empty list is a normal answer.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League inventories
+
+```text
+def League.inventories(credential: str, identifiers: list[str], *, item: str | None = None, options: RequestOptions | None = None) -> InventoryBatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `credential` | `str` | `required` | positional or keyword |
+| `identifiers` | `list[str]` | `required` | positional or keyword |
+| `item` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `InventoryBatchResponse`.
+
+The same for up to 100 game accounts at once, such as everyone on a server. Not cached.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+#### League items
+
+```text
+def League.items(*, options: RequestOptions | None = None) -> LeagueItemsResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `LeagueItemsResponse`.
+
+Every item the League's shop knows, and the kinds of game account its inventory calls accept.
+
+See [League operations](/sdk/python/league) for behavior, examples, errors, and the HTTP route.
+
+### Page
+
+Public bases: `Generic[ItemT, BodyT]`.
+
+One page of a list: its rows in `items` and the whole answer in `body`.
+
+```text
+Page(body: BodyT, items: list[ItemT], has_more: bool, next_token: str | None, fetch_next: Callable[[str], Page[ItemT, BodyT]])
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `body` | `BodyT` | `required` | positional or keyword |
+| `items` | `list[ItemT]` | `required` | positional or keyword |
+| `has_more` | `bool` | `required` | positional or keyword |
+| `next_token` | `str \| None` | `required` | positional or keyword |
+| `fetch_next` | `Callable[[str], Page[ItemT, BodyT]]` | `required` | positional or keyword |
+
+| Public attribute | Type |
+| --- | --- |
+| `body` | `BodyT` |
+| `items` | `list[ItemT]` |
+| `next_token` | `str \| None` |
+
+#### Page has_more
+
+Read-only property: `has_more: bool`.
+
+#### Page next
+
+```text
+def Page.next() -> Page[ItemT, BodyT] | None
+```
+
+No arguments.
+
+Returns: `Page[ItemT, BodyT] | None`.
+
+The page after this one, or None at the end of the list.
+
+#### Page __iter__
+
+```text
+def Page.__iter__() -> Iterator[ItemT]
+```
+
+No arguments.
+
+Returns: `Iterator[ItemT]`.
+
+#### Page __repr__
+
+```text
+def Page.__repr__() -> str
+```
+
+No arguments.
+
+Returns: `str`.
+
+### RequestOptions
+
+Options one call may take.
+
+```text
+RequestOptions(headers: Mapping[str, str] | None = None, no_cache: bool = False)
+```
+
+| Public attribute | Type |
+| --- | --- |
+| `headers` | `Mapping[str, str] \| None` |
+| `no_cache` | `bool` |
+
+### Stats
+
+Stat submission: send your game's stats to a League, for any gamemode it plays.
+
+```text
+Stats(client: Heir)
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `client` | `Heir` | `required` | positional or keyword |
+
+#### Stats gamemodes
+
+```text
+def Stats.gamemodes(*, options: RequestOptions | None = None) -> GamemodeCatalog
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `GamemodeCatalog`.
+
+The gamemodes this key may submit, built-in and custom.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### Stats schemas
+
+```text
+def Stats.schemas(*, options: RequestOptions | None = None) -> StatSchemaCatalog
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `StatSchemaCatalog`.
+
+The gamemode schemas this key may track a match under, with every counter and what one unit is, and the key's allowances.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### Stats submit_match
+
+```text
+def Stats.submit_match(file: HeirMatchFile | MatchTemplate | Mapping[str, Any], *, options: RequestOptions | None = None) -> MatchEntryReceipt
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `file` | `HeirMatchFile \| MatchTemplate \| Mapping[str, Any]` | `required` | positional or keyword |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `MatchEntryReceipt`.
+
+One finished match as a heir-match-v1 document, for any gamemode.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### Stats begin_match
+
+```text
+def Stats.begin_match(request: BeginMatchRequest | Mapping[str, Any], *, idempotency_key: str | None = None, dry_run: bool = False, options: RequestOptions | None = None) -> BeginMatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `request` | `BeginMatchRequest \| Mapping[str, Any]` | `required` | positional or keyword |
+| `idempotency_key` | `str \| None` | `None` | keyword only |
+| `dry_run` | `bool` | `False` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `BeginMatchResponse`.
+
+Open a live match. It takes one of the League's live sessions until finalized or silent for 30 minutes. Beginning it again returns it.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### Stats append_units
+
+```text
+def Stats.append_units(match_id: str, request: AppendUnitsRequest | Mapping[str, Any], *, idempotency_key: str | None = None, dry_run: bool = False, options: RequestOptions | None = None) -> AppendUnitsResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `match_id` | `str` | `required` | positional or keyword |
+| `request` | `AppendUnitsRequest \| Mapping[str, Any]` | `required` | positional or keyword |
+| `idempotency_key` | `str \| None` | `None` | keyword only |
+| `dry_run` | `bool` | `False` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `AppendUnitsResponse`.
+
+Add rounds (or a whole game, for a gamemode without rounds) to an open match. The request is accepted or refused whole.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### Stats heartbeat
+
+```text
+def Stats.heartbeat(match_id: str, *, idempotency_key: str | None = None, options: RequestOptions | None = None) -> HeartbeatMatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `match_id` | `str` | `required` | positional or keyword |
+| `idempotency_key` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `HeartbeatMatchResponse`.
+
+Say the match is still being played when no unit is ready; a match silent for 30 minutes is closed and held for review.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### Stats finalize
+
+```text
+def Stats.finalize(match_id: str, *, idempotency_key: str | None = None, options: RequestOptions | None = None) -> FinalizeMatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `match_id` | `str` | `required` | positional or keyword |
+| `idempotency_key` | `str \| None` | `None` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `FinalizeMatchResponse`.
+
+Close the match and free its live session. A game without its result, or a missing round, holds it for an Organizer's review.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+#### Stats upload
+
+```text
+def Stats.upload(request: UploadMatchRequest | Mapping[str, Any], *, idempotency_key: str | None = None, dry_run: bool = False, options: RequestOptions | None = None) -> UploadMatchResponse
+```
+
+| Parameter | Type | Default | Passing style |
+| --- | --- | --- | --- |
+| `request` | `UploadMatchRequest \| Mapping[str, Any]` | `required` | positional or keyword |
+| `idempotency_key` | `str \| None` | `None` | keyword only |
+| `dry_run` | `bool` | `False` | keyword only |
+| `options` | `RequestOptions \| None` | `None` | keyword only |
+
+Returns: `UploadMatchResponse`.
+
+A complete tracked match in one request.
+
+See [stat submission](/sdk/python/stats) for behavior, examples, idempotency, and the HTTP route.
+
+## Functions, constants, and literal types
+
+### DEFAULT_BASE_URL
+
+```python
+DEFAULT_BASE_URL = "https://api.heir.gg"
+```
+
+### Category
+
+```python
+Category = Literal["overall", "competitive", "casual"]
+```
+
+### FixtureStatus
+
+```python
+FixtureStatus = Literal["scheduled", "played", "cancelled"]
+```
+
+### Metric
+
+```python
+Metric = Literal["mmr", "heirRating", "wins", "losses"]
+```
+
+### __version__
+
+```python
+__version__ = "0.1.0"
+```
+
+### new_idempotency_key
+
+```text
+def new_idempotency_key() -> str
+```
+
+No arguments.
+
+A fresh idempotency key: a version 4 UUID.
+
+## Generated models
+
+Every field is listed below. `required` means that construction needs a value, even when `None` is accepted. Other cells show the Python default. Accepting `None` in Python does not guarantee that the API accepts JSON null for that field; consult the linked HTTP API contracts before sending it.
+
+The SDK sends explicitly set fields and changed mutable defaults, preserving explicit nulls and current allowed extra fields. Raw Pydantic dumping has its own omission flags. See [model behavior](/sdk/python/models) for validation, aliases, datetime conversion, and mutation details.
+
+Standard inherited Pydantic methods are documented in the [BaseModel API](https://docs.pydantic.dev/latest/api/base_model/). SDK operations convert request validation failures to `HeirInputError` and response validation failures to `HeirProtocolError`; direct model construction can raise Pydantic `ValidationError`.
+
+### AppendUnitsRequest
+
+Import: `from heir import AppendUnitsRequest` or `from heir.models import AppendUnitsRequest`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `games` | `games` | `list[GameSubmission]` | `required` | no |
+
+### AppendUnitsResponse
+
+Import: `from heir import AppendUnitsResponse` or `from heir.models import AppendUnitsResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `accepted` | `accepted` | `int` | `required` | no |
+| `duplicates` | `duplicates` | `int` | `required` | no |
+| `replayed` | `replayed` | `bool \| None` | `None` | yes |
+| `dry_run` | `dryRun` | `bool \| None` | `None` | yes |
+
+### BeginMatchRequest
+
+Import: `from heir import BeginMatchRequest` or `from heir.models import BeginMatchRequest`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `match_id` | `matchId` | `str` | `required` | no |
+| `started_at` | `startedAt` | `int` | `required` | no |
+
+### BeginMatchResponse
+
+Import: `from heir import BeginMatchResponse` or `from heir.models import BeginMatchResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `match_id` | `matchId` | `str` | `required` | no |
+| `created` | `created` | `bool` | `required` | no |
+| `approval` | `approval` | `Literal["automatic", "manual"]` | `required` | no |
+| `replayed` | `replayed` | `bool \| None` | `None` | yes |
+| `dry_run` | `dryRun` | `bool \| None` | `None` | yes |
+
+### EligibilityRequest
+
+Import: `from heir import EligibilityRequest` or `from heir.models import EligibilityRequest`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `credential` | `credential` | `str` | `required` | no |
+| `identifiers` | `identifiers` | `list[str]` | `required` | no |
+| `fixture_id` | `fixtureId` | `str` | `required` | no |
+| `roster_id` | `rosterId` | `str` | `required` | no |
+| `gamemode` | `gamemode` | `str` | `required` | no |
+
+### EligibilityResponse
+
+Import: `from heir import EligibilityResponse` or `from heir.models import EligibilityResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `fixture_id` | `fixtureId` | `str` | `required` | no |
+| `roster_id` | `rosterId` | `str` | `required` | no |
+| `checked_at` | `checkedAt` | `str` | `required` | no |
+| `players` | `players` | `list[EligibilityVerdict]` | `required` | no |
+
+### EligibilityVerdict
+
+Import: `from heir import EligibilityVerdict` or `from heir.models import EligibilityVerdict`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `identifier` | `identifier` | `str` | `required` | no |
+| `eligible` | `eligible` | `bool` | `required` | no |
+| `reasons` | `reasons` | `list[str]` | `required` | no |
+
+### FinalScore
+
+Import: `from heir import FinalScore` or `from heir.models import FinalScore`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `side0` | `side0` | `float` | `required` | no |
+| `side1` | `side1` | `float` | `required` | no |
+
+### FinalizeMatchResponse
+
+Import: `from heir import FinalizeMatchResponse` or `from heir.models import FinalizeMatchResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `closed` | `closed` | `bool` | `required` | no |
+| `status` | `status` | `str` | `required` | no |
+| `held_for_review` | `heldForReview` | `bool` | `required` | no |
+| `replayed` | `replayed` | `bool \| None` | `None` | yes |
+| `dry_run` | `dryRun` | `bool \| None` | `None` | yes |
+
+### Fixture
+
+Import: `from heir import Fixture` or `from heir.models import Fixture`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `id` | `id` | `str` | `required` | no |
+| `code` | `code` | `str \| None` | `required` | yes |
+| `roster_a` | `rosterA` | `FixtureRoster` | `required` | no |
+| `roster_b` | `rosterB` | `FixtureRoster` | `required` | no |
+| `scheduled_at` | `scheduledAt` | `str \| None` | `required` | yes |
+| `status` | `status` | `str` | `required` | no |
+| `result_match_id` | `resultMatchId` | `str \| None` | `required` | yes |
+| `score_a` | `scoreA` | `int \| None` | `required` | yes |
+| `score_b` | `scoreB` | `int \| None` | `required` | yes |
+| `stream_url` | `streamUrl` | `str \| None` | `required` | yes |
+
+### FixtureResponse
+
+Import: `from heir import FixtureResponse` or `from heir.models import FixtureResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `fixture` | `fixture` | `Fixture` | `required` | no |
+
+### FixtureRoster
+
+Import: `from heir import FixtureRoster` or `from heir.models import FixtureRoster`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `id` | `id` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+
+### FixturesResponse
+
+Import: `from heir import FixturesResponse` or `from heir.models import FixturesResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `fixtures` | `fixtures` | `list[Fixture]` | `required` | no |
+| `page` | `page` | `int` | `required` | no |
+| `page_size` | `pageSize` | `int` | `required` | no |
+| `has_more` | `hasMore` | `bool` | `required` | no |
+| `next_token` | `nextToken` | `str \| None` | `required` | yes |
+
+### GameResult
+
+Import: `from heir import GameResult` or `from heir.models import GameResult`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `winner_side` | `winnerSide` | `int \| None` | `required` | yes |
+| `final_score` | `finalScore` | `FinalScore \| None` | `None` | yes |
+| `ended_at` | `endedAt` | `int \| None` | `None` | yes |
+| `attacking_side` | `attackingSide` | `int \| None` | `None` | yes |
+| `players` | `players` | `list[dict[str, Any]] \| None` | `None` | yes |
+| `segments` | `segments` | `list[GameSegment] \| None` | `None` | yes |
+
+### GameSegment
+
+Import: `from heir import GameSegment` or `from heir.models import GameSegment`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `side` | `side` | `int` | `required` | no |
+| `seconds` | `seconds` | `float` | `required` | no |
+| `points` | `points` | `float` | `required` | no |
+
+### GameSubmission
+
+Import: `from heir import GameSubmission` or `from heir.models import GameSubmission`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `schema_ref` | `schemaRef` | `str` | `required` | no |
+| `game_id` | `gameId` | `str` | `required` | no |
+| `map` | `map` | `str \| None` | `None` | yes |
+| `started_at` | `startedAt` | `int \| None` | `None` | yes |
+| `rounds` | `rounds` | `list[RoundUnit] \| None` | `None` | yes |
+| `result` | `result` | `GameResult \| None` | `None` | yes |
+
+### Gamemode
+
+Import: `from heir import Gamemode` or `from heir.models import Gamemode`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `id` | `id` | `str` | `required` | no |
+| `key` | `key` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+| `builtin` | `builtin` | `bool` | `required` | no |
+| `played_by` | `playedBy` | `Literal["team", "individual"]` | `required` | no |
+| `rounds` | `rounds` | `bool` | `required` | no |
+| `decided_by` | `decidedBy` | `Literal["winner", "placement", "none"]` | `required` | no |
+| `version` | `version` | `int` | `required` | no |
+| `stats` | `stats` | `list[GamemodeStat]` | `required` | no |
+
+### GamemodeCatalog
+
+Import: `from heir import GamemodeCatalog` or `from heir.models import GamemodeCatalog`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `game_key` | `gameKey` | `str` | `required` | no |
+| `identity` | `identity` | `GamemodeIdentity \| None` | `required` | yes |
+| `gamemodes` | `gamemodes` | `list[Gamemode]` | `required` | no |
+| `template` | `template` | `MatchTemplate` | `required` | no |
+
+### GamemodeIdentity
+
+Import: `from heir import GamemodeIdentity` or `from heir.models import GamemodeIdentity`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `credential` | `credential` | `str` | `required` | no |
+| `label` | `label` | `str` | `required` | no |
+| `pattern` | `pattern` | `str` | `required` | no |
+
+### GamemodeStat
+
+Import: `from heir import GamemodeStat` or `from heir.models import GamemodeStat`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `key` | `key` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+| `scope` | `scope` | `Literal["player", "team"]` | `required` | no |
+| `direction` | `direction` | `Literal["higher", "lower", "none"]` | `required` | no |
+| `format` | `format` | `Literal["integer", "decimal"]` | `required` | no |
+| `gauge` | `gauge` | `bool` | `required` | no |
+| `hidden` | `hidden` | `bool` | `required` | no |
+| `min` | `min` | `float \| None` | `None` | yes |
+| `max` | `max` | `float \| None` | `None` | yes |
+| `added` | `added` | `bool \| None` | `None` | yes |
+
+### HeartbeatMatchResponse
+
+Import: `from heir import HeartbeatMatchResponse` or `from heir.models import HeartbeatMatchResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `deadline` | `deadline` | `int` | `required` | no |
+| `replayed` | `replayed` | `bool \| None` | `None` | yes |
+| `dry_run` | `dryRun` | `bool \| None` | `None` | yes |
+
+### HeirMatchFile
+
+Import: `from heir import HeirMatchFile` or `from heir.models import HeirMatchFile`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `format` | `format` | `Literal["heir-match-v1"]` | `required` | no |
+| `gamemode` | `gamemode` | `HeirMatchGamemode \| None` | `None` | yes |
+| `type` | `type` | `Literal["pug", "scrim", "competitive"] \| None` | `"pug"` | yes |
+| `rosters` | `rosters` | `HeirMatchRosters \| None` | `None` | yes |
+| `fixture_id` | `fixtureId` | `str \| None` | `None` | yes |
+| `reference` | `reference` | `str \| None` | `None` | yes |
+| `started_at` | `startedAt` | `AwareDatetime` | `required` | no |
+| `ended_at` | `endedAt` | `AwareDatetime \| None` | `None` | yes |
+| `maps` | `maps` | `list[HeirMatchMap]` | `required` | no |
+| `note` | `note` | `str \| None` | `None` | yes |
+
+### HeirMatchGamemode
+
+Import: `from heir import HeirMatchGamemode` or `from heir.models import HeirMatchGamemode`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `id` | `id` | `str \| None` | `None` | yes |
+| `key` | `key` | `str \| None` | `None` | yes |
+| `name` | `name` | `str \| None` | `None` | yes |
+| `version` | `version` | `int \| None` | `None` | yes |
+
+### HeirMatchMap
+
+Import: `from heir import HeirMatchMap` or `from heir.models import HeirMatchMap`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `gamemode` | `gamemode` | `HeirMatchGamemode \| None` | `None` | yes |
+| `map` | `map` | `str \| None` | `None` | yes |
+| `started_at` | `startedAt` | `AwareDatetime \| None` | `None` | yes |
+| `ended_at` | `endedAt` | `AwareDatetime \| None` | `None` | yes |
+| `winner` | `winner` | `str \| None` | `None` | yes |
+| `attacker` | `attacker` | `Literal["a", "b"] \| None` | `None` | yes |
+| `tiebreak` | `tiebreak` | `bool \| None` | `None` | yes |
+| `score` | `score` | `HeirMatchScore \| None` | `None` | yes |
+| `placements` | `placements` | `list[HeirMatchPlacement] \| None` | `None` | yes |
+| `players` | `players` | `list[HeirMatchPlayer]` | `required` | no |
+| `rounds` | `rounds` | `list[HeirMatchRound] \| None` | `None` | yes |
+
+### HeirMatchPlacement
+
+Import: `from heir import HeirMatchPlacement` or `from heir.models import HeirMatchPlacement`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `identity` | `identity` | `str \| None` | `None` | yes |
+| `member` | `member` | `str \| None` | `None` | yes |
+| `side` | `side` | `str \| None` | `None` | yes |
+| `place` | `place` | `int \| None` | `required` | yes |
+
+### HeirMatchPlayer
+
+Import: `from heir import HeirMatchPlayer` or `from heir.models import HeirMatchPlayer`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `identity` | `identity` | `str \| None` | `None` | yes |
+| `member` | `member` | `str \| None` | `None` | yes |
+| `name` | `name` | `str \| None` | `None` | yes |
+| `side` | `side` | `str \| None` | `None` | yes |
+| `stats` | `stats` | `dict[str, float \| None] \| None` | `{}` | yes |
+
+### HeirMatchRoster
+
+Import: `from heir import HeirMatchRoster` or `from heir.models import HeirMatchRoster`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `id` | `id` | `str \| None` | `None` | yes |
+| `name` | `name` | `str \| None` | `None` | yes |
+
+### HeirMatchRosters
+
+Import: `from heir import HeirMatchRosters` or `from heir.models import HeirMatchRosters`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `a` | `a` | `HeirMatchRoster` | `required` | no |
+| `b` | `b` | `HeirMatchRoster` | `required` | no |
+
+### HeirMatchRound
+
+Import: `from heir import HeirMatchRound` or `from heir.models import HeirMatchRound`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `index` | `index` | `int` | `required` | no |
+| `winner` | `winner` | `str \| None` | `None` | yes |
+| `players` | `players` | `list[HeirMatchPlayer]` | `required` | no |
+
+### HeirMatchScore
+
+Import: `from heir import HeirMatchScore` or `from heir.models import HeirMatchScore`.
+
+Unknown fields: `allow`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `a` | `a` | `int` | `required` | no |
+| `b` | `b` | `int` | `required` | no |
+
+Additional fields are retained as `Dict[str, int]`; their names stay unchanged in JSON.
+
+### InventoryBatchRequest
+
+Import: `from heir import InventoryBatchRequest` or `from heir.models import InventoryBatchRequest`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `identifiers` | `identifiers` | `list[str]` | `required` | no |
+| `item` | `item` | `str \| None` | `None` | yes |
+
+### InventoryBatchResponse
+
+Import: `from heir import InventoryBatchResponse` or `from heir.models import InventoryBatchResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `players` | `players` | `dict[str, InventoryEntry]` | `required` | no |
+
+### InventoryEntry
+
+Import: `from heir import InventoryEntry` or `from heir.models import InventoryEntry`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `items` | `items` | `list[Item]` | `required` | no |
+
+### InventoryResponse
+
+Import: `from heir import InventoryResponse` or `from heir.models import InventoryResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `items` | `items` | `list[Item]` | `required` | no |
+
+### Item
+
+Import: `from heir import Item` or `from heir.models import Item`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `key` | `key` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+| `expires_at` | `expiresAt` | `int \| None` | `required` | yes |
+| `edition` | `edition` | `ItemEdition \| None` | `required` | yes |
+| `image_url` | `imageUrl` | `str \| None` | `required` | yes |
+
+### ItemEdition
+
+Import: `from heir import ItemEdition` or `from heir.models import ItemEdition`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `number` | `number` | `int` | `required` | no |
+| `size` | `size` | `int \| None` | `required` | yes |
+
+### LeaderboardEntry
+
+Import: `from heir import LeaderboardEntry` or `from heir.models import LeaderboardEntry`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `position` | `position` | `int` | `required` | no |
+| `display_name` | `displayName` | `str` | `required` | no |
+| `profile_url` | `profileUrl` | `str \| None` | `required` | yes |
+| `value` | `value` | `float` | `required` | no |
+| `provisional` | `provisional` | `bool` | `required` | no |
+
+### LeaderboardResponse
+
+Import: `from heir import LeaderboardResponse` or `from heir.models import LeaderboardResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `metric` | `metric` | `str` | `required` | no |
+| `category` | `category` | `str` | `required` | no |
+| `entries` | `entries` | `list[LeaderboardEntry]` | `required` | no |
+| `page` | `page` | `int` | `required` | no |
+| `page_size` | `pageSize` | `int` | `required` | no |
+| `has_more` | `hasMore` | `bool` | `required` | no |
+| `next_token` | `nextToken` | `str \| None` | `required` | yes |
+| `snapshot_at` | `snapshotAt` | `AwareDatetime` | `required` | no |
+| `snapshot_expires_at` | `snapshotExpiresAt` | `AwareDatetime` | `required` | no |
+
+### LeagueConfigCredential
+
+Import: `from heir import LeagueConfigCredential` or `from heir.models import LeagueConfigCredential`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `key` | `key` | `str` | `required` | no |
+| `label` | `label` | `str` | `required` | no |
+| `id_label` | `idLabel` | `str` | `required` | no |
+| `pattern` | `pattern` | `str` | `required` | no |
+
+### LeagueConfigResponse
+
+Import: `from heir import LeagueConfigResponse` or `from heir.models import LeagueConfigResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `id` | `id` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+| `game_key` | `gameKey` | `str \| None` | `required` | yes |
+| `season` | `season` | `int \| None` | `required` | yes |
+| `credentials` | `credentials` | `list[LeagueConfigCredential]` | `required` | no |
+| `categories` | `categories` | `list[str]` | `required` | no |
+| `gamemodes` | `gamemodes` | `list[LeagueGamemode]` | `required` | no |
+| `ranks` | `ranks` | `list[Rank] \| None` | `required` | yes |
+| `leaderboard_metrics` | `leaderboardMetrics` | `list[str]` | `required` | no |
+| `batch_max` | `batchMax` | `int` | `required` | no |
+
+### LeagueCredential
+
+Import: `from heir import LeagueCredential` or `from heir.models import LeagueCredential`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `key` | `key` | `str` | `required` | no |
+| `label` | `label` | `str` | `required` | no |
+| `id_label` | `idLabel` | `str` | `required` | no |
+| `hint` | `hint` | `str` | `required` | no |
+
+### LeagueGamemode
+
+Import: `from heir import LeagueGamemode` or `from heir.models import LeagueGamemode`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `key` | `key` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+
+### LeagueItem
+
+Import: `from heir import LeagueItem` or `from heir.models import LeagueItem`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `key` | `key` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+| `description` | `description` | `str` | `required` | no |
+| `lasts` | `lasts` | `Literal["permanent", "until-season-end"]` | `required` | no |
+| `image_url` | `imageUrl` | `str \| None` | `required` | yes |
+
+### LeagueItemsResponse
+
+Import: `from heir import LeagueItemsResponse` or `from heir.models import LeagueItemsResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `items` | `items` | `list[LeagueItem]` | `required` | no |
+| `credentials` | `credentials` | `list[LeagueCredential]` | `required` | no |
+
+### Match
+
+Import: `from heir import Match` or `from heir.models import Match`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `id` | `id` | `str` | `required` | no |
+| `kind` | `kind` | `Literal["official", "tracked", "recording"]` | `required` | no |
+| `status` | `status` | `str` | `required` | no |
+| `played_at` | `playedAt` | `str \| None` | `required` | yes |
+| `official_match_id` | `officialMatchId` | `str \| None` | `required` | yes |
+| `result` | `result` | `MatchResult \| None` | `required` | yes |
+| `rating_status` | `ratingStatus` | `Literal["rated", "not-rated"]` | `required` | no |
+| `games` | `games` | `list[MatchGame]` | `required` | no |
+
+### MatchEntryReceipt
+
+Import: `from heir import MatchEntryReceipt` or `from heir.models import MatchEntryReceipt`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `kind` | `kind` | `Literal["match", "session", "recording"]` | `required` | no |
+| `id` | `id` | `str` | `required` | no |
+| `status` | `status` | `Literal["pending", "approved", "rejected"]` | `required` | no |
+| `created` | `created` | `bool` | `required` | no |
+| `replayed` | `replayed` | `bool` | `required` | no |
+| `problems` | `problems` | `list[str]` | `required` | no |
+
+### MatchGame
+
+Import: `from heir import MatchGame` or `from heir.models import MatchGame`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `gamemode` | `gamemode` | `str \| None` | `required` | yes |
+| `players` | `players` | `list[MatchGamePlayer]` | `required` | no |
+
+### MatchGamePlayer
+
+Import: `from heir import MatchGamePlayer` or `from heir.models import MatchGamePlayer`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `identifier` | `identifier` | `str \| None` | `required` | yes |
+| `display_name` | `displayName` | `str` | `required` | no |
+| `stats` | `stats` | `dict[str, float]` | `required` | no |
+
+### MatchResponse
+
+Import: `from heir import MatchResponse` or `from heir.models import MatchResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `match` | `match` | `Match` | `required` | no |
+
+### MatchResult
+
+Import: `from heir import MatchResult` or `from heir.models import MatchResult`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `winner_roster_id` | `winnerRosterId` | `str` | `required` | no |
+| `loser_roster_id` | `loserRosterId` | `str` | `required` | no |
+| `winner_score` | `winnerScore` | `int` | `required` | no |
+| `loser_score` | `loserScore` | `int` | `required` | no |
+
+### MatchTemplate
+
+Import: `from heir import MatchTemplate` or `from heir.models import MatchTemplate`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `format` | `format` | `Literal["heir-match-v1"]` | `required` | no |
+| `gamemode` | `gamemode` | `HeirMatchGamemode \| None` | `None` | yes |
+| `type` | `type` | `Literal["pug", "scrim", "competitive"] \| None` | `"pug"` | yes |
+| `rosters` | `rosters` | `MatchTemplateRosters \| None` | `None` | yes |
+| `fixture_id` | `fixtureId` | `str \| None` | `None` | yes |
+| `reference` | `reference` | `str \| None` | `None` | yes |
+| `started_at` | `startedAt` | `AwareDatetime` | `required` | no |
+| `ended_at` | `endedAt` | `AwareDatetime \| None` | `None` | yes |
+| `maps` | `maps` | `list[HeirMatchMap]` | `required` | no |
+| `note` | `note` | `str \| None` | `None` | yes |
+
+### MatchTemplateRoster
+
+Import: `from heir import MatchTemplateRoster` or `from heir.models import MatchTemplateRoster`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `id` | `id` | `str \| None` | `None` | yes |
+| `name` | `name` | `str \| None` | `None` | yes |
+
+### MatchTemplateRosters
+
+Import: `from heir import MatchTemplateRosters` or `from heir.models import MatchTemplateRosters`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `a` | `a` | `MatchTemplateRoster` | `required` | no |
+| `b` | `b` | `MatchTemplateRoster` | `required` | no |
+
+### Player
+
+Import: `from heir import Player` or `from heir.models import Player`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `identifier` | `identifier` | `str` | `required` | no |
+| `display_name` | `displayName` | `str` | `required` | no |
+| `profile_url` | `profileUrl` | `str \| None` | `required` | yes |
+| `mmr` | `mmr` | `PlayerMMR \| None` | `required` | yes |
+| `rank` | `rank` | `Rank \| None` | `required` | yes |
+| `heir_rating` | `heirRating` | `PlayerHeirRating \| None` | `required` | yes |
+| `roster` | `roster` | `PlayerRoster \| None` | `required` | yes |
+
+### PlayerHeirRating
+
+Import: `from heir import PlayerHeirRating` or `from heir.models import PlayerHeirRating`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `value` | `value` | `float` | `required` | no |
+| `provisional` | `provisional` | `bool` | `required` | no |
+| `category` | `category` | `str` | `required` | no |
+| `gamemode` | `gamemode` | `str \| None` | `required` | yes |
+| `computed_at` | `computedAt` | `str \| None` | `required` | yes |
+
+### PlayerLookupRequest
+
+Import: `from heir import PlayerLookupRequest` or `from heir.models import PlayerLookupRequest`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `credential` | `credential` | `str` | `required` | no |
+| `identifiers` | `identifiers` | `list[str]` | `required` | no |
+| `category` | `category` | `Literal["overall", "competitive", "casual"] \| None` | `"overall"` | yes |
+| `gamemode` | `gamemode` | `str \| None` | `None` | yes |
+
+### PlayerLookupResponse
+
+Import: `from heir import PlayerLookupResponse` or `from heir.models import PlayerLookupResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `players` | `players` | `list[PlayerLookupResult]` | `required` | no |
+
+### PlayerLookupResult
+
+Import: `from heir import PlayerLookupResult` or `from heir.models import PlayerLookupResult`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `identifier` | `identifier` | `str` | `required` | no |
+| `status` | `status` | `Literal["found", "unavailable"]` | `required` | no |
+| `player` | `player` | `Player \| None` | `required` | yes |
+
+### PlayerMMR
+
+Import: `from heir import PlayerMMR` or `from heir.models import PlayerMMR`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `value` | `value` | `float` | `required` | no |
+| `category` | `category` | `str` | `required` | no |
+| `provisional` | `provisional` | `bool` | `required` | no |
+| `results` | `results` | `int` | `required` | no |
+
+### PlayerMatch
+
+Import: `from heir import PlayerMatch` or `from heir.models import PlayerMatch`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `source_key` | `sourceKey` | `str` | `required` | no |
+| `match_id` | `matchId` | `str \| None` | `required` | yes |
+| `played_at` | `playedAt` | `str` | `required` | no |
+| `mmr_before` | `mmrBefore` | `float` | `required` | no |
+| `mmr_after` | `mmrAfter` | `float` | `required` | no |
+| `mmr_delta` | `mmrDelta` | `float` | `required` | no |
+
+### PlayerMatchesResponse
+
+Import: `from heir import PlayerMatchesResponse` or `from heir.models import PlayerMatchesResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `category` | `category` | `str` | `required` | no |
+| `matches` | `matches` | `list[PlayerMatch]` | `required` | no |
+| `page` | `page` | `int` | `required` | no |
+| `page_size` | `pageSize` | `int` | `required` | no |
+| `has_more` | `hasMore` | `bool` | `required` | no |
+| `next_token` | `nextToken` | `str \| None` | `required` | yes |
+
+### PlayerRecord
+
+Import: `from heir import PlayerRecord` or `from heir.models import PlayerRecord`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `wins` | `wins` | `int` | `required` | no |
+| `losses` | `losses` | `int` | `required` | no |
+
+### PlayerResponse
+
+Import: `from heir import PlayerResponse` or `from heir.models import PlayerResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `player` | `player` | `Player \| None` | `required` | yes |
+
+### PlayerRoster
+
+Import: `from heir import PlayerRoster` or `from heir.models import PlayerRoster`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `id` | `id` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+| `tag` | `tag` | `str \| None` | `required` | yes |
+
+### PlayerStatsResponse
+
+Import: `from heir import PlayerStatsResponse` or `from heir.models import PlayerStatsResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `player` | `player` | `Player \| None` | `required` | yes |
+| `category` | `category` | `str` | `required` | no |
+| `record` | `record` | `PlayerRecord \| None` | `required` | yes |
+| `totals` | `totals` | `dict[str, float] \| None` | `required` | yes |
+
+### Rank
+
+Import: `from heir import Rank` or `from heir.models import Rank`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `key` | `key` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+| `min_mmr` | `minMmr` | `int \| None` | `required` | yes |
+| `color` | `color` | `str` | `required` | no |
+| `secondary_color` | `secondaryColor` | `str \| None` | `required` | yes |
+| `icon_key` | `iconKey` | `Literal[ "wood", "bronze", "silver", "gold", "platinum", "diamond", "heir", "jester" ]` | `required` | no |
+| `icon_url` | `iconUrl` | `str \| None` | `required` | yes |
+
+### Roster
+
+Import: `from heir import Roster` or `from heir.models import Roster`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `id` | `id` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+| `tag` | `tag` | `str \| None` | `required` | yes |
+| `logo_url` | `logoUrl` | `str \| None` | `required` | yes |
+| `team_mmr` | `teamMmr` | `float \| None` | `required` | yes |
+| `provisional` | `provisional` | `bool` | `required` | no |
+| `category` | `category` | `str` | `required` | no |
+| `captain` | `captain` | `RosterCaptain \| None` | `required` | yes |
+
+### RosterCaptain
+
+Import: `from heir import RosterCaptain` or `from heir.models import RosterCaptain`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `display_name` | `displayName` | `str` | `required` | no |
+| `profile_url` | `profileUrl` | `str \| None` | `required` | yes |
+
+### RosterMember
+
+Import: `from heir import RosterMember` or `from heir.models import RosterMember`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `display_name` | `displayName` | `str` | `required` | no |
+| `profile_url` | `profileUrl` | `str \| None` | `required` | yes |
+| `is_captain` | `isCaptain` | `bool` | `required` | no |
+
+### RosterResponse
+
+Import: `from heir import RosterResponse` or `from heir.models import RosterResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `roster` | `roster` | `Roster` | `required` | no |
+| `members` | `members` | `list[RosterMember]` | `required` | no |
+
+### RostersResponse
+
+Import: `from heir import RostersResponse` or `from heir.models import RostersResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `rosters` | `rosters` | `list[Roster]` | `required` | no |
+| `page` | `page` | `int` | `required` | no |
+| `page_size` | `pageSize` | `int` | `required` | no |
+| `has_more` | `hasMore` | `bool` | `required` | no |
+| `next_token` | `nextToken` | `str \| None` | `required` | yes |
+
+### RoundUnit
+
+Import: `from heir import RoundUnit` or `from heir.models import RoundUnit`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `index` | `index` | `int` | `required` | no |
+| `winner_side` | `winnerSide` | `int \| None` | `None` | yes |
+| `players` | `players` | `list[dict[str, Any]]` | `required` | no |
+| `kills` | `kills` | `list[dict[str, Any]] \| None` | `None` | yes |
+
+### Standing
+
+Import: `from heir import Standing` or `from heir.models import Standing`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `roster_id` | `rosterId` | `str` | `required` | no |
+| `name` | `name` | `str` | `required` | no |
+| `position` | `position` | `int` | `required` | no |
+| `wins` | `wins` | `int` | `required` | no |
+| `losses` | `losses` | `int` | `required` | no |
+| `rounds_won` | `roundsWon` | `int` | `required` | no |
+| `rounds_lost` | `roundsLost` | `int` | `required` | no |
+| `team_mmr` | `teamMmr` | `float` | `required` | no |
+| `provisional` | `provisional` | `bool` | `required` | no |
+
+### StandingsResponse
+
+Import: `from heir import StandingsResponse` or `from heir.models import StandingsResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `season` | `season` | `int \| None` | `required` | yes |
+| `standings` | `standings` | `list[Standing]` | `required` | no |
+| `page` | `page` | `int` | `required` | no |
+| `page_size` | `pageSize` | `int` | `required` | no |
+| `has_more` | `hasMore` | `bool` | `required` | no |
+| `next_token` | `nextToken` | `str \| None` | `required` | yes |
+| `snapshot_at` | `snapshotAt` | `AwareDatetime` | `required` | no |
+| `snapshot_expires_at` | `snapshotExpiresAt` | `AwareDatetime` | `required` | no |
+
+### StatCounter
+
+Import: `from heir import StatCounter` or `from heir.models import StatCounter`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `name` | `name` | `str` | `required` | no |
+| `required` | `required` | `bool` | `required` | no |
+| `signed` | `signed` | `bool \| None` | `None` | yes |
+| `whole` | `whole` | `bool \| None` | `None` | yes |
+
+### StatSchema
+
+Import: `from heir import StatSchema` or `from heir.models import StatSchema`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `schema_ref` | `schemaRef` | `str` | `required` | no |
+| `id` | `id` | `str` | `required` | no |
+| `key` | `key` | `str` | `required` | no |
+| `label` | `label` | `str` | `required` | no |
+| `record` | `record` | `Literal["match"]` | `required` | no |
+| `unit` | `unit` | `Literal["round", "game"]` | `required` | no |
+| `counters` | `counters` | `list[StatCounter]` | `required` | no |
+| `events` | `events` | `list[str]` | `required` | no |
+| `score_ceiling` | `scoreCeiling` | `float \| None` | `required` | yes |
+
+### StatSchemaCatalog
+
+Import: `from heir import StatSchemaCatalog` or `from heir.models import StatSchemaCatalog`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `game` | `game` | `str` | `required` | no |
+| `live_sessions` | `liveSessions` | `int` | `required` | no |
+| `requests_per_minute` | `requestsPerMinute` | `int` | `required` | no |
+| `schemas` | `schemas` | `list[StatSchema]` | `required` | no |
+
+### UploadMatchRequest
+
+Import: `from heir import UploadMatchRequest` or `from heir.models import UploadMatchRequest`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `match_id` | `matchId` | `str` | `required` | no |
+| `started_at` | `startedAt` | `int` | `required` | no |
+| `games` | `games` | `list[GameSubmission]` | `required` | no |
+
+### UploadMatchResponse
+
+Import: `from heir import UploadMatchResponse` or `from heir.models import UploadMatchResponse`.
+
+Unknown fields: `ignore`. Field names and JSON aliases are accepted during construction.
+
+| Python field | JSON field | Python type | Default at construction | Accepts None |
+| --- | --- | --- | --- | --- |
+| `match_id` | `matchId` | `str` | `required` | no |
+| `created` | `created` | `bool` | `required` | no |
+| `status` | `status` | `str` | `required` | no |
+| `held_for_review` | `heldForReview` | `bool` | `required` | no |
+| `replayed` | `replayed` | `bool \| None` | `None` | yes |
+| `dry_run` | `dryRun` | `bool \| None` | `None` | yes |
+
+## Models namespace
+
+`heir.models.__all__` lists exactly the generated model classes above. Clients, options, errors, page helpers, and literal query aliases are top-level `heir` exports instead.

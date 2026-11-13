@@ -59,6 +59,7 @@ jobs:
             typescript/tools/codegen/package-lock.json
       - run: npm ci && npm --prefix tools/codegen ci
       - run: npm run generate:check
+      - run: npm run docs:check
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:package
@@ -93,6 +94,8 @@ jobs:
           cache-dependency-path: go/internal/gen/go.sum
       - run: test -z "$(gofmt -l .)"
       - run: go run -C internal/gen . -check
+        if: matrix.go == 'stable'
+      - run: go run ../scripts/generate-go-docs.go --check
         if: matrix.go == 'stable'
       - run: go vet ./...
       - run: go test -race -shuffle=on -count=1 ./...
@@ -131,6 +134,7 @@ jobs:
             python/requirements-dev.txt
       - run: pip install -e ".[dev]" -c requirements-dev.txt
       - run: python scripts/generate.py --check
+      - run: python scripts/generate_docs.py --check
       - run: ruff check .
       - run: ruff format --check .
       - run: mypy

@@ -61,6 +61,8 @@ The sync script maps backend `openapi.json` to `spec/public-openapi.json`, copie
 
 ## Contribute and get support
 
+The docs site has a dedicated [SDK section](https://docs.heir.gg/sdk) with TypeScript, Python, and Go guides and complete source-derived references. Keep those pages current using the [documentation workflow](docs/documentation.md).
+
 Use [CONTRIBUTING.md](CONTRIBUTING.md) for setup and checks, [SUPPORT.md](SUPPORT.md) for compatibility and troubleshooting, and [SECURITY.md](SECURITY.md) for private vulnerability reporting. Package releases use independent version tags; maintainers follow [RELEASING.md](RELEASING.md). Changes awaiting release appear in [CHANGELOG.md](CHANGELOG.md).
 
 The source and each language package use the [MIT license](LICENSE).

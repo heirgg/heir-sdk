@@ -32,7 +32,7 @@ jobs:
       - id: version
         run: python3 scripts/release.py go "$GITHUB_REF_NAME" --github-output --require-committed-spec --require-main
       - run: python3 scripts/check-contracts.py
-      - run: test -z "$(gofmt -l .)" && go run -C internal/gen . -check && go vet ./... && go test -race -shuffle=on -count=1 ./...
+      - run: test -z "$(gofmt -l .)" && go run -C internal/gen . -check && go run ../scripts/generate-go-docs.go --check && go vet ./... && go test -race -shuffle=on -count=1 ./...
         working-directory: go
       - name: Ask the public module proxy for the validated version
         run: |

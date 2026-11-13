@@ -32,7 +32,7 @@ jobs:
       - run: python3 scripts/check-contracts.py
       - run: pip install -e ".[dev]" -c requirements-dev.txt
         working-directory: python
-      - run: python scripts/generate.py --check && ruff check . && ruff format --check . && mypy && pytest
+      - run: python scripts/generate.py --check && python scripts/generate_docs.py --check && ruff check . && ruff format --check . && mypy && pytest
         working-directory: python
       - run: SOURCE_DATE_EPOCH="$(git show -s --format=%ct)" python -m build --no-isolation
         working-directory: python

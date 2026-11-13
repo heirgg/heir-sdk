@@ -25,6 +25,8 @@
   "scripts": {
     "generate": "node scripts/generate.mjs",
     "generate:check": "node scripts/generate.mjs --check",
+    "docs:generate": "node scripts/generate-docs.mjs",
+    "docs:check": "node scripts/generate-docs.mjs --check",
     "build": "node tools/codegen/node_modules/tsup/dist/cli-default.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
