@@ -2,7 +2,7 @@
 #    uvx --from uv==0.13.6 uv pip compile pyproject.toml --extra dev --universal --python-version 3.10 --upgrade --output-file requirements-dev.txt
 annotated-types==0.8.0
     # via pydantic
-anyio==4.15.1
+anyio==4.16.0
     # via
     #   heir-sdk (pyproject.toml)
     #   httpx
@@ -31,7 +31,7 @@ cffi==2.1.1 ; implementation_name != 'pypy' and os_name == 'nt'
     # via trio
 charset-normalizer==3.5.2 ; python_full_version >= '3.11'
     # via requests
-click==8.5.0 ; sys_platform != 'emscripten'
+click==8.5.1 ; sys_platform != 'emscripten'
     # via black
 colorama==0.4.6 ; os_name == 'nt' or sys_platform == 'win32'
     # via
@@ -39,7 +39,7 @@ colorama==0.4.6 ; os_name == 'nt' or sys_platform == 'win32'
     #   pytest
 cyclonedx-python-lib==11.12.0 ; python_full_version >= '3.11'
     # via pip-audit
-datamodel-code-generator==0.87.0
+datamodel-code-generator==0.92.0
     # via heir-sdk (pyproject.toml)
 defusedxml==0.7.1 ; python_full_version >= '3.11'
     # via py-serializable
@@ -100,7 +100,7 @@ msgpack==1.2.4 ; python_full_version >= '3.11'
     # via cachecontrol
 mypy==2.4.1
     # via heir-sdk (pyproject.toml)
-mypy-extensions==1.1.0
+mypy-extensions==1.2.0
     # via
     #   black
     #   mypy
@@ -145,11 +145,11 @@ pycparser==3.11 ; python_full_version < '3.11' and implementation_name != 'PyPy'
     # via cffi
 pycparser==3.12 ; python_full_version >= '3.11' and implementation_name != 'PyPy' and implementation_name != 'pypy' and os_name == 'nt'
     # via cffi
-pydantic==2.14.2
+pydantic==2.14.3
     # via
     #   heir-sdk (pyproject.toml)
     #   datamodel-code-generator
-pydantic-core==2.50.2
+pydantic-core==2.50.4
     # via pydantic
 pygments==2.21.0
     # via
@@ -171,7 +171,7 @@ requests==2.34.2 ; python_full_version >= '3.11'
     #   pip-audit
 rich==15.0.0 ; python_full_version >= '3.11'
     # via pip-audit
-ruff==0.17.3
+ruff==0.17.4
     # via heir-sdk (pyproject.toml)
 sniffio==1.3.1
     # via trio
@@ -192,7 +192,7 @@ tomli-w==1.2.0 ; python_full_version >= '3.11'
     # via pip-audit
 tomlkit==0.15.2
     # via hatchling
-trio==0.34.0
+trio==0.35.0
     # via heir-sdk (pyproject.toml)
 trove-classifiers==2026.9.21.13
     # via hatchling
@@ -210,7 +210,7 @@ typing-extensions==4.16.0
     #   pydantic-core
     #   typeguard
     #   typing-inspection
-typing-inspection==0.4.4
+typing-inspection==0.4.5
     # via pydantic
 urllib3==2.8.0 ; python_full_version >= '3.11'
     # via requests
